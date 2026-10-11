@@ -33,6 +33,8 @@ for part in PARTS:
     top = next(unpack.iterdir())                     # <name>-<plat>-<ver>-archive/
     shutil.copytree(top, dest, dirs_exist_ok=True)
     shutil.rmtree(unpack); arc.unlink()
+if not WIN and (dest / "lib").is_dir() and not (dest / "lib64").exists():
+    (dest / "lib64").symlink_to("lib")              # the archives use lib/, nvcc's profile looks in lib64/
 if os.environ.get("GITHUB_ENV"):
     with open(os.environ["GITHUB_ENV"], "a") as f:
         f.write(f"CUDA_PATH={dest}\n")
