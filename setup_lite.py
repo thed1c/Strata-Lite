@@ -263,14 +263,17 @@ def get_engine(build: bool) -> Path:
         S.ok("the Strata-Lite engine is installed")
         return exe
     if not build:
-        base = f"https://github.com/{LITE_REPO}/releases/latest/download/"
+        # STRATA_LITE_RELEASE: another place with the release's files (a URL folder or a local folder; tests, mirrors)
+        base = os.environ.get("STRATA_LITE_RELEASE") or f"https://github.com/{LITE_REPO}/releases/latest/download/"
+        base = base if base.endswith(("/", "\\")) else base + "/"
         z = LITE_DIR / LITE_ASSET
         try:
             LITE_DIR.mkdir(exist_ok=True)
             if z.exists():
                 z.unlink()
             S.download(base + LITE_ASSET, z, "the ready-made Strata-Lite engine")
-            sums = urllib.request.urlopen(base + "SHA256SUMS.txt", timeout=60).read().decode()
+            sums = (urllib.request.urlopen(base + "SHA256SUMS.txt", timeout=60).read().decode()
+                    if base.startswith(("http://", "https://")) else Path(base, "SHA256SUMS.txt").read_text())
             want = next((l.split()[0] for l in sums.splitlines() if l.strip().endswith(LITE_ASSET)), None)
             got = hashlib.sha256(z.read_bytes()).hexdigest()
             if want != got:
