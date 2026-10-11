@@ -329,6 +329,8 @@ Engine::~Engine() {
     if (buf_cache_) ggml_backend_buffer_free(buf_cache_);
     if (ctx_cache_) ggml_free(ctx_cache_);
     if (buf_kv_) ggml_backend_buffer_free(buf_kv_);
+    for (KvLayer & kl : kvl_) { if (kl.buf) ggml_backend_buffer_free(kl.buf); if (kl.ctx) ggml_free(kl.ctx); }
+    if (ctx_kvfull_) ggml_free(ctx_kvfull_);
     if (buf_gpu_) ggml_backend_buffer_free(buf_gpu_);
     if (buf_map_) ggml_backend_buffer_free(buf_map_);
     if (buf_arena_) ggml_backend_buffer_free(buf_arena_);
@@ -513,16 +515,25 @@ std::string Engine::load(const Options & o) {
             s_l_[il] = ggml_new_tensor_2d(ctx_kv_, GGML_TYPE_F32, H.n_embd_s(), 1 + o.n_rs_seq);
             ggml_format_name(r_l_[il], "cache_r_l%d", il);
             ggml_format_name(s_l_[il], "cache_s_l%d", il);
-        } else {
-            kv_.k[il] = ggml_new_tensor_3d(ctx_kv_, o.type_k, n_gqa, kv_.size, 1);
-            kv_.v[il] = ggml_new_tensor_3d(ctx_kv_, o.type_v, n_gqa, kv_.size, 1);
-            ggml_format_name(kv_.k[il], "cache_k_l%d", il);
-            ggml_format_name(kv_.v[il], "cache_v_l%d", il);
         }
     }
     buf_kv_ = ggml_backend_alloc_ctx_tensors_from_buft(ctx_kv_, ggml_backend_get_default_buffer_type(gpu_));
-    if (!buf_kv_) return "KV / recurrent state allocation failed";
+    if (!buf_kv_) return "recurrent state allocation failed";
     ggml_backend_buffer_clear(buf_kv_, 0);
+    // the KV pager: the attention layers' K/V, kv_cap_ cells each, and the full-size views the reserve graphs use
+    kv_cap_ = o.kv_initial > 0 ? std::min<uint32_t>(kv_.size, (uint32_t) ((o.kv_initial + 255) / 256 * 256)) : kv_.size;
+    kvl_.assign(H.n_layer, {}); kfull_.assign(H.n_layer, nullptr); vfull_.assign(H.n_layer, nullptr);
+    ggml_init_params fp = { (size_t) (2 * H.n_layer + 8) * ggml_tensor_overhead(), nullptr, true };
+    ctx_kvfull_ = ggml_init(fp);
+    for (int il = 0; il < H.n_layer; ++il) {
+        if (H.is_recr[il]) continue;
+        kfull_[il] = ggml_new_tensor_3d(ctx_kvfull_, o.type_k, n_gqa, kv_.size, 1);
+        vfull_[il] = ggml_new_tensor_3d(ctx_kvfull_, o.type_v, n_gqa, kv_.size, 1);
+        ggml_format_name(kfull_[il], "cache_k_l%d", il);
+        ggml_format_name(vfull_[il], "cache_v_l%d", il);
+        const std::string e = kv_alloc_layer(il, kv_cap_);
+        if (!e.empty()) return e;
+    }
 
     if (o.pool) {   // stage c: Strata's CPU expert pool for the RAM-resident layers
         pool_ = std::make_unique<scpu::ExpertPool>(o.pool_threads, /*pin*/ false);   // never pin: machine A runs production
@@ -610,6 +621,7 @@ std::string Engine::load(const Options & o) {
         const std::string e = reserve_graphs();
         if (!e.empty()) return e;
     }
+    compute_bytes_ = ggml_backend_sched_get_buffer_size(sched_, gpu_);   // what end_read's arena must leave for the graphs
     mtp_h_prev_.assign(H.n_embd, 0.0f);   // draft-mtp's pending_h starts at zeros
     if (!o.mtp.empty()) {
         const std::string e = load_mtp();
@@ -627,6 +639,7 @@ std::string Engine::load(const Options & o) {
         while (!(err = arena_build(S, true)).empty() && S > kMinSlots) S = std::max(kMinSlots, S - 2);
         if (!err.empty()) return "auto slots: " + err;
     }
+    slots_load_ = slots_now_;
     return "";
 }
 
@@ -634,6 +647,63 @@ size_t Engine::slot_bytes() const {
     size_t b = 0;
     for (const auto & C : cache_) if (C && !C->full) for (ggml_tensor * t : C->src) b += t->nb[2];
     return b;
+}
+
+// ---------------------------------------------------------------- the KV pager
+size_t Engine::kv_bytes(uint32_t cells) const {
+    const int64_t n_gqa = (int64_t) hp_.head_dim * hp_.n_head_kv;
+    size_t b = 0;
+    for (int il = 0; il < hp_.n_layer; ++il)
+        if (!hp_.is_recr[il]) b += (ggml_row_size(o_.type_k, n_gqa) + ggml_row_size(o_.type_v, n_gqa)) * cells;
+    return b;
+}
+
+// one attention layer's K/V in a buffer of cap cells: zeroed (as the whole-context buffer was at load), the old cells
+// copied over, the old buffer freed, the full-size reserve views pointed at the new memory
+std::string Engine::kv_alloc_layer(int il, uint32_t cap) {
+    const int64_t n_gqa = (int64_t) hp_.head_dim * hp_.n_head_kv;
+    ggml_init_params p = { 4 * ggml_tensor_overhead(), nullptr, true };
+    KvLayer nl; nl.ctx = ggml_init(p);
+    ggml_tensor * k = ggml_new_tensor_3d(nl.ctx, o_.type_k, n_gqa, cap, 1);
+    ggml_tensor * v = ggml_new_tensor_3d(nl.ctx, o_.type_v, n_gqa, cap, 1);
+    ggml_format_name(k, "cache_k_l%d", il);
+    ggml_format_name(v, "cache_v_l%d", il);
+    nl.buf = ggml_backend_alloc_ctx_tensors_from_buft(nl.ctx, ggml_backend_get_default_buffer_type(gpu_));
+    if (!nl.buf) { ggml_free(nl.ctx); return "KV allocation failed (layer " + std::to_string(il) + ", " + std::to_string(cap) + " cells)"; }
+    ggml_backend_buffer_clear(nl.buf, 0);
+    if (kv_.k[il]) {
+        const size_t rows = (size_t) std::min<int64_t>(kv_.k[il]->ne[1], cap);
+        cudaMemcpy(k->data, kv_.k[il]->data, ggml_row_size(k->type, n_gqa) * rows, cudaMemcpyDeviceToDevice);
+        cudaMemcpy(v->data, kv_.v[il]->data, ggml_row_size(v->type, n_gqa) * rows, cudaMemcpyDeviceToDevice);
+    }
+    if (kvl_[il].buf) ggml_backend_buffer_free(kvl_[il].buf);
+    if (kvl_[il].ctx) ggml_free(kvl_[il].ctx);
+    kvl_[il] = nl;
+    kv_.k[il] = k; kv_.v[il] = v;
+    kfull_[il]->data = k->data; kfull_[il]->buffer = nl.buf;
+    vfull_[il]->data = v->data; vfull_[il]->buffer = nl.buf;
+    return "";
+}
+
+// room for cells: the capacity rounded up to kv_step (at most the context); the slot arena gives way first, one layer
+// at a time is reallocated (so the moment's extra VRAM is one layer's new buffer)
+std::string Engine::kv_grow(uint32_t cells) {
+    if (cells <= kv_cap_) return "";
+    const uint32_t step = (uint32_t) std::max(256, (o_.kv_step + 255) / 256 * 256);
+    const uint32_t cap = std::min(kv_.size, (cells + step - 1) / step * step);
+    const int64_t n_gqa = (int64_t) hp_.head_dim * hp_.n_head_kv;
+    const size_t one = (ggml_row_size(o_.type_k, n_gqa) + ggml_row_size(o_.type_v, n_gqa)) * cap;
+    ensure_free(kv_bytes(cap) - kv_bytes(kv_cap_) + one + ((size_t) 64 << 20));
+    if (!fatal_.empty()) return fatal_;
+    ggml_backend_synchronize(gpu_);
+    for (int il = 0; il < hp_.n_layer; ++il) {
+        if (hp_.is_recr[il]) continue;
+        const std::string e = kv_alloc_layer(il, cap);
+        if (!e.empty()) return e;
+    }
+    fprintf(stderr, "strata-lite: KV on the card %u -> %u cells (%.0f MiB)\n", kv_cap_, cap, kv_bytes(cap) / 1048576.0);
+    kv_cap_ = cap;
+    return "";
 }
 
 // VRAM for something else: fewer slots (refilled from the usage counts unless keep_profile)
@@ -785,6 +855,13 @@ void Engine::end_read() {
         // the read may leave less VRAM than it lent (ggml-cuda's pool keeps what the big ubatches grew): fewer slots then
         int S = slots_now_;
         const int before = S;
+        if (o_.cache_slots < 0) {   // auto slots: what the VRAM holds after the graphs' buffers and the reserve, as at load
+            // (the KV pager may have grown the KV during the read; without it this is the load-time count)
+            size_t fr = 0, tot = 0; cudaMemGetInfo(&fr, &tot);
+            const size_t per = slot_bytes(), need = compute_bytes_ + ((size_t) o_.vram_reserve_mb << 20);
+            const int fit = fr > need + 2 * per ? (int) ((fr - need) / per) - 1 : kMinSlots;
+            S = std::max(kMinSlots, std::min(S, fit));
+        }
         std::string err;
         while (!(err = arena_build(S, false)).empty() && S > kMinSlots) S = std::max(kMinSlots, S - 4);
         if (!err.empty()) { fatal_ = "after the read: " + err; return; }
@@ -802,9 +879,14 @@ int Engine::pick_chunk(int n) {
     // after an image) the compute buffers the read holds
     size_t fr = 0, tot = 0; cudaMemGetInfo(&fr, &tot);
     const bool lending = o_.lend && (buf_cache_ || reading_);
-    const size_t avail = fr + ((o_.lend && buf_cache_) ? ggml_backend_buffer_get_size(buf_cache_) : 0)
+    size_t avail = fr + ((o_.lend && buf_cache_) ? ggml_backend_buffer_get_size(buf_cache_) : 0)
                             + (reading_ ? ggml_backend_sched_get_buffer_size(sched_, gpu_) : 0);
     const size_t n_kv_end = (size_t) n_past_ + n, margin = (size_t) 256 << 20;
+    // the KV pager grows during this read: its new cells come out of the same VRAM
+    const uint32_t step = (uint32_t) std::max(256, (o_.kv_step + 255) / 256 * 256);
+    const uint32_t cells = (uint32_t) std::min<size_t>(kv_.size, (n_kv_end + step - 1) / step * step);
+    const size_t kv_more = cells > kv_cap_ ? kv_bytes(cells) - kv_bytes(kv_cap_) : 0;
+    avail = avail > kv_more ? avail - kv_more : 0;
     for (int P : { 32768, 16384, 8192, kChunkMin }) {
         const size_t m = (size_t) std::min(P, n);
         if (kChunkFixed + m * kChunkPerTok + m * n_kv_end * 2 + margin <= avail) return P;
@@ -1000,6 +1082,7 @@ void Engine::commit_landed() {
 void Engine::reset() {
     kv_.pos.assign(kv_.size, -1); kv_.head = 0; kv_.n_kv = 0;
     ggml_backend_buffer_clear(buf_kv_, 0);   // the recurrent cells start at zero (llama.cpp clears a new cell: rs_z)
+    for (const KvLayer & kl : kvl_) if (kl.buf) ggml_backend_buffer_clear(kl.buf, 0);
     rs_fresh_ = true;
     rs_src_ = 0;
     n_past_ = 0;
@@ -1007,6 +1090,19 @@ void Engine::reset() {
     for (int & c : ckpt_pos_) c = -1;   // their attention cells are gone
     mtp_h_prev_.assign(hp_.n_embd, 0.0f);
     if (mtp_.loaded) { mtp_.kv.pos.assign(mtp_.kv.size, -1); mtp_.kv.head = 0; mtp_.kv.n_kv = 0; }
+    // the KV pager: a new conversation gives the grown cells back, and the slot arena takes them again
+    const uint32_t init = o_.kv_initial > 0 ? std::min<uint32_t>(kv_.size, (uint32_t) ((o_.kv_initial + 255) / 256 * 256)) : kv_.size;
+    if (kv_cap_ > init && !kvl_.empty()) {
+        ggml_backend_synchronize(gpu_);
+        for (int il = 0; il < hp_.n_layer; ++il) {
+            if (hp_.is_recr[il]) continue;
+            const std::string e = kv_alloc_layer(il, init);
+            if (!e.empty()) { fatal_ = "new conversation: " + e; return; }
+        }
+        fprintf(stderr, "strata-lite: KV on the card %u -> %u cells (a new conversation)\n", kv_cap_, init);
+        kv_cap_ = init;
+        if (slots_load_ > slots_now_) grow_to(slots_load_, (size_t) o_.vram_reserve_mb << 20);
+    }
 }
 
 // ---------------------------------------------------------------- the graph
@@ -1097,6 +1193,8 @@ std::string Engine::ubatch(const int32_t * toks, int n, int pos0, int n_out, std
         if (reading_ && n < kOffloadMin) { end_read(); if (!fatal_.empty()) return fatal_; }
         if (copy_stream_) commit_landed();
         if (!kv_.find_slot(n)) return "KV cache full";
+        const uint32_t need = (uint32_t) *std::max_element(kv_.idxs.begin(), kv_.idxs.end()) + 1;
+        if (need > kv_cap_) { const std::string e = kv_grow(need); if (!e.empty()) return e; }
         kv_.apply(positions);
     }
     const uint32_t n_kv = reserve ? kv_.size : kv_.n_kv;
@@ -1322,6 +1420,7 @@ std::string Engine::ubatch(const int32_t * toks, int n, int pos0, int n_out, std
             const float kq_scale = 1.0f / sqrtf((float) n_embd_head);
 
             // build_attn (kv): the rotations, cpy_k / cpy_v, then build_attn_mha with flash attention
+            ggml_tensor * Kc = reserve ? kfull_[il] : kv_.k[il], * Vc = reserve ? vfull_[il] : kv_.v[il];   // the pager: see kfull_
             if (k_rot) { Qcur = mul_mat_hadamard(ctx, Qcur, k_rot); Kcur = mul_mat_hadamard(ctx, Kcur, k_rot); }
             if (v_rot) Vcur = mul_mat_hadamard(ctx, Vcur, v_rot);
             ggml_build_forward_expand(gf, Qcur);   // llm_graph_context::build_attn (kv): q, then v, then k
@@ -1329,16 +1428,16 @@ std::string Engine::ubatch(const int32_t * toks, int n, int pos0, int n_out, std
             ggml_build_forward_expand(gf, Kcur);
             {
                 ggml_tensor * kc = ggml_view_2d(ctx, Kcur, n_gqa, n, Kcur->nb[2], 0);
-                ggml_build_forward_expand(gf, ggml_set_rows(ctx, kv_.k[il], kc, k_idxs));
+                ggml_build_forward_expand(gf, ggml_set_rows(ctx, Kc, kc, k_idxs));
                 ggml_tensor * vc = ggml_view_2d(ctx, Vcur, n_gqa, n, Vcur->nb[2], 0);
-                ggml_build_forward_expand(gf, ggml_set_rows(ctx, kv_.v[il], vc, v_idxs));
+                ggml_build_forward_expand(gf, ggml_set_rows(ctx, Vc, vc, v_idxs));
             }
-            ggml_tensor * k = ggml_view_4d(ctx, kv_.k[il], n_embd_head, H.n_head_kv, n_kv, 1,
-                                           ggml_row_size(kv_.k[il]->type, n_embd_head), ggml_row_size(kv_.k[il]->type, n_gqa),
-                                           ggml_row_size(kv_.k[il]->type, n_gqa * kv_.size), 0);
-            ggml_tensor * v = ggml_view_4d(ctx, kv_.v[il], n_embd_head, H.n_head_kv, n_kv, 1,
-                                           ggml_row_size(kv_.v[il]->type, n_embd_head), ggml_row_size(kv_.v[il]->type, n_gqa),
-                                           ggml_row_size(kv_.v[il]->type, n_gqa * kv_.size), 0);
+            ggml_tensor * k = ggml_view_4d(ctx, Kc, n_embd_head, H.n_head_kv, n_kv, 1,
+                                           ggml_row_size(Kc->type, n_embd_head), ggml_row_size(Kc->type, n_gqa),
+                                           ggml_row_size(Kc->type, n_gqa * kv_.size), 0);
+            ggml_tensor * v = ggml_view_4d(ctx, Vc, n_embd_head, H.n_head_kv, n_kv, 1,
+                                           ggml_row_size(Vc->type, n_embd_head), ggml_row_size(Vc->type, n_gqa),
+                                           ggml_row_size(Vc->type, n_gqa * kv_.size), 0);
             ggml_tensor * q = ggml_view_4d(ctx, Qcur, Qcur->ne[0], Qcur->ne[1], Qcur->ne[2], 1, Qcur->nb[1], Qcur->nb[2], Qcur->nb[3], 0);
             q = ggml_permute(ctx, q, 0, 2, 1, 3);
             ggml_tensor * kp = ggml_permute(ctx, k, 0, 2, 1, 3);

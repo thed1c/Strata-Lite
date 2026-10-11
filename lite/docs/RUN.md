@@ -27,6 +27,7 @@ Where Qwen's defaults differ: `--n-cpu-moe 40`, `--adapt-half-life 64`, the draf
 | `--n-cpu-moe` | 30 (Qwen: 40) | blocks whose experts live in RAM (all of them: the cache fronts them) |
 | `--profile` | none | a ranked expert list per layer to start from |
 | `--prefill-ubatch` | `auto` | prompt chunk: the largest of 32k / 16k / 8k / 4k the card funds; `--no-lend` stops the read borrowing the cache's VRAM |
+| `--kv-initial`, `--kv-step` | 32768, 16384 (Qwen) | the KV pager: the attention KV starts with this many cells on the card and grows in steps as the conversation needs them (the expert cache gives way, and takes the room back when a new conversation starts); `--kv-initial 0` reserves the whole context at load. Same output bit for bit |
 | `--adapt-half-life` | 32 (Qwen: 64) | tokens over which usage counts halve |
 | `--adapt-budget` | 2 | swaps per layer per step |
 | `--no-adapt`, `--no-adapt-refill`, `--no-async-swaps`, `--no-overlap` | | the ablation switches (fixed cache; no refill after a read; swaps in the step; no CPU/GPU overlap) |

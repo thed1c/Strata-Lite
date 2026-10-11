@@ -51,6 +51,8 @@ int main(int argc, char ** argv) {
         else if (a == "--async-swaps") o.async_swaps = true;
         else if (a == "--overlap") o.overlap = true;
         else if (a == "--prefill-ubatch") { std::string v = next(); o.prefill_ubatch = v == "auto" ? -1 : std::stoi(v); }
+        else if (a == "--kv-initial") o.kv_initial = std::stoi(next());   // KV pager: cells on the card at load (0 = all)
+        else if (a == "--kv-step") o.kv_step = std::stoi(next());
         else if (a == "--lend") o.lend = true;
         else if (a == "--n-gen") n_gen = std::stoi(next());
         else if (a == "--dump-tokens") dump_tokens = next();

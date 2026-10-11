@@ -57,6 +57,10 @@ struct Options {
     std::string mtp;
     bool mtp_share_head = false;     // the target's token_embd / output instead of the drafter file's own
     int  n_rs_seq       = 0;
+    // the KV pager: the attention layers' K/V start with kv_initial cells on the card (0 = the whole context at load, as
+    // llama.cpp) and grow in kv_step steps as the conversation needs them; the slot arena gives way (ensure_free)
+    int  kv_initial     = 0;
+    int  kv_step        = 16384;
 };
 
 struct Stats {
@@ -107,6 +111,7 @@ public:
     int slots() const { return slots_now_; }
     int n_past() const { return n_past_; }
     int n_ctx() const { return (int) kv_.size; }
+    int kv_cap() const { return (int) kv_cap_; }   // KV cells on the card now (<= n_ctx)
     // an image chunk (mtmd's embeddings, n rows): pos4 = 4 x n M-RoPE positions (t, y, x, z sections, mtmd's
     // decoder positions), n_pos = how far the position advances (mtmd_input_chunk_get_n_pos). The drafter skips it, as
     // draft-mtp's process() skips embedding batches.
@@ -198,6 +203,8 @@ private:
     ggml_backend_buffer_t buf_cache_ = nullptr;
     std::vector<std::vector<int>> rank_;
     int slots_now_ = 0;
+    int slots_load_ = 0;
+    size_t compute_bytes_ = 0;   // the reserved graphs' GPU buffers at load   // the slot count at load: a new conversation grows the arena back to it (the KV pager)
     std::string arena_build(int S, bool fill_profile);
     void adapt_after(int n, const std::vector<ggml_tensor *> & argsorts);
     void swap_layer(int il, int budget);
@@ -231,6 +238,17 @@ private:
     uint64_t ckpt_age_[kCkpts] = {}, ckpt_clock_ = 0;
     std::vector<float> ckpt_h_[kCkpts];
     size_t slot_bytes() const;
+    // the KV pager: each attention layer's K/V in its own buffer of kv_cap_ cells (a multiple of 256, <= kv_.size). The
+    // reserve graphs see full-size tensors over the same memory (kfull_ / vfull_, metadata only, never computed), so the
+    // allocator's plan is the one a whole-context KV gives
+    struct KvLayer { ggml_context * ctx = nullptr; ggml_backend_buffer_t buf = nullptr; };
+    std::vector<KvLayer> kvl_;
+    ggml_context * ctx_kvfull_ = nullptr;
+    std::vector<ggml_tensor *> kfull_, vfull_;
+    uint32_t kv_cap_ = 0;
+    size_t kv_bytes(uint32_t cells) const;
+    std::string kv_alloc_layer(int il, uint32_t cap);
+    std::string kv_grow(uint32_t cells);
     std::string load_mtp();
     std::string mtp_ubatch(const int32_t * toks, const float * h, int n, int pos0, bool out, int32_t * amax, std::vector<float> * h_out);
     std::string mtp_catchup(const int32_t * toks, int n, int pos0, const float * h_rows);
