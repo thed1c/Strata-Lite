@@ -15,7 +15,7 @@ and two models.
 | Needs | Windows or Linux, an NVIDIA RTX 30 / 40 / 50 card, driver 580+, 24 GB of RAM for Gemma or 32 GB for Qwen (16 GB runs in low-RAM mode, slower), a CPU with AVX2. The setup installs everything else (Install, below); to compile it yourself: `lite/docs/BUILD.md` |
 | Run | `strata-lite-server -m model.gguf --mtp mtp.gguf --mmproj mmproj.gguf`; it picks the engine from the GGUF (`lite/docs/RUN.md`) |
 | API | llama-server's and OpenAI chat; 63/63 parity checks for each model (`lite/docs/API.md`) |
-| Images | The vision projector takes GPU memory only while it is in use: small images encode on the CPU, big ones move it to the card and it leaves after 15 s idle; prompts over 64K keep images on the CPU; a second GPU takes it automatically; under 32 GB of RAM it loads only when an image arrives (`--mmproj-place`, see "The image projector, on demand") |
+| Images | The vision projector does not sit on the card beside the model: on one GPU it waits in RAM and takes GPU memory only while it is in use. Small images encode on the CPU, big ones move it to the card and it leaves after 15 s idle; prompts over 64K keep images on the CPU; a second GPU takes it automatically; under 32 GB of RAM it loads only when an image arrives (`--mmproj-place`, see "The image projector, on demand") |
 | Docs | `lite/docs/HOW-IT-WORKS.md`, `lite/docs/CORRECTNESS.md`, `lite/docs/QWEN36.md`, `lite/docs/MODEL-DESCRIPTOR.md`, `lite/ROADMAP.md`, `lite/CONTRIBUTING.md`, `lite/CHANGELOG.md` |
 | Licence | MIT (`LICENSE`); weights are yours to download under their own terms |
 
@@ -63,7 +63,7 @@ and reads an image in 11 s; Qwen about 4 tokens a second (Gemma with enough RAM,
 **The costs:**
 - **The first reply after a long read writes 13–27 % slower than the second.** The read lent the cache's VRAM and the cache refills while it writes; llama.cpp has no such dip.
 - **Mean KL against all-GPU is slightly higher than llama.cpp's** (1.5–2.0e-2 vs 1.3–1.7e-2). The twin check shows every cached row computes exactly; the difference is which experts run on the GPU and which on the CPU.
-- **Both engines fit the image projector beside the model at every context.** Strata-Lite gives up 16–18 expert slots for it; llama.cpp moves 3–4 more blocks of experts to RAM.
+- **Both engines fit the image projector beside the model at every context**, when it is forced onto the card for this test (`--mmproj-place gpu`). Strata-Lite gives up 16–18 expert slots for it; llama.cpp moves 3–4 more blocks of experts to RAM. Strata-Lite's default doesn't do that: the projector waits in RAM and visits the card only for an image, so text keeps every slot ("The image projector, on demand").
 
 The grid below is the headline. Each column puts the same 12 GB card, the same context, the same prompts and the same greedy
 sampling through both engines, with MTP drafting on in both:
@@ -121,7 +121,7 @@ Both use q4_0 KV at every context.
 - **VRAM:** sampled every 0.25 s on the card.
 - **Strata-Lite configuration:** slots per layer chosen at load from free VRAM. It reads in the largest chunk the card funds, lending the slot arena's VRAM to the read. The grid found 16k up to 131k of context and 8k at 262k with the 157k prompt; the server's automatic chunk choice (`--prefill-ubatch auto`, the default) picks the same.
 - **llama.cpp configuration:** `-b 2048 -ub 512`, `--spec-type draft-mtp`.
-- **Image projector:** the same configuration plus the BF16 mmproj kept on the same card (`--mmproj-place gpu`). Does it load and answer one and eight 1024 px images? Strata-Lite gives up slots to fit it; llama.cpp moves more blocks to RAM.
+- **Image projector:** the same configuration plus the BF16 mmproj kept on the same card (`--mmproj-place gpu`; not the default, which keeps it in RAM until an image needs it). Does it load and answer one and eight 1024 px images? Strata-Lite gives up slots to fit it; llama.cpp moves more blocks to RAM.
 - **Quality:** teacher-forced through the greedy tokens of llama.cpp with every expert on the GPU (q4 KV, two cards). Top-1 agreement and mean KL(ref ‖ engine) over 200 steps of five prompts (0.6k–6.8k tokens), and 500 steps of the 157k prompt at 262k.
   - The all-GPU run is the arithmetic a cache approaches as it holds more of the model.
   - llama.cpp's own placements score in the same range against it: all-CPU vs all-GPU is 96.3 % / 1.35e-2 at q4 on these prompts.
@@ -149,7 +149,7 @@ a point of llama.cpp's.**
   3060; the card's cache wins where the card is fast (the 5070) and where many tokens go through at once (reading).
 - **Twin check:** every cached row equal to its CPU twin, bit for bit, in every cell (10k–16k rows each, 0 differ).
 - **The first reply after a long read** writes within a few percent of the next one (-7 % to +3 %; Gemma's dipped 13–27 %).
-- **Both engines fit the image projector beside the model at every context**; Strata-Lite gives up 18–20 expert slots for it.
+- **Both engines fit the image projector beside the model at every context**, when it is forced onto the card for this test (`--mmproj-place gpu`); Strata-Lite gives up 18–20 expert slots for it. By default it waits in RAM instead and visits the card only for an image ("The image projector, on demand").
 <!-- QWEN-HEADLINE:END -->
 
 The same grid, cell for cell (`lite/tests/grid_qwen.sh`): Qwen's 40 expert blocks, the same prompts tokenized for Qwen, its own

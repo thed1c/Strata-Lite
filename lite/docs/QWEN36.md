@@ -23,7 +23,7 @@ A 12 GB card holds about 25 to 37 % of Qwen's experts (Gemma: 37 to 61 %), so th
 Tested set (all downloads under their own licences, never in this repository):
 - **Model:** HauhauCS `Qwen3.6-35B-A3B-Uncensored-HauhauCS-Aggressive`, `Q4_K_P` (23 GB). Any GGUF with architecture `qwen35moe`
   is meant to load (the official `Qwen/Qwen3.6-35B-A3B` quants, unsloth's).
-- **Projector:** the `mmproj-...-f16.gguf` beside the model (0.9 GB).
+- **Projector:** the `mmproj-...-f16.gguf` file, in the same folder as the model (0.9 GB).
 - **MTP drafter:** HauhauCS's file carries no MTP head. unsloth's `Qwen3.6-35B-A3B-MTP-GGUF` carries one inside its model GGUF (block
   40, plus `nextn` tensors). `tools/qwen35_mtp_extract.py` copies that block, the embedding and the output head into a 1.62 GB
   GGUF that both llama.cpp (`-md ... --spec-type draft-mtp`) and Strata-Lite (`--mtp`) load beside the HauhauCS model:
