@@ -22,10 +22,7 @@
 #include <cstdio>
 #include <cstring>
 #include <vector>
-#include <fcntl.h>
-#include <sys/mman.h>
-#include <sys/stat.h>
-#include <unistd.h>
+#include "../lite/platform.hpp"
 
 namespace g4 {
 
@@ -363,7 +360,7 @@ Engine::~Engine() {
     if (gguf_) gguf_free(gguf_);
     if (gpu_) ggml_backend_free(gpu_);
     if (cpu_) ggml_backend_free(cpu_);
-    if (map_) munmap(map_, map_size_);
+    lite::unmap_file(map_, map_size_);
 }
 
 std::string Engine::load(const Options & o) {
@@ -408,12 +405,8 @@ std::string Engine::load(const Options & o) {
     ggml_backend_cpu_set_n_threads(cpu_, o.n_threads);
 
     // the file, mapped: the CPU-resident weights are used in place (llama.cpp with mmap: no repacking)
-    const int fd = open(o.gguf.c_str(), O_RDONLY);
-    if (fd < 0) return "open failed";
-    struct stat sb; fstat(fd, &sb); map_size_ = sb.st_size;
-    map_ = mmap(nullptr, map_size_, PROT_READ, MAP_SHARED, fd, 0);
-    close(fd);
-    if (map_ == MAP_FAILED) { map_ = nullptr; return "mmap failed"; }
+    map_ = lite::map_file(o.gguf, &map_size_);
+    if (!map_) return "cannot map " + o.gguf;
     const size_t data_off = gguf_get_data_offset(gguf_);
 
     // which tensors live where: `-ngl 99 --n-cpu-moe N` = token_embd and the first N layers' experts in RAM, the rest

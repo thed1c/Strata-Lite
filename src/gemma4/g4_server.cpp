@@ -1,11 +1,8 @@
-#include <sched.h>
-#include <fstream>
-#include <set>
+#include "../lite/platform.hpp"
+#include "../lite/chat_page.hpp"
+#include <filesystem>
 #include <thread>
-#include <sys/sysinfo.h>
 extern "C" int stbi_info_from_memory(const unsigned char * buffer, int len, int * x, int * y, int * comp);   // in libmtmd (stb_image)
-#include <sys/stat.h>
-#include <unistd.h>
 #include <cstring>
 #include "gguf.h"
 // strata-lite-server: an OpenAI-compatible server for the gemma4 engine, API-identical to llama-server for what
@@ -42,6 +39,8 @@ extern "C" int stbi_info_from_memory(const unsigned char * buffer, int len, int 
 #include <string>
 #include <vector>
 
+namespace g4srv {
+
 struct Args {
     std::string model, mmproj, mtp, alias = "strata-lite", host = "127.0.0.1", profile;
     int port = 8080, n_draft = 3, image_max_tokens = 384, threads = 0;   // 384: the maintainer, 2026-10-10; threads 0 = physical cores
@@ -65,36 +64,38 @@ static void usage() {
 
 static ggml_type kv_type(const std::string & t) { return t == "q4_0" ? GGML_TYPE_Q4_0 : t == "q8_0" ? GGML_TYPE_Q8_0 : GGML_TYPE_F16; }
 
-// strata-lite-server is the one entry point: a GGUF of another architecture goes to that engine's server, with the same
-// arguments (qwen35moe: strata-lite-server-qwen35, from $STRATA_LITE_QWEN35_SERVER or next to this binary)
-static void dispatch_by_architecture(int argc, char ** argv) {
+// strata-lite-server is the one entry point: a GGUF of another architecture goes to that engine's server with the same
+// arguments. The release build links both servers into one binary (STRATA_LITE_COMBINED); a per-engine build starts
+// strata-lite-server-qwen35 from $STRATA_LITE_QWEN35_SERVER or next to this binary.
+static std::string model_architecture(int argc, char ** argv) {
     std::string model;
     for (int i = 1; i + 1 < argc; ++i) if (!strcmp(argv[i], "-m") || !strcmp(argv[i], "--model")) model = argv[i + 1];
-    if (model.empty()) return;
+    if (model.empty()) return "";
     gguf_init_params gp = { /*no_alloc*/ true, /*ctx*/ nullptr };
     gguf_context * g = gguf_init_from_file(model.c_str(), gp);
-    if (!g) return;
+    if (!g) return "";
     const int64_t id = gguf_find_key(g, "general.architecture");
     const std::string arch = id < 0 ? "" : gguf_get_val_str(g, id);
     gguf_free(g);
-    if (arch != "qwen35moe") return;
+    return arch;
+}
+
+#if !defined(STRATA_LITE_COMBINED) && !defined(_WIN32)
+static void exec_qwen_server(int argc, char ** argv) {
     std::string exe;
     if (const char * e = getenv("STRATA_LITE_QWEN35_SERVER")) exe = e;
-    else {
-        char self[4096]; const ssize_t k = readlink("/proc/self/exe", self, sizeof self - 1);
-        if (k > 0) { self[k] = 0; exe = std::string(self); exe = exe.substr(0, exe.rfind('/') + 1) + "strata-lite-server-qwen35"; }
-    }
+    else exe = lite::self_dir() + "strata-lite-server-qwen35";
     std::vector<char *> av = { (char *) exe.c_str() };
     for (int i = 1; i < argc; ++i) av.push_back(argv[i]);
     av.push_back(nullptr);
-    fprintf(stderr, "strata-lite-server: %s is %s: starting %s\n", model.c_str(), arch.c_str(), exe.c_str());
+    fprintf(stderr, "strata-lite-server: a qwen35moe model: starting %s\n", exe.c_str());
     execv(exe.c_str(), av.data());
     fprintf(stderr, "strata-lite-server: cannot start %s (build src/qwen35, or set STRATA_LITE_QWEN35_SERVER)\n", exe.c_str());
     exit(1);
 }
+#endif
 
-int main(int argc, char ** argv) {
-    dispatch_by_architecture(argc, argv);
+int run(int argc, char ** argv) {
     Args A;
     common_params & P = A.params;
     // neutral public defaults (the maintainer, 2026-10-10: "we will make them neutral public"): llama-server's sampling, a
@@ -151,19 +152,7 @@ int main(int argc, char ** argv) {
         if (A.eo.lend) { A.eo.lend = false; fprintf(stderr, "strata-lite: --no-adapt reads without lending the cache's VRAM\n"); }
     }
     if (A.threads <= 0 || A.eo.pool_threads <= 0) {   // physical cores among the CPUs this process may run on (numactl respected)
-        cpu_set_t set; CPU_ZERO(&set);
-        int cores = 0;
-        if (sched_getaffinity(0, sizeof set, &set) == 0) {
-            std::set<std::string> seen;
-            for (int c = 0; c < CPU_SETSIZE; ++c) {
-                if (!CPU_ISSET(c, &set)) continue;
-                std::ifstream f("/sys/devices/system/cpu/cpu" + std::to_string(c) + "/topology/thread_siblings_list");
-                std::string sib; std::getline(f, sib);
-                seen.insert(sib.empty() ? std::to_string(c) : sib);
-            }
-            cores = (int) seen.size();
-        }
-        if (cores <= 0) cores = std::max(1u, std::thread::hardware_concurrency() / 2);
+        const int cores = lite::physical_cores_or_half();
         if (A.threads <= 0) A.threads = cores;
         if (A.eo.pool_threads <= 0) A.eo.pool_threads = cores;
     }
@@ -184,7 +173,7 @@ int main(int argc, char ** argv) {
     for (llama_token t = 0; t < n_vocab; ++t) if (llama_vocab_is_eog(vocab, t)) P.sampling.logit_bias_eog.push_back({ t, -INFINITY });
 
     // auto slots: what loads after the arena (the drafter, the projector and its largest image encode) plus step headroom
-    auto fsize = [](const std::string & p) -> size_t { struct stat st; return p.empty() || stat(p.c_str(), &st) != 0 ? 0 : (size_t) st.st_size; };
+    auto fsize = [](const std::string & p) -> size_t { std::error_code ec; const auto n = p.empty() ? 0 : std::filesystem::file_size(p, ec); return ec ? 0 : (size_t) n; };
     // a second visible GPU takes the projector whole (the maintainer, 2026-10-10: "if there is a second card detected it
     // automatically puts mmproj there"): no expert slots given up, no moves, no CPU encodes
     ggml_backend_dev_t second_dev = nullptr;
@@ -199,7 +188,7 @@ int main(int argc, char ** argv) {
     }
     const bool second_fits = second_dev && second_free >= (((fsize(A.mmproj) >> 20) + 768) << 20);
     if (A.mmproj_place.empty()) {
-        struct sysinfo si; const double gb = sysinfo(&si) == 0 ? (double) si.totalram * si.mem_unit / 1e9 : 0;
+        const double gb = lite::total_ram_gb();
         A.mmproj_place = second_fits ? "second" : gb > 0 && gb < 32 ? "lazy" : "auto";   // the maintainer, 2026-10-10: "32Gb for mmproj"
     }
     if (A.mmproj_place != "second" && A.mmproj_place != "gpu" && A.mmproj_place != "cpu" && A.mmproj_place != "auto" && A.mmproj_place != "lazy") {
@@ -490,6 +479,7 @@ int main(int argc, char ** argv) {
     const auto t_created = std::time(nullptr);
     auto send_json = [](httplib::Response & r, const json & j, int code) { r.status = code; r.set_content(safe_json_to_str(j), "application/json; charset=utf-8"); };
     srv.Get("/health", [&](const httplib::Request &, httplib::Response & r) { send_json(r, json{ { "status", "ok" } }, 200); });
+    srv.Get("/", [&](const httplib::Request &, httplib::Response & r) { r.set_content(lite::chat_page(), "text/html; charset=utf-8"); });
     auto models = [&](const httplib::Request &, httplib::Response & r) {
         json meta = { { "vocab_type", llama_vocab_type(vocab) }, { "n_vocab", n_vocab }, { "n_ctx_train", eng.hp().n_ctx_train },
                       { "n_embd", eng.hp().n_embd }, { "n_ctx", eng.n_ctx() } };
@@ -576,3 +566,20 @@ int main(int argc, char ** argv) {
     llama_model_free(model);
     return 0;
 }
+
+}  // namespace g4srv
+
+#ifdef STRATA_LITE_COMBINED
+namespace q35srv { int run(int argc, char ** argv); }
+int main(int argc, char ** argv) {
+    if (g4srv::model_architecture(argc, argv) == "qwen35moe") return q35srv::run(argc, argv);
+    return g4srv::run(argc, argv);
+}
+#else
+int main(int argc, char ** argv) {
+#ifndef _WIN32
+    if (g4srv::model_architecture(argc, argv) == "qwen35moe") g4srv::exec_qwen_server(argc, argv);
+#endif
+    return g4srv::run(argc, argv);
+}
+#endif

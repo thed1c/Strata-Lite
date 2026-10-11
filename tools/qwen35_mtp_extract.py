@@ -7,12 +7,67 @@ llama.cpp loads a GGUF without `blk.0` but with the nextn layer as an MTP-only d
 `mtp_only`). This copies, byte for byte and without requantising: every metadata key (architecture, hyperparameters,
 tokenizer), `token_embd`, `output_norm`, `output` (when present) and every `blk.<last>.*` tensor.
 
-Pure Python (no numpy). Usage: qwen35_mtp_extract.py SOURCE.gguf OUT.gguf
+Pure Python (no numpy). Usage: qwen35_mtp_extract.py [--no-head] SOURCE OUT.gguf
+SOURCE is a file or an https:// URL (a Hugging Face "resolve" link): from a URL only the header and the tensors kept are
+read, with HTTP range requests (the MTP block is ~0.5 GB of a ~23 GB file). --no-head leaves out token_embd / output /
+output_norm: Strata-Lite's server uses the target model's own (the default), llama.cpp's `-md` needs them.
 """
+import io
 import pathlib
 import re
 import struct
 import sys
+import time
+import urllib.request
+
+
+class Source:
+    """A file or an HTTP(S) URL read by offset. URLs: HTTP range requests, retried; a header window is cached."""
+    def __init__(self, src):
+        self.url = src if str(src).startswith(("http://", "https://")) else None
+        self.f = None if self.url else open(src, "rb")
+        self.size = self._size()
+
+    def _size(self):
+        if not self.url:
+            self.f.seek(0, 2); return self.f.tell()
+        req = urllib.request.Request(self.url, method="HEAD", headers={"User-Agent": "strata-lite"})
+        with urllib.request.urlopen(req, timeout=60) as r:
+            return int(r.headers["Content-Length"])
+
+    def read(self, off, n):
+        if not self.url:
+            self.f.seek(off); return self.f.read(n)
+        for attempt in range(6):
+            try:
+                req = urllib.request.Request(self.url, headers={"Range": f"bytes={off}-{off + n - 1}", "User-Agent": "strata-lite"})
+                with urllib.request.urlopen(req, timeout=120) as r:
+                    data = r.read()
+                if len(data) == n: return data
+            except Exception as e:
+                err = e
+            time.sleep(2 * (attempt + 1))
+        sys.exit(f"cannot read {n} bytes at {off} from {self.url}")
+
+
+class Cursor(io.RawIOBase):
+    """A sequential reader over a Source for the header parse (reads ahead in 16 MB windows)."""
+    def __init__(self, src):
+        self.src, self.pos, self.buf, self.base = src, 0, b"", 0
+
+    def read(self, n):
+        if self.pos < self.base or self.pos + n > self.base + len(self.buf):
+            self.base = self.pos
+            self.buf = self.src.read(self.pos, min(max(n, 16 << 20), self.src.size - self.pos))
+        out = self.buf[self.pos - self.base:self.pos - self.base + n]
+        self.pos += n
+        return out
+
+    def tell(self): return self.pos
+
+    def seek(self, off, whence=0):
+        self.pos = off if whence == 0 else self.pos + off
+        return self.pos
 
 GGUF_MAGIC = 0x46554747
 # value type ids (gguf.h) and their fixed sizes
@@ -45,8 +100,13 @@ def skip_value(fh, vtype):
 
 
 def main():
-    src, dst = pathlib.Path(sys.argv[1]), pathlib.Path(sys.argv[2])
-    with src.open("rb") as fh:
+    args = [a for a in sys.argv[1:] if a != "--no-head"]
+    no_head = "--no-head" in sys.argv[1:]
+    if len(args) != 2: sys.exit(__doc__)
+    source, dst = Source(args[0]), pathlib.Path(args[1])
+    src_name = args[0].rsplit("/", 1)[-1]
+    fh = Cursor(source)
+    if True:
         magic, version, n_tensors, n_kv = struct.unpack("<IIQQ", fh.read(24))
         if magic != GGUF_MAGIC or version != 3:
             sys.exit(f"{src}: not a GGUF v3 file")
@@ -74,13 +134,13 @@ def main():
             tensors.append([name, shape, ttype, off])
         align = meta.get("general.alignment", 32)
         data_start = (fh.tell() + align - 1) // align * align
-        file_end = src.stat().st_size
+        file_end = source.size
 
     arch = meta["general.architecture"]
     n_layer = meta[f"{arch}.block_count"]
     n_nextn = meta.get(f"{arch}.nextn_predict_layers", 0)
     if not n_nextn:
-        sys.exit(f"{src.name}: no MTP head ({arch}.nextn_predict_layers is 0 or missing)")
+        sys.exit(f"{src_name}: no MTP head ({arch}.nextn_predict_layers is 0 or missing)")
     mtp_blocks = set(range(n_layer - n_nextn, n_layer))
     # tensor byte sizes from the offsets (sorted), the last one to the end of the file
     by_off = sorted(tensors, key=lambda t: t[3])
@@ -90,7 +150,7 @@ def main():
 
     def keep(name):
         if name in ("token_embd.weight", "output_norm.weight", "output.weight"):
-            return True
+            return not no_head
         m = re.match(r"blk\.(\d+)\.", name)
         return bool(m) and int(m.group(1)) in mtp_blocks
     out = [t for t in tensors if keep(t[0])]
@@ -105,7 +165,7 @@ def main():
         t.append(off)  # t[4] = new offset
         off = pad(off + size[t[0]])
 
-    with dst.open("wb") as fo, src.open("rb") as fi:
+    with dst.open("wb") as fo:
         fo.write(struct.pack("<IIQQ", GGUF_MAGIC, 3, len(out), len(kv_raw)))
         for raw in kv_raw:
             fo.write(raw)
@@ -117,12 +177,12 @@ def main():
         base = fo.tell()
         for name, shape, ttype, soff, noff in out:
             fo.write(b"\0" * (base + noff - fo.tell()))
-            fi.seek(data_start + soff)
-            left = size[name]
+            at, left = data_start + soff, size[name]
             while left:
-                chunk = fi.read(min(left, 64 << 20)); fo.write(chunk); left -= len(chunk)
+                n = min(left, 64 << 20)
+                chunk = source.read(at, n); fo.write(chunk); at += n; left -= n
     total = sum(size[t[0]] for t in out)
-    print(f"{dst.name}: {len(out)} tensors ({total / 1e9:.2f} GB) from {src.name}: MTP block(s) {sorted(mtp_blocks)} + "
+    print(f"{dst.name}: {len(out)} tensors ({total / 1e9:.2f} GB) from {src_name}: MTP block(s) {sorted(mtp_blocks)} + "
           f"{', '.join(t[0] for t in out if not t[0].startswith('blk.'))}; {len(kv_raw)} metadata keys copied")
 
 

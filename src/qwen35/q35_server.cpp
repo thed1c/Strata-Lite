@@ -1,15 +1,13 @@
-#include <sched.h>
-#include <fstream>
-#include <set>
+#include "../lite/platform.hpp"
+#include "../lite/chat_page.hpp"
+#include <filesystem>
 #include <thread>
-#include <sys/sysinfo.h>
 extern "C" int stbi_info_from_memory(const unsigned char * buffer, int len, int * x, int * y, int * comp);   // in libmtmd (stb_image)
-#include <sys/stat.h>
 // strata-lite-server-qwen35: the Strata-Lite server for the qwen35moe engine (Qwen3.5 / 3.6 MoE), g4_server.cpp's
 // request handling around q35::Engine. What differs from the gemma4 server: MTP is the engine's (draft-mtp with its own
 // KV cache; the drafts advance a position each); images take M-RoPE positions (mtmd's decoder positions, n_pos per
 // chunk); and the prompt cache resumes only where the recurrent state can return (q35::Engine::resume_point: a
-// checkpoint taken one token before the end of each prompt, so a repeated prompt or the next chat turn resumes there).
+// checkpoints of the recurrent state where the next request is likely to resume).
 //
 // strata-lite-server (gemma4): an OpenAI-compatible server for the gemma4 engine, API-identical to llama-server for what
 // the reference server's clients use (docs/API.md): POST /v1/chat/completions (and /chat/completions), GET /health,
@@ -46,6 +44,8 @@ extern "C" int stbi_info_from_memory(const unsigned char * buffer, int len, int 
 #include <string>
 #include <vector>
 
+namespace q35srv {
+
 struct Args {
     std::string model, mmproj, mtp, alias = "strata-lite", host = "127.0.0.1", profile;
     int port = 8080, n_draft = 3, image_max_tokens = 384, threads = 0;   // 384: the maintainer, 2026-10-10; threads 0 = physical cores
@@ -72,7 +72,7 @@ static void usage() {
 
 static ggml_type kv_type(const std::string & t) { return t == "q4_0" ? GGML_TYPE_Q4_0 : t == "q8_0" ? GGML_TYPE_Q8_0 : GGML_TYPE_F16; }
 
-int main(int argc, char ** argv) {
+int run(int argc, char ** argv) {
     Args A;
     common_params & P = A.params;
     // neutral public defaults (the maintainer, 2026-10-10: "we will make them neutral public"): llama-server's sampling, a
@@ -131,19 +131,7 @@ int main(int argc, char ** argv) {
         if (A.eo.lend) { A.eo.lend = false; fprintf(stderr, "strata-lite: --no-adapt reads without lending the cache's VRAM\n"); }
     }
     if (A.threads <= 0 || A.eo.pool_threads <= 0) {   // physical cores among the CPUs this process may run on (numactl respected)
-        cpu_set_t set; CPU_ZERO(&set);
-        int cores = 0;
-        if (sched_getaffinity(0, sizeof set, &set) == 0) {
-            std::set<std::string> seen;
-            for (int c = 0; c < CPU_SETSIZE; ++c) {
-                if (!CPU_ISSET(c, &set)) continue;
-                std::ifstream f("/sys/devices/system/cpu/cpu" + std::to_string(c) + "/topology/thread_siblings_list");
-                std::string sib; std::getline(f, sib);
-                seen.insert(sib.empty() ? std::to_string(c) : sib);
-            }
-            cores = (int) seen.size();
-        }
-        if (cores <= 0) cores = std::max(1u, std::thread::hardware_concurrency() / 2);
+        const int cores = lite::physical_cores_or_half();
         if (A.threads <= 0) A.threads = cores;
         if (A.eo.pool_threads <= 0) A.eo.pool_threads = cores;
     }
@@ -164,7 +152,7 @@ int main(int argc, char ** argv) {
     for (llama_token t = 0; t < n_vocab; ++t) if (llama_vocab_is_eog(vocab, t)) P.sampling.logit_bias_eog.push_back({ t, -INFINITY });
 
     // auto slots: what loads after the arena (the drafter, the projector and its largest image encode) plus step headroom
-    auto fsize = [](const std::string & p) -> size_t { struct stat st; return p.empty() || stat(p.c_str(), &st) != 0 ? 0 : (size_t) st.st_size; };
+    auto fsize = [](const std::string & p) -> size_t { std::error_code ec; const auto n = p.empty() ? 0 : std::filesystem::file_size(p, ec); return ec ? 0 : (size_t) n; };
     // a second visible GPU takes the projector whole (the maintainer, 2026-10-10: "if there is a second card detected it
     // automatically puts mmproj there"): no expert slots given up, no moves, no CPU encodes
     ggml_backend_dev_t second_dev = nullptr;
@@ -179,7 +167,7 @@ int main(int argc, char ** argv) {
     }
     const bool second_fits = second_dev && second_free >= (((fsize(A.mmproj) >> 20) + 768) << 20);
     if (A.mmproj_place.empty()) {
-        struct sysinfo si; const double gb = sysinfo(&si) == 0 ? (double) si.totalram * si.mem_unit / 1e9 : 0;
+        const double gb = lite::total_ram_gb();
         A.mmproj_place = second_fits ? "second" : gb > 0 && gb < 32 ? "lazy" : "auto";   // the maintainer, 2026-10-10: "32Gb for mmproj"
     }
     if (A.mmproj_place != "second" && A.mmproj_place != "gpu" && A.mmproj_place != "cpu" && A.mmproj_place != "auto" && A.mmproj_place != "lazy") {
@@ -516,6 +504,7 @@ int main(int argc, char ** argv) {
     const auto t_created = std::time(nullptr);
     auto send_json = [](httplib::Response & r, const json & j, int code) { r.status = code; r.set_content(safe_json_to_str(j), "application/json; charset=utf-8"); };
     srv.Get("/health", [&](const httplib::Request &, httplib::Response & r) { send_json(r, json{ { "status", "ok" } }, 200); });
+    srv.Get("/", [&](const httplib::Request &, httplib::Response & r) { r.set_content(lite::chat_page(), "text/html; charset=utf-8"); });
     auto models = [&](const httplib::Request &, httplib::Response & r) {
         json meta = { { "vocab_type", llama_vocab_type(vocab) }, { "n_vocab", n_vocab }, { "n_ctx_train", eng.hp().n_ctx_train },
                       { "n_embd", eng.hp().n_embd }, { "n_ctx", eng.n_ctx() } };
@@ -603,3 +592,9 @@ int main(int argc, char ** argv) {
     llama_model_free(model);
     return 0;
 }
+
+}  // namespace q35srv
+
+#ifndef STRATA_LITE_COMBINED
+int main(int argc, char ** argv) { return q35srv::run(argc, argv); }
+#endif

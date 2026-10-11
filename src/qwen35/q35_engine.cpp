@@ -21,10 +21,7 @@
 #include <condition_variable>
 #include <mutex>
 #include <thread>
-#include <fcntl.h>
-#include <sys/mman.h>
-#include <sys/stat.h>
-#include <unistd.h>
+#include "../lite/platform.hpp"
 
 namespace q35 {
 
@@ -323,7 +320,7 @@ Engine::~Engine() {
     if (mtp_.ctx_w) ggml_free(mtp_.ctx_w);
     if (mtp_.meta) ggml_free(mtp_.meta);
     if (mtp_.gguf) gguf_free(mtp_.gguf);
-    if (mtp_.map) munmap(mtp_.map, mtp_.map_size);
+    lite::unmap_file(mtp_.map, mtp_.map_size);
     if (copy_stream_) { cudaStreamSynchronize((cudaStream_t) copy_stream_); cudaStreamDestroy((cudaStream_t) copy_stream_); }
     for (auto & b : pending_) cudaEventDestroy((cudaEvent_t) b.ev);
     for (void * c : ckpt_) if (c) cudaFree(c);
@@ -343,7 +340,7 @@ Engine::~Engine() {
     if (gguf_) gguf_free(gguf_);
     if (gpu_) ggml_backend_free(gpu_);
     if (cpu_) ggml_backend_free(cpu_);
-    if (map_) munmap(map_, map_size_);
+    lite::unmap_file(map_, map_size_);
 }
 
 std::string Engine::load(const Options & o) {
@@ -401,12 +398,8 @@ std::string Engine::load(const Options & o) {
     ggml_backend_cpu_set_n_threads(cpu_, o.n_threads);
 
     // the file, mapped: the CPU-resident weights are used in place (llama.cpp with mmap)
-    const int fd = open(o.gguf.c_str(), O_RDONLY);
-    if (fd < 0) return "open failed";
-    struct stat sb; fstat(fd, &sb); map_size_ = sb.st_size;
-    map_ = mmap(nullptr, map_size_, PROT_READ, MAP_SHARED, fd, 0);
-    close(fd);
-    if (map_ == MAP_FAILED) { map_ = nullptr; return "mmap failed"; }
+    map_ = lite::map_file(o.gguf, &map_size_);
+    if (!map_) return "cannot map " + o.gguf;
     const size_t data_off = gguf_get_data_offset(gguf_);
 
     // `-ngl 99 --n-cpu-moe N`: token_embd (the input layer) and the first N layers' routed experts in RAM, the rest on
@@ -1689,12 +1682,8 @@ std::string Engine::load_mtp() {
             return "the drafter's shape does not match the target";
     }
     const int il = (int) kv_int(M.gguf, "qwen35moe.block_count") - 1;
-    const int fd = open(o_.mtp.c_str(), O_RDONLY);
-    if (fd < 0) return "open failed";
-    struct stat sb; fstat(fd, &sb); M.map_size = sb.st_size;
-    M.map = mmap(nullptr, M.map_size, PROT_READ, MAP_SHARED, fd, 0);
-    close(fd);
-    if (M.map == MAP_FAILED) { M.map = nullptr; return "mmap failed"; }
+    M.map = lite::map_file(o_.mtp, &M.map_size);
+    if (!M.map) return "cannot map " + o_.mtp;
     const size_t data_off = gguf_get_data_offset(M.gguf);
     const int n_tensors = (int) gguf_get_n_tensors(M.gguf);
     ggml_init_params ip = { (size_t) (n_tensors + 8) * ggml_tensor_overhead(), nullptr, true };
