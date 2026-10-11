@@ -91,7 +91,15 @@ int main(int argc, char ** argv) {
     FILE * fsteps = getenv("Q35_KL_STEPS") ? fopen(getenv("Q35_KL_STEPS"), "w") : nullptr;
     int steps = 0, identical = 0, argmax_same = 0, first_diff = -1, first_tok_diff = -1, greedy_same = 0;
     double max_abs = 0, kl_sum = 0, kl_max = 0;
+    // Q35_LOGIT_HASH=FILE: one FNV-1a hash of every scored step's logits (bit-for-bit comparison of two builds, no oracle)
+    FILE * fhash = getenv("Q35_LOGIT_HASH") ? fopen(getenv("Q35_LOGIT_HASH"), "w") : nullptr;
     auto compare = [&](const float * L) {
+        if (fhash) {
+            uint64_t h = 1469598103934665603ull;
+            const unsigned char * b = (const unsigned char *) L;
+            for (size_t j = 0; j < (size_t) n_vocab * sizeof(float); ++j) { h ^= b[j]; h *= 1099511628211ull; }
+            fprintf(fhash, "%016llx\n", (unsigned long long) h);
+        }
         if (!(fo && fread(ref.data(), sizeof(float), n_vocab, fo) == (size_t) n_vocab)) return;
         steps++;
         if (memcmp(ref.data(), L, n_vocab * sizeof(float)) == 0) identical++;
@@ -174,6 +182,7 @@ int main(int argc, char ** argv) {
     }
     if (!dump_tokens.empty()) { FILE * fd = fopen(dump_tokens.c_str(), "wb"); if (fd) { fwrite(gen.data(), 4, gen.size(), fd); fclose(fd); } }
     if (fsteps) fclose(fsteps);
+    if (fhash) fclose(fhash);
     const auto t3 = std::chrono::steady_clock::now();
     auto sec = [](auto a, auto b) { return std::chrono::duration<double>(b - a).count(); };
     char buf[4096];
