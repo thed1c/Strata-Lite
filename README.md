@@ -25,6 +25,167 @@ computed on the CPU (`--n-cpu-moe`). Strata's answer is a per-layer GPU cache of
 using. The cache adapts as the conversation moves, misses go to a CPU expert pool in the same step, and swaps run on a
 background copy stream.
 
+## New in v0.2.1: VRAM only for the conversation you are having
+
+A 12 GB card is shared between the model's expert cache and the attention's KV cache. v0.2.0, like llama.cpp, reserved the KV
+for the whole 262,144-token context at load, even for a two-line chat. v0.2.1 gives the card only what the conversation uses:
+
+- **The KV grows with the conversation.** It starts at 32K tokens on the card and grows in 16K steps; the expert cache gives way
+  as it grows and takes the room back when a new chat starts (`--kv-initial`, `--kv-step`). Same output, bit for bit, as
+  reserving it all up front (checked on both models, with MTP drafting).
+- **The chat page compacts at 192K.** When a conversation reaches three quarters of the context, the page has the model
+  summarize it and carries on from the summary plus the last turns, with a marker you can open to read the summary. A paste of
+  up to 256K still goes through in one message. So in normal use the KV tops out near 192K, not 262K.
+
+**What that bought: Gemma back on q8 KV.** At 64K tokens of Wikipedia text, against f16 KV and a noise floor of the same run
+batched differently:
+
+| | Gemma 4 top-1 | Gemma 4 KL | Qwen3.6 top-1 | Qwen3.6 KL |
+|---|---|---|---|---|
+| noise floor (f16, other batching) | 87.1 % | 0.073 | 94.1 % | 0.024 |
+| q8_0 KV | **87.1 %** | 0.106 | 93.4 % | 0.014 |
+| q4_0 KV (v0.2.0) | 80.5 % | 0.216 | 92.2 % | 0.020 |
+
+q4 KV cost Gemma 6.6 points of top-token agreement; q8 is back at the floor. Qwen's q4 cost is already inside its floor, so Qwen
+stays on q4. Gemma's q8 KV takes twice the VRAM per token, and the growing KV is what makes that affordable:
+
+Measured 2026-10-11 on the grid's cards (RTX 3060 on PCIe 3.0 x16, RTX 5070 on PCIe x16) at 262K context, MTP on, each version with its own defaults. v0.2.1 ran on Wikipedia text (the CC BY-SA corpus published with [llama.cpp-adaptive-kv-streaming](https://github.com/RaymondHuang210129/llama.cpp-adaptive-kv-streaming)); the v0.2.0 and llama.cpp columns are the published grid below, on the project's test prompts. The ratio in brackets is v0.2.1 over the other column (for the first token, the other column's time over v0.2.1's). Writing at 157K depends mostly on how well MTP predicts the text: on the same 157K Wikipedia prompt on the RTX 3060, v0.2.0 writes 28.3–30.7 tok/s with ~46 % of drafts accepted and v0.2.1 27.8–31.1 with ~45 %, the same; the grid's prompts accept more drafts. Read the 157K writing rows as level, not as a loss.
+
+### v0.2.1 vs llama.cpp
+
+**Gemma 4 26B-A4B, RTX 3060, 262K context**
+
+| | v0.2.1 | llama.cpp (grid) |
+|---|---|---|
+| KV cache | q8_0 | q4_0 |
+| on the card | 79 slots/layer (the KV grows from 32K) | 11 of 30 expert blocks on the card |
+| expert slots after the 157K fill | 56 slots/layer | — |
+| writing after a short prompt, tok/s (MTP) | 77.8 (1.65×) | 47.1 |
+| reading a 5K prompt, tok/s | 1,510 (3.91×) | 386 |
+| reading a 15K prompt, tok/s | 1,495 (3.70×) | 404 |
+| reading the 157K prompt, tok/s | 670 (2.01×) | 333 |
+| first token after 157K, s | 234 (2.02×) | 474 |
+| writing at 157K, first turn, tok/s | 37.6 | — |
+| writing at 157K, second turn, tok/s | 28.4 (1.16×) | 24.6 |
+
+**Gemma 4 26B-A4B, RTX 5070, 262K context**
+
+| | v0.2.1 | llama.cpp (grid) |
+|---|---|---|
+| KV cache | q8_0 | q4_0 |
+| on the card | 78 slots/layer (the KV grows from 32K) | 11 of 30 expert blocks on the card |
+| expert slots after the 157K fill | 54 slots/layer | — |
+| writing after a short prompt, tok/s (MTP) | 111.5 (2.41×) | 46.3 |
+| reading a 5K prompt, tok/s | 2,234 (8.63×) | 259 |
+| reading a 15K prompt, tok/s | 2,268 (8.37×) | 271 |
+| reading the 157K prompt, tok/s | 1,000 (3.79×) | 264 |
+| first token after 157K, s | 157 (3.79×) | 596 |
+| writing at 157K, first turn, tok/s | 52.5 | — |
+| writing at 157K, second turn, tok/s | 66.7 (2.29×) | 29.1 |
+
+**Qwen3.6-35B-A3B, RTX 3060, 262K context**
+
+| | v0.2.1 | llama.cpp (grid) |
+|---|---|---|
+| KV cache | q4_0 | q4_0 |
+| on the card | 89 slots/layer (the KV grows from 32K) | 9 of 40 expert blocks on the card |
+| expert slots after the 157K fill | 77 slots/layer | — |
+| writing after a short prompt, tok/s (MTP) | 58.5 (1.06×) | 55.4 |
+| reading a 5K prompt, tok/s | 956 (3.78×) | 253 |
+| reading a 15K prompt, tok/s | 1,242 (4.91×) | 253 |
+| reading the 157K prompt, tok/s | 710 (3.02×) | 235 |
+| first token after 157K, s | 221 (3.03×) | 670 |
+| writing at 157K, first turn, tok/s | 28.3 | — |
+| writing at 157K, second turn, tok/s | 29.4 (0.90×) | 32.7 |
+
+**Qwen3.6-35B-A3B, RTX 5070, 262K context**
+
+| | v0.2.1 | llama.cpp (grid) |
+|---|---|---|
+| KV cache | q4_0 | q4_0 |
+| on the card | 87 slots/layer (the KV grows from 32K) | 9 of 40 expert blocks on the card |
+| expert slots after the 157K fill | 75 slots/layer | — |
+| writing after a short prompt, tok/s (MTP) | 73.9 (1.64×) | 45.2 |
+| reading a 5K prompt, tok/s | 1,347 (8.27×) | 163 |
+| reading a 15K prompt, tok/s | 1,978 (12.21×) | 162 |
+| reading the 157K prompt, tok/s | 1,064 (6.57×) | 162 |
+| first token after 157K, s | 148 (6.58×) | 971 |
+| writing at 157K, first turn, tok/s | 45.6 | — |
+| writing at 157K, second turn, tok/s | 48.8 (1.32×) | 36.9 |
+
+### v0.2.1 vs v0.2.0
+
+**Gemma 4 26B-A4B, RTX 3060, 262K context**
+
+| | v0.2.1 | v0.2.0 (grid) |
+|---|---|---|
+| KV cache | q8_0 | q4_0 |
+| expert slots at load | 79 slots/layer (the KV grows from 32K) | 70 slots/layer (the KV reserved for 262K) |
+| expert slots after the 157K fill | 56 slots/layer | — |
+| writing after a short prompt, tok/s (MTP) | 77.8 (1.17×) | 66.6 |
+| reading a 5K prompt, tok/s | 1,510 (1.08×) | 1,404 |
+| reading a 15K prompt, tok/s | 1,495 (1.03×) | 1,445 |
+| reading the 157K prompt, tok/s | 670 (1.00×) | 672 |
+| first token after 157K, s | 234 (1.00×) | 234 |
+| writing at 157K, first turn, tok/s | 37.6 | — |
+| writing at 157K, second turn, tok/s | 28.4 (0.89×) | 32.1 |
+
+**Gemma 4 26B-A4B, RTX 5070, 262K context**
+
+| | v0.2.1 | v0.2.0 (grid) |
+|---|---|---|
+| KV cache | q8_0 | q4_0 |
+| expert slots at load | 78 slots/layer (the KV grows from 32K) | 69 slots/layer (the KV reserved for 262K) |
+| expert slots after the 157K fill | 54 slots/layer | — |
+| writing after a short prompt, tok/s (MTP) | 111.5 (1.11×) | 100.2 |
+| reading a 5K prompt, tok/s | 2,234 (1.15×) | 1,943 |
+| reading a 15K prompt, tok/s | 2,268 (1.05×) | 2,161 |
+| reading the 157K prompt, tok/s | 1,000 (1.01×) | 993 |
+| first token after 157K, s | 157 (1.01×) | 159 |
+| writing at 157K, first turn, tok/s | 52.5 | — |
+| writing at 157K, second turn, tok/s | 66.7 (1.46×) | 45.8 |
+
+**Qwen3.6-35B-A3B, RTX 3060, 262K context**
+
+| | v0.2.1 | v0.2.0 (grid) |
+|---|---|---|
+| KV cache | q4_0 | q4_0 |
+| expert slots at load | 89 slots/layer (the KV grows from 32K) | 73 slots/layer (the KV reserved for 262K) |
+| expert slots after the 157K fill | 77 slots/layer | — |
+| writing after a short prompt, tok/s (MTP) | 58.5 (1.07×) | 54.5 |
+| reading a 5K prompt, tok/s | 956 (1.03×) | 926 |
+| reading a 15K prompt, tok/s | 1,242 (1.06×) | 1,170 |
+| reading the 157K prompt, tok/s | 710 (1.00×) | 707 |
+| first token after 157K, s | 221 (1.01×) | 223 |
+| writing at 157K, first turn, tok/s | 28.3 | — |
+| writing at 157K, second turn, tok/s | 29.4 (0.86×) | 34.4 |
+
+**Qwen3.6-35B-A3B, RTX 5070, 262K context**
+
+| | v0.2.1 | v0.2.0 (grid) |
+|---|---|---|
+| KV cache | q4_0 | q4_0 |
+| expert slots at load | 87 slots/layer (the KV grows from 32K) | 72 slots/layer (the KV reserved for 262K) |
+| expert slots after the 157K fill | 75 slots/layer | — |
+| writing after a short prompt, tok/s (MTP) | 73.9 (1.03×) | 71.6 |
+| reading a 5K prompt, tok/s | 1,347 (1.13×) | 1,196 |
+| reading a 15K prompt, tok/s | 1,978 (1.14×) | 1,740 |
+| reading the 157K prompt, tok/s | 1,064 (1.02×) | 1,044 |
+| first token after 157K, s | 148 (1.02×) | 151 |
+| writing at 157K, first turn, tok/s | 45.6 | — |
+| writing at 157K, second turn, tok/s | 48.8 (0.97×) | 50.3 |
+
+
+**Streaming the KV from RAM was measured and set aside.** It was on the roadmap: keep the KV in RAM past 96K and stream it to the
+card. These models attend to every past token for every new one, so everything streamed crosses PCIe once per token: about 1 GB
+per token for Gemma's q8 KV between 96K and 192K. Pinned RAM reaches the grid's RTX 3060 at 12.3 GB/s (PCIe 3.0 x16), so that is
+~85 ms a token against ~40 ms for the whole step today: long chats would drop from ~24 to ~8 tok/s. Holding the KV on the card
+costs a few expert slots instead (~0.7 % of decode speed each on the 3060). Streaming stays a fallback for cards where the KV
+cannot fit at all (8 GB, `lite/ROADMAP.md`).
+
+Also in v0.2.1: the projector's warm-up works on a second GPU (it was skipped), and an answer with a broken UTF-8 byte no longer
+comes back as an HTTP 500.
+
 ## Install
 
 [Download Strata-Lite](https://github.com/thed1c/Strata-Lite/archive/refs/heads/main.zip) and unzip it (or `git clone` it).
