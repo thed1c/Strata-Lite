@@ -368,8 +368,10 @@ def install(a, family: str, gpu: dict, ram: float, models_dir: Path) -> int:
     low_ram = ram < fam["locked_gib"]
     if low_ram:
         S.warn(f"RAM: {ram:.0f} GB - not enough to keep {fam['title']}'s experts locked in RAM (that needs about "
-               f"{fam['locked_gib'] + 2} GB). It runs in low-RAM mode: the experts are read from the model file as needed, so "
-               "it writes about half as fast and long prompts take longer. Use an SSD for the model files.")
+               f"{fam['locked_gib'] + 2} GB). It runs in low-RAM mode: the experts are read from the model file as needed. "
+               "It works, but slower: measured with 16 GB on an RTX 3060, Gemma 4 wrote about 10 tokens a "
+               "second and Qwen3.6 about 4 (Gemma 4 with enough RAM: about 43). Keep the model files on an SSD"
+               + ("; with this much RAM Gemma 4 is the better choice." if family == "qwen36" else "."))
     # ---- the questions: a first install takes the recommended answers (the measured files, the context the card holds,
     # images on); `setup --setup` (SETUP.bat) asks them
     simple = not a.setup

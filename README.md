@@ -12,7 +12,7 @@ and two models.
 |---|---|
 | Models | Gemma 4 26B-A4B (HauhauCS QAT Uncensored Balanced, Q4_K_M, with its MTP drafter and projector); Qwen3.6-35B-A3B (HauhauCS Uncensored Aggressive, Q4_K_P, with its projector and the MTP head from unsloth's release, `lite/docs/QWEN36.md`) |
 | Cards | 12 GB: RTX 3060 (sm_86), RTX 5070 (sm_120); built for sm_89 too. 8 GB is on the roadmap |
-| Needs | Windows or Linux, an NVIDIA RTX 30 / 40 / 50 card, driver 580+, 32 GB of RAM for Gemma or 48 GB for Qwen (64 for 262k + images), a CPU with AVX2. The setup installs everything else (Install, below); to compile it yourself: `lite/docs/BUILD.md` |
+| Needs | Windows or Linux, an NVIDIA RTX 30 / 40 / 50 card, driver 580+, 24 GB of RAM for Gemma or 32 GB for Qwen (16 GB runs in low-RAM mode, slower), a CPU with AVX2. The setup installs everything else (Install, below); to compile it yourself: `lite/docs/BUILD.md` |
 | Run | `strata-lite-server -m model.gguf --mtp mtp.gguf --mmproj mmproj.gguf`; it picks the engine from the GGUF (`lite/docs/RUN.md`) |
 | API | llama-server's and OpenAI chat; 63/63 parity checks for each model (`lite/docs/API.md`) |
 | Images | The vision projector takes GPU memory only while it is in use: small images encode on the CPU, big ones move it to the card and it leaves after 15 s idle; prompts over 64K keep images on the CPU; a second GPU takes it automatically; under 32 GB of RAM it loads only when an image arrives (`--mmproj-place`, see "The image projector, on demand") |
@@ -43,8 +43,10 @@ resumable) and NVIDIA's CUDA libraries, gets the ready-made engine, and starts t
 `http://127.0.0.1:8080`; the same address serves the OpenAI and llama-server APIs (`/v1/chat/completions`).
 
 What it needs: an NVIDIA RTX 30, 40 or 50 card with 12 GB (8-11 GB runs with fewer experts on the card), driver 580 or
-newer, 32 GB of RAM for Gemma and 48 GB for Qwen, and a CPU with AVX2. The first start loads ~15-22 GB into locked RAM:
-the PC can be slow for a minute. Next time, run `START-HERE.bat` (or `./setup.sh`) again: it starts right away.
+newer, 24 GB of RAM for Gemma and 32 GB for Qwen, and a CPU with AVX2. The first start loads ~15-22 GB into locked RAM:
+the PC can be slow for a minute. With less RAM (16 GB at least) the setup picks low-RAM mode: the experts are read from
+the model file as needed, so keep it on an SSD. Measured with 16 GB on an RTX 3060: Gemma writes about 10 tokens a second
+and reads an image in 11 s; Qwen about 4 tokens a second (Gemma with enough RAM, same test: about 43). Next time, run `START-HERE.bat` (or `./setup.sh`) again: it starts right away.
 
 ## Results: Gemma 4 26B-A4B
 

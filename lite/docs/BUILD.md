@@ -12,7 +12,8 @@ the server's request handling, mtmd for images) statically, from llama.cpp at co
 - An NVIDIA RTX 30, 40 or 50 card (sm_86 / sm_89 / sm_120), driver 580 or newer.
 - The CUDA toolkit 13.0 (`nvcc`). Avoid 13.2.0 / 13.2.1 for RTX 50 cards (a known sm_120 miscompile; 13.2.2 is fixed).
 - CMake 3.24+ and Ninja; on Windows, Visual Studio 2022's C++ build tools (run from an "x64 Native Tools" prompt).
-- RAM to run it: Gemma 4 keeps about 17 GB of experts in locked RAM, Qwen3.6 about 24 GB.
+- RAM to run it: Gemma 4 keeps about 17 GB of experts in locked RAM, Qwen3.6 about 24 GB. With less, `--no-async-swaps`
+  (low-RAM mode) reads them from the model file as needed: slower, needs 16 GB.
 
 ## Build
 ```bash

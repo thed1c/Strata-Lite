@@ -30,6 +30,7 @@ Where Qwen's defaults differ: `--n-cpu-moe 40`, `--adapt-half-life 64`, the draf
 | `--adapt-half-life` | 32 (Qwen: 64) | tokens over which usage counts halve |
 | `--adapt-budget` | 2 | swaps per layer per step |
 | `--no-adapt`, `--no-adapt-refill`, `--no-async-swaps`, `--no-overlap` | | the ablation switches (fixed cache; no refill after a read; swaps in the step; no CPU/GPU overlap) |
+| `--no-async-swaps` | | also low-RAM mode: the experts are not copied into locked RAM but read from the model file as needed (16 GB of RAM runs, slower; keep the model on an SSD). Turned on by itself when locking fails |
 | `-t`, `--pool-threads` | the cores the process may use | GPU-side threads / the CPU expert pool |
 | `--temp`, `--top-k`, `--top-p`, `--min-p`, `--repeat-penalty` | 0.8 / 40 / 0.95 / 0.05 / off | llama-server's sampling defaults; every request can override them |
 | `--mtp-own-head` | off | Qwen: load the drafter file's embedding and output head instead of sharing the model's (0.5 GB more VRAM) |
