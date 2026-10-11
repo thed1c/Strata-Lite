@@ -37,7 +37,7 @@ import setup as S
 ROOT = S.ROOT
 WIN = S.WIN
 # the published fork whose releases carry the ready-made engine (owner/repo; STRATA_LITE_REPO overrides it)
-LITE_REPO = os.environ.get("STRATA_LITE_REPO", "OWNER/Strata-Lite")
+LITE_REPO = os.environ.get("STRATA_LITE_REPO", "thed1c/Strata-Lite")
 LITE_ASSET = "strata-lite-windows-x64.zip" if WIN else "strata-lite-linux-x64.zip"
 LITE_DIR = ROOT / "engine-lite"
 LITE_EXE = "strata-lite-server.exe" if WIN else "strata-lite-server"

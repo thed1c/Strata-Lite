@@ -26,7 +26,7 @@ background copy stream.
 
 ## Install
 
-[Download Strata-Lite](https://github.com/OWNER/Strata-Lite/archive/refs/heads/main.zip) and unzip it (or `git clone` it).
+[Download Strata-Lite](https://github.com/thed1c/Strata-Lite/archive/refs/heads/main.zip) and unzip it (or `git clone` it).
 **Windows:** double-click **`START-HERE.bat`**. **Linux:** run **`./setup.sh`** in the folder.
 
 It is Strata's installer. In "Which model?" choose **Qwen3.6-35B-A3B** or **Gemma 4 26B-A4B** (Strata's own Qwen3.8-Flash-Next
