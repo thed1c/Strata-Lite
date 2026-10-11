@@ -189,10 +189,10 @@ extracted head as `-md`, Strata-Lite with the model's own embedding and head).
 | MTP accepted | 67 % | 64 % | 64 % | 71 % | 61 % | 66 % |
 | decode right after a 15k read | +2 % | -1 % | -5 % | +1 % | -2 % | -1 % |
 | VRAM load / peak | 11.1 / 11.6 GB | 11.3 / 11.4 GB | 11.1 / 11.6 GB | 11.1 / 11.2 GB | 11.2 / 11.5 GB | 11.5 / 11.6 GB |
-| image projector on the card | fits (77 slots; 1 / 8 images 3.4 / 16.66 s) | fits (11 blocks; 1 / 8 images 3.84 / 22.76 s) | fits (68 slots; 1 / 8 images 3.47 / 16.84 s) | fits (9 blocks; 1 / 8 images 4.09 / 24.71 s) | fits (52 slots; 1 / 8 images 3.49 / 17.07 s) | — |
+| image projector on the card | fits (77 slots; 1 / 8 images 3.4 / 16.66 s) | fits (11 blocks; 1 / 8 images 3.84 / 22.76 s) | fits (68 slots; 1 / 8 images 3.47 / 16.84 s) | fits (9 blocks; 1 / 8 images 4.09 / 24.71 s) | fits (52 slots; 1 / 8 images 3.49 / 17.07 s) | fits (6 blocks; 1 / 8 images 4.62 / 27.95 s) |
 | top-1 vs all-GPU, 5 prompts | 97.1 % | 96.6 % | 96.9 % | 97.3 % | 97.7 % | 97.2 % |
 | mean KL vs all-GPU, 5 prompts | 1.1e-02 | 1.3e-02 | 1.2e-02 | 1.2e-02 | 1.2e-02 | 1.2e-02 |
-| top-1 / KL vs all-GPU, 157k prompt | — | — | — | — | 96.2 % / 1.2e-02 | — |
+| top-1 / KL vs all-GPU, 157k prompt | — | — | — | — | 96.2 % / 1.2e-02 | 97.4 % / 1.1e-02 |
 | twin rows (differ) | 10,416 (0) | n/a | 10,296 (0) | n/a | 15,560 (0) | n/a |
 <!-- GRID-QWEN:END -->
 
