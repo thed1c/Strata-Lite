@@ -205,7 +205,7 @@ int run(int argc, char ** argv) {
         mtmd_bitmap * bm = mtmd_bitmap_init(1024, 1024, px.data());
         mtmd_input_chunks * chs = mtmd_input_chunks_init();
         const std::string marker = get_media_marker();
-        mtmd_input_text txt; txt.text = marker.c_str(); txt.add_special = false; txt.parse_special = true;
+        mtmd_input_text txt; txt.text = marker.c_str(); txt.text_len = marker.size(); txt.add_special = false; txt.parse_special = true;
         const mtmd_bitmap * bms[1] = { bm };
         if (mtmd_tokenize(c, chs, &txt, bms, 1) == 0)
             for (size_t i = 0; i < mtmd_input_chunks_size(chs); ++i) {
