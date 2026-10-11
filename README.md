@@ -24,6 +24,27 @@ computed on the CPU (`--n-cpu-moe`). Strata's answer is a per-layer GPU cache of
 using. The cache adapts as the conversation moves, misses go to a CPU expert pool in the same step, and swaps run on a
 background copy stream.
 
+## Install
+
+[Download Strata-Lite](https://github.com/OWNER/Strata-Lite/archive/refs/heads/main.zip) and unzip it (or `git clone` it).
+**Windows:** double-click **`START-HERE.bat`**. **Linux:** run **`./setup.sh`** in the folder.
+
+It is Strata's installer. In "Which model?" choose **Qwen3.6-35B-A3B** or **Gemma 4 26B-A4B** (Strata's own Qwen3.8-Flash-Next
+models are there too). Then it asks:
+- **which files:** *uncensored* (the HauhauCS releases every number here was measured with), *official* (unsloth's
+  quantizations; experimental, not measured with this engine), or GGUF files you already have;
+- **how much context:** 32K, 128K or 256K tokens;
+- **images:** the image encoder loads only when an image arrives;
+- **a Hugging Face token:** optional, press Enter (none of the files needs one).
+
+Press Enter for the recommended answers. It downloads the model (Qwen ~24 GB, Gemma ~18 GB, eight connections at a time,
+resumable) and NVIDIA's CUDA libraries, gets the ready-made engine, and starts the model. Your browser opens a chat page at
+`http://127.0.0.1:8080`; the same address serves the OpenAI and llama-server APIs (`/v1/chat/completions`).
+
+What it needs: an NVIDIA RTX 30, 40 or 50 card with 12 GB (8-11 GB runs with fewer experts on the card), driver 580 or
+newer, 32 GB of RAM for Gemma and 48 GB for Qwen, and a CPU with AVX2. The first start loads ~15-22 GB into locked RAM:
+the PC can be slow for a minute. Next time, run `START-HERE.bat` (or `./setup.sh`) again: it starts right away.
+
 ## Results: Gemma 4 26B-A4B
 
 **On the same 12 GB card, at the same context, Strata-Lite reads prompts 2–7× faster than llama.cpp and writes 1.2–2.2× faster. Its top-token agreement with an all-GPU run is within about one point of llama.cpp's.**

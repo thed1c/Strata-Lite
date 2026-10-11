@@ -124,6 +124,27 @@ def use_token(token: str | None) -> None:
         urllib.request.install_opener(urllib.request.build_opener(_HFAuth(token)))
 
 
+_ASKED = []
+
+
+def ask_token(code: int) -> bool:
+    """Hugging Face refused a download (busy or limited): a free account's token usually lifts that. Asked once."""
+    if _ASKED or not sys.stdin.isatty():
+        return False
+    _ASKED.append(True)
+    S.warn(f"Hugging Face refused the download (HTTP {code}): it limits downloads without an account at busy times.")
+    S.say("  A free Hugging Face account's token fixes this: sign in at https://huggingface.co, open Settings > Access\n"
+          "  Tokens, create a token with the 'Read' role and paste it here. It is used for this download only, not saved.")
+    try:
+        t = input("  Token (Enter to stop and try again later): ").strip()
+    except EOFError:
+        return False
+    if not t:
+        return False
+    use_token(t)
+    return True
+
+
 # ------------------------------------------------------------------------------------------------ downloads
 def _final_url_and_size(url: str) -> tuple[str, int]:
     req = urllib.request.Request(url, method="HEAD", headers={"User-Agent": "strata-lite-setup"})
@@ -162,7 +183,12 @@ def download(url: str, dst: Path, what: str, sha256: str | None = None) -> None:
         S.ok(f"{what} already downloaded")
         return
     dst.parent.mkdir(parents=True, exist_ok=True)
-    final, total = _final_url_and_size(url)
+    try:
+        final, total = _final_url_and_size(url)
+    except urllib.error.HTTPError as e:
+        if e.code not in (401, 403, 429) or not ask_token(e.code):
+            raise
+        final, total = _final_url_and_size(url)
     if total and S.free_gb(dst.parent) < total / 1e9 + 1:
         S.fail(f"not enough disk space for {what} ({total / 1e9:.1f} GB) in {dst.parent}")
     aria = shutil.which("aria2c")
@@ -306,8 +332,16 @@ def configs() -> list[Path]:
     return sorted(ROOT.glob("lite-*.json"), key=lambda p: p.stat().st_mtime, reverse=True)
 
 
-def menu_lines(start: int) -> list[str]:
-    return [f"  {start + i}) {d['title']:20s} {d['by']} - {d['about']}" for i, d in enumerate(FAMILIES.values())]
+def recommend(gpu: dict | None, ram: float, hip: bool) -> str | None:
+    """The Strata-Lite model for this PC: Qwen3.6 with 48 GB of RAM or more, else Gemma 4; none on a card it cannot run."""
+    if hip or not gpu or str(gpu.get("arch")) not in LITE_ARCHS:
+        return None
+    return "qwen36" if ram >= 46 else "gemma4"
+
+
+def menu_lines(start: int, rec: str | None = None) -> list[str]:
+    return [f"  {start + i}) {d['title']:20s} {d['by']} - {d['about']}" + ("   (recommended for this PC)" if f == rec else "")
+            for i, (f, d) in enumerate(FAMILIES.items())]
 
 
 def install(a, family: str, gpu: dict, ram: float, models_dir: Path) -> int:
@@ -323,26 +357,34 @@ def install(a, family: str, gpu: dict, ram: float, models_dir: Path) -> int:
         S.confirm_risk(f"RAM: {ram:.0f} GB - {fam['title']} keeps its experts in about {fam['ram_gb'] - 8} GB of locked RAM",
                        False, a.yes, f"{fam['title']} needs about {fam['ram_gb']} GB of RAM",
                        "close other programs, or choose a smaller model")
-    # ---- the questions
+    # ---- the questions: a first install takes the recommended answers (the measured files, the context the card holds,
+    # images on); `setup --setup` (SETUP.bat) asks them
+    simple = not a.setup
     vs = list(fam["variants"])
-    S.say("  Which files?")
-    for i, v in enumerate(vs, 1):
-        S.say(f"  {i}) {v:11s} {fam['variants'][v]['about']}")
-    S.say(f"  {len(vs) + 1}) your own   GGUF files you already have (architecture {fam['arch']})")
-    pick = int(S.ask("Which files?", [str(i) for i in range(1, len(vs) + 2)], "1", a.yes))
+    if simple:
+        pick = 1
+    else:
+        S.say("  Which files?")
+        for i, v in enumerate(vs, 1):
+            S.say(f"  {i}) {v:11s} {fam['variants'][v]['about']}")
+        S.say(f"  {len(vs) + 1}) your own   GGUF files you already have (architecture {fam['arch']})")
+        pick = int(S.ask("Which files?", [str(i) for i in range(1, len(vs) + 2)], "1", a.yes))
     own = pick == len(vs) + 1
     var = None if own else fam["variants"][vs[pick - 1]]
     if var and var.get("experimental"):
         S.warn("experimental: these files have not been measured with the Strata-Lite engine; if it refuses them, "
                "it says why (an unsupported quantization type)")
     rec_ctx = 262144 if gpu.get("vram_gb", 0) >= 11.5 else 131072
-    ctx = a.context if a.context in CONTEXTS else None
+    ctx = a.context if a.context in CONTEXTS else (rec_ctx if simple else None)
     if ctx is None:
         for i, c in enumerate(CONTEXTS, 1):
             S.say(f"  {i}) {c // 1024}K tokens" + ("  (recommended)" if c == rec_ctx else ""))
         ctx = CONTEXTS[int(S.ask("Context?", [str(i) for i in range(1, len(CONTEXTS) + 1)], str(CONTEXTS.index(rec_ctx) + 1), a.yes)) - 1]
-    vision = a.vision not in ("no", "none") if a.vision else S.ask("Do you want images? (the image encoder is loaded only when an image comes)",
-                                                                     ["y", "n"], "y", a.yes) == "y"
+    vision = a.vision not in ("no", "none") if a.vision else (True if simple else S.ask(
+        "Do you want images? (the image encoder is loaded only when an image comes)", ["y", "n"], "y", a.yes) == "y")
+    if simple:
+        S.ok(f"files: {vs[0]} ({fam['variants'][vs[0]]['about'].split(' - ')[0]}); context {ctx // 1024}K; images on "
+             "(other choices: SETUP.bat / ./setup.sh --setup)")
     port = a.port or 8080
     # ---- files
     if own:
@@ -353,13 +395,7 @@ def install(a, family: str, gpu: dict, ram: float, models_dir: Path) -> int:
         mm = input("  The image projector (mmproj) GGUF (Enter: none): ").strip().strip('"') if vision else ""
         files = {"model": mpath, "mtp": Path(mtp) if mtp else None, "mmproj": Path(mm) if mm else None}
     else:
-        token = hf_token()
-        if not token and not a.yes:
-            try:
-                token = input("  A Hugging Face token (optional; Enter to skip - none of these files needs one): ").strip() or None
-            except EOFError:
-                token = None
-        use_token(token)
+        use_token(hf_token())   # none of these files needs one; asked only if Hugging Face refuses a download
         mdir = models_dir / fam["name"]
         files = {"model": mdir / var["model"], "mtp": None, "mmproj": None}
         download(hf_url(var["repo"], var["model"]), files["model"], var["model"], SHA256.get(var["model"]))

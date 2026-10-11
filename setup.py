@@ -5193,16 +5193,20 @@ def main() -> int:
     elif a.family:
         family = a.family
     else:
+        # Strata-Lite's models first (this fork's own; one recommended for this PC's RAM and card), then Strata's
+        lite = list(setup_lite.FAMILIES)
+        rec_lite = setup_lite.recommend(gpu, ram, hip)
+        for line in setup_lite.menu_lines(1, rec_lite):
+            say(line)
         rec_fam = STRIX_HALO_FAMILY if strix_halo_recommends(gpu, ram) and STRIX_HALO_FAMILY in fams else fams[0]
-        for i, f in enumerate(fams, 1):
+        for i, f in enumerate(fams, len(lite) + 1):
             d = FAMILIES[f]
             say(f"  {i}) {d['title']:20s} {d['by']} - {d['about']}" + ("   [experimental]" if d.get("experimental") else "")
                 + (f"   (recommended for Strix Halo: {STRIX_HALO_MODEL})" if f == rec_fam and rec_fam != fams[0] else ""))
-        for line in setup_lite.menu_lines(len(fams) + 1):   # Strata-Lite's models, after Strata's own
-            say(line)
-        every = fams + list(setup_lite.FAMILIES)
+        every = lite + fams
+        rec = rec_lite or rec_fam
         family = every[int(ask("Which model?", [str(i) for i in range(1, len(every) + 1)],
-                               str(fams.index(rec_fam) + 1), a.yes)) - 1]
+                               str(every.index(rec) + 1), a.yes)) - 1]
     if family in setup_lite.FAMILIES:
         if hip:
             fail("Strata-Lite's models run on NVIDIA cards only", "choose Qwen3.8-Flash-Next for this AMD card")
