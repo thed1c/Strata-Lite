@@ -1,5 +1,6 @@
 #include "../lite/platform.hpp"
 #include "../lite/chat_page.hpp"
+#include "../lite/utf8.hpp"
 #include <filesystem>
 #include <thread>
 extern "C" int stbi_info_from_memory(const unsigned char * buffer, int len, int * x, int * y, int * comp);   // in libmtmd (stb_image)
@@ -489,6 +490,7 @@ int run(int argc, char ** argv) {
         if (!err.empty()) { http_code = 500; return format_error_response("generation: " + err, ERROR_TYPE_SERVER); }
         stats.update_gen_last();
 
+        text = lite::utf8_clean(text);   // valid UTF-8 for the chat parser below (src/lite/utf8.hpp: it was a 500)
         server_task_result_cmpl_final res;
         res.content = text; res.tokens = out; res.stream = tp.stream; res.include_usage = tp.include_usage; res.stats = stats;
         res.truncated = false; res.n_decoded = (int32_t) out.size(); res.n_prompt_tokens = n_prompt;

@@ -243,7 +243,7 @@ The defaults (Qwen's differences are in `lite/docs/RUN.md`) (every one can be ov
 | what | default |
 |---|---|
 | API | OpenAI `/v1/chat/completions` and llama-server's `/completion`, `/health`, `/props`, `/slots`, `/v1/models`; alias `strata-lite`, `127.0.0.1:8080`, one request at a time, prompt cache on |
-| context, KV | 262,144 tokens, q4_0 K and V |
+| context, KV | 262,144 tokens; q8_0 K and V (Qwen: q4_0, where q8 measured no better); the card holds only the context the conversation has reached (`--kv-initial`) |
 | experts | all in RAM (`--n-cpu-moe 30`), with a GPU cache in front sized from free VRAM (`--cache-slots auto`). It shrinks instead of failing when VRAM gets tight and grows back when VRAM frees. |
 | starting profile | none needed: the cache fills from the first prompt's routing (`--profile` to start from a ranked list) |
 | prompt reads | in the largest chunk that fits, from 32k / 16k / 8k / 4k (`--prefill-ubatch auto`) |

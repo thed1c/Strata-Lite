@@ -1,5 +1,6 @@
 #include "../lite/platform.hpp"
 #include "../lite/chat_page.hpp"
+#include "../lite/utf8.hpp"
 #include <filesystem>
 #include <thread>
 extern "C" int stbi_info_from_memory(const unsigned char * buffer, int len, int * x, int * y, int * comp);   // in libmtmd (stb_image)
@@ -105,7 +106,9 @@ int run(int argc, char ** argv) {
     A.eo.n_ctx = 262144; A.eo.n_cpu_moe = 30; A.eo.pool = true; A.eo.pool_threads = 0; A.eo.cache_slots = -1;
     A.eo.adapt = true; A.eo.async_swaps = true; A.eo.overlap = true; A.eo.prefill_ubatch = -1; A.eo.lend = true;
     A.eo.kv_initial = 32768;   // the KV pager: 32k global-layer cells on the card at load, grown as needed (0 = all at load)
-    A.eo.type_k = GGML_TYPE_Q4_0; A.eo.type_v = GGML_TYPE_Q4_0;
+    // q8_0 K/V (the maintainer, 2026-10-11): at 64k q4_0 costs Gemma 4 top-1 80.5 % vs a noise floor of 87.1 %, q8_0 is back at
+    // 87.1 % (Qwen3.6 keeps q4_0: its q4 cost is inside the floor); the KV pager keeps the extra VRAM to what the chat uses
+    A.eo.type_k = GGML_TYPE_Q8_0; A.eo.type_v = GGML_TYPE_Q8_0;
     for (int i = 1; i < argc; ++i) {
         std::string a = argv[i];
         auto nx = [&]() { if (i + 1 >= argc) { usage(); exit(2); } return std::string(argv[++i]); };
@@ -464,6 +467,7 @@ int run(int argc, char ** argv) {
         if (!err.empty()) { http_code = 500; return format_error_response("generation: " + err, ERROR_TYPE_SERVER); }
         stats.update_gen_last();
 
+        text = lite::utf8_clean(text);   // valid UTF-8 for the chat parser below (src/lite/utf8.hpp: it was a 500)
         server_task_result_cmpl_final res;
         res.content = text; res.tokens = out; res.stream = tp.stream; res.include_usage = tp.include_usage; res.stats = stats;
         res.truncated = false; res.n_decoded = (int32_t) out.size(); res.n_prompt_tokens = n_prompt;

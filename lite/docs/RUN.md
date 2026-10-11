@@ -10,7 +10,7 @@ Qwen3.6-35B-A3B is the same command with its files; the server reads the GGUF's 
 ```bash
 strata-lite-server -m Qwen3.6-35B-A3B-...-Q4_K_P.gguf --mtp mtp-qwen3.6-35b-a3b.gguf --mmproj mmproj-...-f16.gguf
 ```
-Where Qwen's defaults differ: `--n-cpu-moe 40`, `--adapt-half-life 64`, the drafter uses the model's own embedding and output head
+Where Qwen's defaults differ: `-ctk q4_0 -ctv q4_0`, `--n-cpu-moe 40`, `--adapt-half-life 64`, the drafter uses the model's own embedding and output head
 (`--mtp-own-head` to load the drafter file's), and the prompt cache keeps checkpoints of the recurrent state (below).
 
 ## Flags
@@ -28,6 +28,7 @@ Where Qwen's defaults differ: `--n-cpu-moe 40`, `--adapt-half-life 64`, the draf
 | `--profile` | none | a ranked expert list per layer to start from |
 | `--prefill-ubatch` | `auto` | prompt chunk: the largest of 32k / 16k / 8k / 4k the card funds; `--no-lend` stops the read borrowing the cache's VRAM |
 | `--kv-initial`, `--kv-step` | 32768, 16384 | the KV pager: the full-attention KV (Qwen's 10 attention layers, Gemma's 5 global layers; Gemma's window layers keep their own small cache) starts with this many cells on the card and grows in steps as the conversation needs them (the expert cache gives way, and takes the room back when a new conversation starts); `--kv-initial 0` reserves the whole context at load. Same output bit for bit |
+| `-ctk`, `-ctv` | `q8_0` (Gemma), `q4_0` (Qwen) | the KV cache types (`f16`, `q8_0`, `q4_0`). At 64k, against f16 KV and a noise floor of top-1 87.1 % (Gemma) / 94.1 % (Qwen): Gemma q8_0 87.1 %, q4_0 80.5 %; Qwen q8_0 93.4 %, q4_0 92.2 % (both inside its floor) |
 | `--adapt-half-life` | 32 (Qwen: 64) | tokens over which usage counts halve |
 | `--adapt-budget` | 2 | swaps per layer per step |
 | `--no-adapt`, `--no-adapt-refill`, `--no-async-swaps`, `--no-overlap` | | the ablation switches (fixed cache; no refill after a read; swaps in the step; no CPU/GPU overlap) |
