@@ -1,5 +1,5 @@
 
-### RTX 3060 (12 GB, 360 GB/s; machine B, x16 Gen3)
+### RTX 3060 (12 GB, 360 GB/s; PCIe 3.0 x16)
 
 | | 32k Strata-Lite | 32k llama.cpp | 131k Strata-Lite | 131k llama.cpp | 262k Strata-Lite | 262k llama.cpp |
 |---|---|---|---|---|---|---|
@@ -19,7 +19,7 @@
 | top-1 / KL vs all-GPU, 157k prompt | — | — | — | — | 95.6 % / 1.8e-02 | 94.6 % / 1.9e-02 |
 | twin rows (differ) | 9,928 (0) | n/a | 9,936 (0) | n/a | 15,304 (0) | n/a |
 
-### RTX 5070 (12 GB, 672 GB/s; machine A, x16)
+### RTX 5070 (12 GB, 672 GB/s; PCIe x16)
 
 | | 32k Strata-Lite | 32k llama.cpp | 131k Strata-Lite | 131k llama.cpp | 262k Strata-Lite | 262k llama.cpp |
 |---|---|---|---|---|---|---|
