@@ -4788,7 +4788,9 @@ def sycl_setup(argv) -> int:
 
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument("--family", choices=list(FAMILIES), help="qwen = Qwen3.8-Flash-Next, swift = Swift 1.5")
+    import setup_lite                                  # Strata-Lite: Qwen3.6-35B-A3B and Gemma 4 26B-A4B
+    ap.add_argument("--family", choices=list(FAMILIES) + list(setup_lite.FAMILIES),
+                    help="qwen = Qwen3.8-Flash-Next, swift = Swift 1.5; Strata-Lite: qwen36 = Qwen3.6-35B-A3B, gemma4 = Gemma 4 26B-A4B")
     ap.add_argument("--model", choices=list(MODELS))
     ap.add_argument("--context", type=int)
     ap.add_argument("--rope-scaling", choices=["none", "linear", "yarn"],
@@ -4921,6 +4923,7 @@ def main() -> int:
 
     # ---- 0. already installed: just start it
     have = installed_configs()
+    lite_have = setup_lite.configs()                   # Strata-Lite installs (lite-*.json), started by setup_lite
     if a.update:                                       # #475: UPDATE.bat / update.sh - never starts the model
         return update_install(have, a)
     explicit = a.setup or a.model or a.family or a.check or a.no_start
@@ -4971,18 +4974,34 @@ def main() -> int:
         return 0 if a.no_start else start(pick_cfg, a.port, run_gpu, yes=a.yes, layer_split=a.layer_split,
                      keep={"host": a.host, "api_key": a.api_key, "draft_vocab": a.draft_vocab,
                            "vram_reserve_mib": a.vram_reserve_mib, "open_browser": a.browser})
+    if lite_have and not (a.setup or a.model or a.family or a.check or a.no_start):
+        if not have and len(lite_have) == 1:
+            return setup_lite.start(lite_have[0], a.port, a.browser is not False)
+        if not have:
+            say()
+            for i, c in enumerate(lite_have, 1):
+                say(f"  {i}) {json.loads(c.read_text(encoding='utf-8')).get('model_name', c.stem)}")
+            say(f"  {len(lite_have) + 1}) install another model / change settings")
+            pick = int(ask("Which one?", [str(i) for i in range(1, len(lite_have) + 2)], "1", a.yes))
+            if pick <= len(lite_have):
+                return setup_lite.start(lite_have[pick - 1], a.port, a.browser is not False)
     if have and not (a.setup or a.model or a.family or a.check or a.no_start):
         if not a.build:
             update_installed_engine(a.prebuilt)
-        if len(have) == 1:
+        if len(have) == 1 and not lite_have:
             return start(have[0], a.port, run_gpu, yes=a.yes, layer_split=a.layer_split,
                      keep={"host": a.host, "api_key": a.api_key, "draft_vocab": a.draft_vocab,
                            "vram_reserve_mib": a.vram_reserve_mib, "open_browser": a.browser})
         say()
         for i, c in enumerate(have, 1):
             say(f"  {i}) {json.loads(c.read_text(encoding='utf-8-sig')).get('model_name', c.stem)}")
-        say(f"  {len(have) + 1}) install another model / change settings")
-        pick = int(ask("Which one?", [str(i) for i in range(1, len(have) + 2)], "1", a.yes))
+        for i, c in enumerate(lite_have, len(have) + 1):
+            say(f"  {i}) {json.loads(c.read_text(encoding='utf-8')).get('model_name', c.stem)}")
+        n_have = len(have) + len(lite_have)
+        say(f"  {n_have + 1}) install another model / change settings")
+        pick = int(ask("Which one?", [str(i) for i in range(1, n_have + 2)], "1", a.yes))
+        if len(have) < pick <= n_have:
+            return setup_lite.start(lite_have[pick - len(have) - 1], a.port, a.browser is not False)
         if pick <= len(have):
             return start(have[pick - 1], a.port, run_gpu, yes=a.yes, layer_split=a.layer_split,
                      keep={"host": a.host, "api_key": a.api_key, "draft_vocab": a.draft_vocab,
@@ -5169,7 +5188,9 @@ def main() -> int:
     # ---- 2. the questions
     step(2, "your choices")
     fams = list(FAMILIES)
-    if a.family:
+    if a.family in setup_lite.FAMILIES:
+        family = a.family
+    elif a.family:
         family = a.family
     else:
         rec_fam = STRIX_HALO_FAMILY if strix_halo_recommends(gpu, ram) and STRIX_HALO_FAMILY in fams else fams[0]
@@ -5177,8 +5198,15 @@ def main() -> int:
             d = FAMILIES[f]
             say(f"  {i}) {d['title']:20s} {d['by']} - {d['about']}" + ("   [experimental]" if d.get("experimental") else "")
                 + (f"   (recommended for Strix Halo: {STRIX_HALO_MODEL})" if f == rec_fam and rec_fam != fams[0] else ""))
-        family = fams[int(ask("Which model?", [str(i) for i in range(1, len(fams) + 1)],
-                              str(fams.index(rec_fam) + 1), a.yes)) - 1]
+        for line in setup_lite.menu_lines(len(fams) + 1):   # Strata-Lite's models, after Strata's own
+            say(line)
+        every = fams + list(setup_lite.FAMILIES)
+        family = every[int(ask("Which model?", [str(i) for i in range(1, len(every) + 1)],
+                               str(fams.index(rec_fam) + 1), a.yes)) - 1]
+    if family in setup_lite.FAMILIES:
+        if hip:
+            fail("Strata-Lite's models run on NVIDIA cards only", "choose Qwen3.8-Flash-Next for this AMD card")
+        return setup_lite.install(a, family, gpu, ram, Path(a.models_dir))
     fam = FAMILIES[family]
     ok(f"model: {fam['title']}")
     if fam.get("license"):

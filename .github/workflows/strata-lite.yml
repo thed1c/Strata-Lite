@@ -1,0 +1,107 @@
+# Strata-Lite's ready-made engine: strata-lite-server for Windows and Linux (x64, NVIDIA RTX 30 / 40 / 50), built from
+# lite/CMakeLists.txt with CUDA 13.0 (the runtime setup.py installs from pip). Every push that touches the engine builds
+# it (a compile check); a tag lite-vX.Y.Z also publishes the zips and their SHA-256 as a release, which setup_lite.py
+# downloads. No GPU is needed to build.
+name: Strata-Lite engine
+
+on:
+  push:
+    tags: ['lite-v*']
+    branches: [main]
+    paths:
+      - 'src/gemma4/**'
+      - 'src/qwen35/**'
+      - 'src/lite/**'
+      - 'src/kernels/cpu/**'
+      - 'include/strata/kernels/cpu/**'
+      - 'lite/CMakeLists.txt'
+      - 'lite/llama-hooks/**'
+      - '.github/workflows/strata-lite.yml'
+      - '.github/scripts/fetch_cuda.py'
+  pull_request:
+    paths:
+      - 'src/gemma4/**'
+      - 'src/qwen35/**'
+      - 'src/lite/**'
+      - 'src/kernels/cpu/**'
+      - 'include/strata/kernels/cpu/**'
+      - 'lite/CMakeLists.txt'
+      - 'lite/llama-hooks/**'
+      - '.github/workflows/strata-lite.yml'
+      - '.github/scripts/fetch_cuda.py'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+env:
+  CUDA_VERSION: '13.0.2'
+  CUDA_ARCHS: '86-real;89-real;120a-real'
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: windows-2022
+            asset: strata-lite-windows-x64.zip
+            exe: strata-lite-server.exe
+            jobs: 2
+          - os: ubuntu-22.04
+            asset: strata-lite-linux-x64.zip
+            exe: strata-lite-server
+            jobs: 3
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 360
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: CUDA toolkit (NVIDIA's redistributables)
+        run: python .github/scripts/fetch_cuda.py ${{ env.CUDA_VERSION }} ${{ runner.temp }}/cuda
+      - name: MSVC
+        if: runner.os == 'Windows'
+        uses: ilammy/msvc-dev-cmd@v1
+      - name: cmake and ninja
+        run: python -m pip install "cmake>=3.24,<4" ninja
+      - name: Configure
+        shell: bash
+        run: |
+          cmake -S lite -B build -G Ninja -DCMAKE_BUILD_TYPE=Release -DSTRATA_LITE_PORTABLE=ON \
+            "-DCMAKE_CUDA_ARCHITECTURES=${CUDA_ARCHS}" "-DCUDAToolkit_ROOT=${CUDA_PATH}" \
+            "-DCMAKE_CUDA_COMPILER=${CUDA_PATH}/bin/nvcc$([ "$RUNNER_OS" = Windows ] && echo .exe)"
+      - name: Build
+        run: cmake --build build --target strata-lite-server -j ${{ matrix.jobs }}
+      - name: Package
+        shell: bash
+        run: |
+          mkdir pkg
+          cp build/bin/${{ matrix.exe }} pkg/
+          cp LICENSE pkg/
+          ver="${GITHUB_REF_NAME#lite-v}"; case "$GITHUB_REF" in refs/tags/lite-v*) ;; *) ver="0.2.0" ;; esac
+          printf '{"version": "%s", "archs": [86, 89, 120], "cuda": "%s", "commit": "%s", "source": "release"}\n' \
+            "$ver" "$CUDA_VERSION" "$GITHUB_SHA" > pkg/BUILD.json
+          cd pkg && python -c "import shutil; shutil.make_archive('../${{ matrix.asset }}'.replace('.zip',''), 'zip', '.')"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.asset }}
+          path: ${{ matrix.asset }}
+
+  release:
+    needs: build
+    if: startsWith(github.ref, 'refs/tags/lite-v')
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          merge-multiple: true
+      - name: SHA-256
+        run: sha256sum strata-lite-*.zip > SHA256SUMS.txt && cat SHA256SUMS.txt
+      - uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            strata-lite-windows-x64.zip
+            strata-lite-linux-x64.zip
+            SHA256SUMS.txt
