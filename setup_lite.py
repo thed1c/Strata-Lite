@@ -42,6 +42,7 @@ LITE_ASSET = "strata-lite-windows-x64.zip" if WIN else "strata-lite-linux-x64.zi
 LITE_DIR = ROOT / "engine-lite"
 LITE_EXE = "strata-lite-server.exe" if WIN else "strata-lite-server"
 LITE_MIN_ENGINE = (0, 2, 0)
+RAM_FLOOR_GIB = 15          # below this neither model is worth starting (low-RAM mode pages most of the model from disk)
 LITE_ARCHS = ("86", "87", "89", "120")       # what the engine is built for: RTX 30, RTX 40, RTX 50
 CONTEXTS = [32768, 131072, 262144]
 CONNECTIONS = 8
@@ -61,8 +62,10 @@ SHA256 = {
 FAMILIES = {
     "qwen36": {
         "title": "Qwen3.6-35B-A3B", "by": "Qwen, on the Strata-Lite engine",
-        "about": "35B MoE (3B active), thinks, reads images: a 12 GB card and 48 GB of RAM",
-        "arch": "qwen35moe", "ram_gb": 40, "name": "qwen3.6-35b",
+        "about": "35B MoE (3B active), thinks, reads images: a 12 GB card and 32 GB of RAM (16 GB runs, slower)",
+        "arch": "qwen35moe", "name": "qwen3.6-35b",
+        # GiB as the PC reports it (a "32 GB" PC: ~31): enough to lock the experts (20 GiB) beside the OS and a browser
+        "locked_gib": 30,
         "variants": {
             "uncensored": {"about": "HauhauCS Uncensored Aggressive, Q4_K_P (23 GB) - every number in lite/ was measured with it",
                            "repo": "HauhauCS/Qwen3.6-35B-A3B-Uncensored-HauhauCS-Aggressive",
@@ -77,8 +80,9 @@ FAMILIES = {
         }},
     "gemma4": {
         "title": "Gemma 4 26B-A4B", "by": "Google, on the Strata-Lite engine",
-        "about": "26B MoE (4B active), thinks, reads images: a 12 GB card and 32 GB of RAM",
-        "arch": "gemma4", "ram_gb": 28, "name": "gemma-4-26b",
+        "about": "26B MoE (4B active), thinks, reads images: a 12 GB card and 24 GB of RAM (16 GB runs, slower)",
+        "arch": "gemma4", "name": "gemma-4-26b",
+        "locked_gib": 22,       # the experts: 14 GiB
         "variants": {
             "uncensored": {"about": "HauhauCS QAT Uncensored Balanced, Q4_K_M (17 GB) - every number in lite/ was measured with it",
                            "repo": "HauhauCS/Gemma4-26B-A4B-QAT-Uncensored-HauhauCS-Balanced-MTP",
@@ -339,7 +343,7 @@ def recommend(gpu: dict | None, ram: float, hip: bool) -> str | None:
     """The Strata-Lite model for this PC: Qwen3.6 with 48 GB of RAM or more, else Gemma 4; none on a card it cannot run."""
     if hip or not gpu or str(gpu.get("arch")) not in LITE_ARCHS:
         return None
-    return "qwen36" if ram >= 46 else "gemma4"
+    return "qwen36" if ram >= FAMILIES["qwen36"]["locked_gib"] else "gemma4"
 
 
 def menu_lines(start: int, rec: str | None = None) -> list[str]:
@@ -356,10 +360,16 @@ def install(a, family: str, gpu: dict, ram: float, models_dir: Path) -> int:
                "choose a Strata model (Qwen3.8-Flash-Next), which runs on more cards")
     if gpu.get("vram_gb", 0) < 11:
         S.warn(f"{gpu['name']} has {gpu['vram_gb']:.0f} GB: Strata-Lite is measured on 12 GB cards; fewer experts fit on yours")
-    if ram < fam["ram_gb"]:
-        S.confirm_risk(f"RAM: {ram:.0f} GB - {fam['title']} keeps its experts in about {fam['ram_gb'] - 8} GB of locked RAM",
-                       False, a.yes, f"{fam['title']} needs about {fam['ram_gb']} GB of RAM",
-                       "close other programs, or choose a smaller model")
+    if ram < RAM_FLOOR_GIB:
+        S.confirm_risk(f"RAM: {ram:.0f} GB - {fam['title']} needs at least 16 GB; with less, most of the model is read from the disk "
+                       "for every answer", False, a.yes, f"{fam['title']} needs at least 16 GB of RAM", "choose a PC with more RAM")
+    # low-RAM mode (Strata's file tier, simply): the experts stay in the model file and are read in as needed instead of
+    # being locked in RAM; the engine also falls back to it by itself if the OS will not lock them
+    low_ram = ram < fam["locked_gib"]
+    if low_ram:
+        S.warn(f"RAM: {ram:.0f} GB - not enough to keep {fam['title']}'s experts locked in RAM (that needs about "
+               f"{fam['locked_gib'] + 2} GB). It runs in low-RAM mode: the experts are read from the model file as needed, so "
+               "it writes about half as fast and long prompts take longer. Use an SSD for the model files.")
     # ---- the questions: a first install takes the recommended answers (the measured files, the context the card holds,
     # images on); `setup --setup` (SETUP.bat) asks them
     simple = not a.setup
@@ -427,6 +437,8 @@ def install(a, family: str, gpu: dict, ram: float, models_dir: Path) -> int:
         args += ["--mtp", str(files["mtp"])]
     if files["mmproj"]:
         args += ["--mmproj", str(files["mmproj"])]
+    if low_ram:
+        args += ["--no-async-swaps"]
     cfg = {"engine": "strata-lite", "model_name": f"{fam['title']} (Strata-Lite, {'own files' if own else vs[pick - 1]})",
            "family": family, "exe": str(exe), "args": args, "port": port, "context": ctx}
     cfg_path = ROOT / f"lite-{fam['name']}.json"

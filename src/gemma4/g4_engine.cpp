@@ -469,10 +469,19 @@ std::string Engine::load(const Options & o) {
     ggml_backend_buffer_set_usage(buf_map_, GGML_BACKEND_BUFFER_USAGE_WEIGHTS);
     // with async swaps the RAM-resident experts live in a page-locked arena (Strata's expert arena): the copy stream
     // needs pinned sources, and a read-only file mapping cannot be registered. Same bytes, so the arithmetic is unchanged.
-    auto in_arena = [&](ggml_tensor * t) { return o.async_swaps && strstr(ggml_get_name(t), "_exps.") != nullptr; };
-    if (o.async_swaps) {
+    // Low-RAM mode: when the OS will not lock that much (too little free RAM), the experts stay in the file mapping and the
+    // OS reads them in as needed; swaps are then copied in the step (slower, but it runs). --no-async-swaps chooses it up front.
+    auto in_arena = [&](ggml_tensor * t) { return o_.async_swaps && strstr(ggml_get_name(t), "_exps.") != nullptr; };
+    if (o_.async_swaps) {
         for (auto & [t, off] : on_cpu) if (in_arena(t)) arena_size_ += GGML_PAD(ggml_nbytes(t), 4096);
-        if (cudaHostAlloc(&arena_, arena_size_, cudaHostAllocPortable) != cudaSuccess) { cudaGetLastError(); return "cannot allocate the pinned expert arena"; }
+        if (cudaHostAlloc(&arena_, arena_size_, cudaHostAllocPortable) != cudaSuccess) {
+            cudaGetLastError();
+            fprintf(stderr, "strata-lite: not enough free RAM to lock the experts (%.1f GB): low-RAM mode - they stay in the model file and "
+                            "are read in as needed (slower)\n", arena_size_ / 1e9);
+            arena_ = nullptr; arena_size_ = 0; o_.async_swaps = false;
+        }
+    }
+    if (o_.async_swaps) {
         buf_arena_ = ggml_backend_cpu_buffer_from_ptr(arena_, arena_size_);
         ggml_backend_buffer_set_usage(buf_arena_, GGML_BACKEND_BUFFER_USAGE_WEIGHTS);
         pinned_ = true;
@@ -588,7 +597,7 @@ std::string Engine::load(const Options & o) {
         driver_ = std::make_unique<Driver>();
         for (auto & C : cache_) if (C && C->miss) C->miss->driver = driver_.get();
     }
-    if (o.async_swaps) {   // the copy stream: expert bytes from the page-locked mapping, beside the compute stream
+    if (o_.async_swaps) {   // the copy stream: expert bytes from the page-locked mapping, beside the compute stream
         if (!o.adapt) return "--async-swaps needs --adapt";
         cudaStream_t cs;
         if (cudaStreamCreateWithFlags(&cs, cudaStreamNonBlocking) != cudaSuccess) return "cannot create the copy stream";
