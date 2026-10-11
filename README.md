@@ -12,7 +12,7 @@ and two models.
 |---|---|
 | Models | Gemma 4 26B-A4B (HauhauCS QAT Uncensored Balanced, Q4_K_M, with its MTP drafter and projector); Qwen3.6-35B-A3B (HauhauCS Uncensored Aggressive, Q4_K_P, with its projector and the MTP head from unsloth's release, `lite/docs/QWEN36.md`) |
 | Cards | 12 GB: RTX 3060 (sm_86), RTX 5070 (sm_120); built for sm_89 too. 8 GB is on the roadmap |
-| Needs | Linux, NVIDIA driver 580+, CUDA 12.8/13, 32 GB RAM for Gemma, 48 GB for Qwen (64 for 262k + images), a patched llama.cpp build (`lite/docs/BUILD.md`) |
+| Needs | Windows or Linux, an NVIDIA RTX 30 / 40 / 50 card, driver 580+, 32 GB of RAM for Gemma or 48 GB for Qwen (64 for 262k + images), a CPU with AVX2. The setup installs everything else (Install, below); to compile it yourself: `lite/docs/BUILD.md` |
 | Run | `strata-lite-server -m model.gguf --mtp mtp.gguf --mmproj mmproj.gguf`; it picks the engine from the GGUF (`lite/docs/RUN.md`) |
 | API | llama-server's and OpenAI chat; 63/63 parity checks for each model (`lite/docs/API.md`) |
 | Images | The vision projector takes GPU memory only while it is in use: small images encode on the CPU, big ones move it to the card and it leaves after 15 s idle; prompts over 64K keep images on the CPU; a second GPU takes it automatically; under 32 GB of RAM it loads only when an image arrives (`--mmproj-place`, see "The image projector, on demand") |
