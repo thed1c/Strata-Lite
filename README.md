@@ -61,7 +61,7 @@ and reads an image in 11 s; Qwen about 4 tokens a second (Gemma with enough RAM,
 | top-1 agreement with all-GPU, 5 prompts | 96.1–96.4 % vs 95.9–96.6 % | 96.7–96.8 % vs 96.3–97.2 % |
 
 **The costs:**
-- **The first reply after a long read writes 13–27 % slower than the second.** The read lent the cache's VRAM and the cache refills while it writes; llama.cpp has no such dip.
+- **The first reply after a long read writes 13–27 % slower than the second,** while the cache settles after the read; llama.cpp has no such dip.
 - **Mean KL against all-GPU is slightly higher than llama.cpp's** (1.5–2.0e-2 vs 1.3–1.7e-2). The twin check shows every cached row computes exactly; the difference is which experts run on the GPU and which on the CPU.
 - **Both engines fit the image projector beside the model at every context**, when it is forced onto the card for this test (`--mmproj-place gpu`). Strata-Lite gives up 16–18 expert slots for it; llama.cpp moves 3–4 more blocks of experts to RAM. Strata-Lite's default doesn't do that: the projector waits in RAM and visits the card only for an image, so text keeps every slot ("The image projector, on demand").
 
@@ -116,10 +116,10 @@ Both use q4_0 KV at every context.
 
 **How each cell was measured** (`lite/tests/grid.sh`, `lite/tests/grid_bench.py`, `lite/tests/grid_summary.py`):
 - **Prompt speed:** three real long-form prompts of 5.4k, 15.4k and 157k tokens, sent as token ids to `/completion`; the 157k one only at 262k.
-- **Decode:** 256 greedy tokens per prompt. "Decode" is the second turn on the same prompt, where the prompt cache holds it and the cache has settled. "Right after a read" is the first turn, where Strata-Lite's arena is refilling.
+- **Decode:** 256 greedy tokens per prompt. "Decode" is the second turn on the same prompt, where the prompt cache holds it and the cache has settled. "Right after a read" is the first turn, where Strata-Lite's cache is still settling.
 - **MTP accepted:** drafts accepted over drafts proposed.
 - **VRAM:** sampled every 0.25 s on the card.
-- **Strata-Lite configuration:** slots per layer chosen at load from free VRAM. It reads in the largest chunk the card funds, lending the slot arena's VRAM to the read. The grid found 16k up to 131k of context and 8k at 262k with the 157k prompt; the server's automatic chunk choice (`--prefill-ubatch auto`, the default) picks the same.
+- **Strata-Lite configuration:** slots per layer chosen at load from free VRAM. It reads in the largest chunk the card funds. The grid found 16k up to 131k of context and 8k at 262k with the 157k prompt; the server's automatic chunk choice (`--prefill-ubatch auto`, the default) picks the same.
 - **llama.cpp configuration:** `-b 2048 -ub 512`, `--spec-type draft-mtp`.
 - **Image projector:** the same configuration plus the BF16 mmproj kept on the same card (`--mmproj-place gpu`; not the default, which keeps it in RAM until an image needs it). Does it load and answer one and eight 1024 px images? Strata-Lite gives up slots to fit it; llama.cpp moves more blocks to RAM.
 - **Quality:** teacher-forced through the greedy tokens of llama.cpp with every expert on the GPU (q4 KV, two cards). Top-1 agreement and mean KL(ref ‖ engine) over 200 steps of five prompts (0.6k–6.8k tokens), and 500 steps of the 157k prompt at 262k.
@@ -204,7 +204,7 @@ The engine's own stage-by-stage checks against llama.cpp (bit for bit where the 
 
 Twelve real runs (790k prompt tokens, 6.5k decoded) were replayed with every token's 8 experts per layer logged. The table gives simulated decode hit rates, with the cache warmed by the prompt.
 
-| cache size | adaptive (decayed counts, half-life 32) | LRU | best fixed set (hindsight) | fixed profile from other prompts |
+| cache size | adaptive | LRU | best fixed set (hindsight) | fixed profile from other prompts |
 |---|---|---|---|---|
 | 25 % of experts | 72.3 % | 71.2 % | 72.8 % | 50.8 % |
 | 37 % | 84.1 % | 81.8 % | 85.0 % | 64.6 % |
@@ -223,7 +223,7 @@ Each stage was checked against llama.cpp on the same card before the next began 
 | b | full forward, every expert on the CPU | logits vs llama.cpp, 5 prompts + 200 steps | bit-identical, 993/993 steps; greedy tokens identical; graphs equal node for node (2,644 nodes) |
 | c | Strata's CPU expert pool (GeGLU, Gemma's quant formats) | same | bit-identical, 993/993 |
 | d | GPU expert slots in front of the pool | whole layers resident vs `--n-cpu-moe 20`; mixed slots via the twin check | 993/993 bit-identical; 7,904 twin rows, 0 differ |
-| e | adaptation (decayed counts, ≤ 2 swaps/layer/step) | top-1 / KL vs llama.cpp's own placement noise | 98.89 % / 3.2e-3, against llama.cpp all-GPU vs all-CPU at 98.19 % / 3.6e-3 |
+| e | adaptation (≤ 2 swaps/layer/step) | top-1 / KL vs llama.cpp's own placement noise | 98.89 % / 3.2e-3, against llama.cpp all-GPU vs all-CPU at 98.19 % / 3.6e-3 |
 | f | MTP drafter (gemma4-assistant), verify windows, rollback | KL vs all-GPU with and without MTP | KL unchanged (within ±10 % per prompt); greedy output identical to e on 3 of 5 prompts, the other two part where a 4-token verify window rounds differently, as llama.cpp's MTP does; 48–97 % of drafts accepted |
 | g | chunked reads with lent VRAM, copy stream, CPU/GPU overlap | twin check, five prompts | 9,864 rows, 0 differ |
 | q4 KV | llama.cpp's Hadamard KV rotation mirrored | logits vs llama.cpp at q4_0 | bit-identical (195/195, 198/198, 200/200) |
@@ -246,11 +246,11 @@ The defaults (Qwen's differences are in `lite/docs/RUN.md`) (every one can be ov
 | context, KV | 262,144 tokens, q4_0 K and V |
 | experts | all in RAM (`--n-cpu-moe 30`), with a GPU cache in front sized from free VRAM (`--cache-slots auto`). It shrinks instead of failing when VRAM gets tight and grows back when VRAM frees. |
 | starting profile | none needed: the cache fills from the first prompt's routing (`--profile` to start from a ranked list) |
-| prompt reads | in the largest chunk that fits, from 32k / 16k / 8k / 4k (`--prefill-ubatch auto`), lending the cache's VRAM to the read |
+| prompt reads | in the largest chunk that fits, from 32k / 16k / 8k / 4k (`--prefill-ubatch auto`) |
 | threads | the physical cores the process may run on (`-t`, `--pool-threads`) |
 | sampling | llama-server's: temperature 0.8, top-k 40, top-p 0.95, min-p 0.05, no repeat penalty |
 | MTP drafting | with `--mtp`, 3 drafts per step (`--n-draft`) |
-| cache behaviour | adaptive: usage counts halve every 32 tokens (`--adapt-half-life`), at most 2 swaps per layer per step (`--adapt-budget`), refill after a prompt read, swaps copied on a background stream, CPU misses overlapped with the GPU hits. `--no-adapt`, `--no-adapt-refill`, `--no-async-swaps`, `--no-overlap` and `--no-lend` turn each off; `--no-adapt` also stops lending, since a fixed cache would not refill. |
+| cache behaviour | adaptive, at most 2 swaps per layer per step (`--adapt-budget`), swaps copied on a background stream, CPU misses overlapped with the GPU hits. Every switch: `lite/docs/RUN.md`. |
 | image projector | `--mmproj-place`: `second` on a second GPU with room, else `auto` with 32 GB of RAM or more, else `lazy`. Images under 128 px, and every image in a prompt over 65,536 tokens, encode on the CPU. The projector leaves the card after 15 s idle. Up to 384 tokens per image. |
 
 ## The image projector, on demand
@@ -280,7 +280,7 @@ Two invented test turns (`lite/tests/sameness-inputs/`) compared the two setups 
 
 ## Limitations, plainly
 - One request at a time; no batched slots yet.
-- The first reply after a long read is 13–27 % slower while the cache refills (about half a second).
+- The first reply after a long read is 13–27 % slower while the cache settles (about half a second).
 - Mean KL against an all-GPU run is slightly above llama.cpp's static offload (which experts run where), with every cached row
   proven bit-exact; see `lite/docs/CORRECTNESS.md`.
 - On 12 GB a 262k context halves the cache's slots; KV streaming is next on the roadmap.
