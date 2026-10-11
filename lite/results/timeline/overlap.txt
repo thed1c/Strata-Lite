@@ -1,0 +1,33 @@
+p3.overlap.json: 200 tokens, 58 windows, 105.5 tok/s, hits 0.919, accepted 141/174
+  overlap: 1740 layer-steps, 440 with no miss (25%); pool busy 251.6 ms (concurrent with the GPU)
+  drafts (174 drafter graphs)                                 206.1 ms   3.55 ms/window  10.9%
+  verify: graph build + alloc + inputs                        216.8 ms   3.74 ms/window  11.5%
+  verify: compute, host blocked in join (pool slower than GPU hits)    114.6 ms   1.98 ms/window   6.1%
+  verify: compute, the rest (GPU work, transfers, syncs, start ops)   1159.6 ms  19.99 ms/window  61.4%
+  verify: readbacks (logits, hidden rows, routing)             64.7 ms   1.12 ms/window   3.4%
+  adapt: score updates                                         15.4 ms   0.27 ms/window   0.8%
+  adapt: swap copies (issue cost if async)                     68.9 ms   1.19 ms/window   3.6%
+  adapt: refill after the read                                  3.7 ms   0.06 ms/window   0.2%
+  accounted / decode wall                                    1849.8 / 1890.0 ms; 122.0 graph splits per verify ubatch
+p1.overlap.json: 195 tokens, 51 windows, 103.9 tok/s, hits 0.872, accepted 144/153
+  overlap: 1530 layer-steps, 192 with no miss (13%); pool busy 326.4 ms (concurrent with the GPU)
+  drafts (153 drafter graphs)                                 173.7 ms   3.41 ms/window   9.3%
+  verify: graph build + alloc + inputs                        197.0 ms   3.86 ms/window  10.5%
+  verify: compute, host blocked in join (pool slower than GPU hits)    174.5 ms   3.42 ms/window   9.3%
+  verify: compute, the rest (GPU work, transfers, syncs, start ops)   1126.0 ms  22.08 ms/window  60.2%
+  verify: readbacks (logits, hidden rows, routing)             58.9 ms   1.15 ms/window   3.1%
+  adapt: score updates                                         12.8 ms   0.25 ms/window   0.7%
+  adapt: swap copies (issue cost if async)                     66.2 ms   1.30 ms/window   3.5%
+  adapt: refill after the read                                 23.0 ms   0.45 ms/window   1.2%
+  accounted / decode wall                                    1832.1 / 1870.0 ms; 122.0 graph splits per verify ubatch
+p4.overlap.json: 200 tokens, 80 windows, 81.1 tok/s, hits 0.925, accepted 119/240
+  overlap: 2400 layer-steps, 803 with no miss (33%); pool busy 307.4 ms (concurrent with the GPU)
+  drafts (240 drafter graphs)                                 277.2 ms   3.46 ms/window  11.3%
+  verify: graph build + alloc + inputs                        288.6 ms   3.61 ms/window  11.8%
+  verify: compute, host blocked in join (pool slower than GPU hits)    133.1 ms   1.66 ms/window   5.4%
+  verify: compute, the rest (GPU work, transfers, syncs, start ops)   1503.4 ms  18.79 ms/window  61.4%
+  verify: readbacks (logits, hidden rows, routing)             98.2 ms   1.23 ms/window   4.0%
+  adapt: score updates                                         20.5 ms   0.26 ms/window   0.8%
+  adapt: swap copies (issue cost if async)                     84.4 ms   1.06 ms/window   3.4%
+  adapt: refill after the read                                  3.9 ms   0.05 ms/window   0.2%
+  accounted / decode wall                                    2409.3 / 2450.0 ms; 122.0 graph splits per verify ubatch

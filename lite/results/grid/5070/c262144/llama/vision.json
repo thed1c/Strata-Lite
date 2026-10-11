@@ -1,0 +1,71 @@
+{
+ "label": "llama-c262144-N23-vision",
+ "vram_load_mib": 11164,
+ "requests": {
+  "p5k": {
+   "prompt_tokens": 5402,
+   "cold": {
+    "code": 200,
+    "wall_s": 31.0,
+    "prompt_n": 5402,
+    "prompt_ms": 24578.31,
+    "prompt_per_second": 219.79,
+    "predicted_n": 256,
+    "predicted_ms": 6411.29,
+    "predicted_per_second": 39.77,
+    "draft_n": 241,
+    "draft_n_accepted": 174,
+    "cache_n": 0
+   },
+   "warm": {
+    "code": 200,
+    "wall_s": 6.29,
+    "prompt_n": 1,
+    "prompt_ms": 98.35,
+    "prompt_per_second": 10.17,
+    "predicted_n": 256,
+    "predicted_ms": 6176.56,
+    "predicted_per_second": 41.29,
+    "draft_n": 233,
+    "draft_n_accepted": 177,
+    "cache_n": 5401
+   },
+   "vram_peak_mib": 11278
+  },
+  "image-x1": {
+   "cold": {
+    "code": 200,
+    "wall_s": 4.06,
+    "prompt_n": 285,
+    "prompt_ms": 2707.41,
+    "prompt_per_second": 105.27,
+    "predicted_n": 32,
+    "predicted_ms": 1076.81,
+    "predicted_per_second": 28.79,
+    "draft_n": 44,
+    "draft_n_accepted": 16,
+    "cache_n": 0
+   },
+   "vram_peak_mib": 11406
+  },
+  "image-x8": {
+   "cold": {
+    "code": 200,
+    "wall_s": 18.6,
+    "prompt_n": 2160,
+    "prompt_ms": 17581.85,
+    "prompt_per_second": 122.85,
+    "predicted_n": 32,
+    "predicted_ms": 782.49,
+    "predicted_per_second": 39.62,
+    "draft_n": 31,
+    "draft_n_accepted": 20,
+    "cache_n": 1
+   },
+   "vram_peak_mib": 11768
+  }
+ },
+ "props_strata": null,
+ "props_strata_end": null,
+ "vram_peak_mib": 11768
+}

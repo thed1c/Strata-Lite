@@ -1,0 +1,5 @@
+p1 d2 vs ncm14: top1 194 / 195 kl 8.28e-04
+p2 d2 vs ncm14: top1 198 / 198 kl 2.48e-04
+p3 d2 vs ncm14: top1 199 / 200 kl 2.54e-03
+p4 d2 vs ncm14: top1 195 / 200 kl 3.13e-03
+p5 d2 vs ncm14: top1 195 / 200 kl 1.26e-03

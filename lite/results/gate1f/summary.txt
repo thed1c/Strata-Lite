@@ -1,0 +1,11 @@
+p1 | e-force top1 194/195 KL 1.71e-03 | f-force top1 194/195 KL 1.61e-03 | greedy e/f identical (195/195 tokens); accepted 143/153 in 51 windows; tok/s 25.6 -> 33.1; hits 0.893
+p2 | e-force top1 198/198 KL 7.08e-04 | f-force top1 198/198 KL 7.62e-04 | greedy e/f identical (198/198 tokens); accepted 147/152 in 51 windows; tok/s 27.1 -> 34.9; hits 0.912
+p3 | e-force top1 197/200 KL 5.42e-03 | f-force top1 197/200 KL 5.50e-03 | greedy e/f identical (200/200 tokens); accepted 139/180 in 60 windows; tok/s 28.1 -> 34.6; hits 0.934
+p4 | e-force top1 195/200 KL 7.84e-03 | f-force top1 197/200 KL 7.59e-03 | greedy e/f differ at 19 (200/200 tokens); accepted 118/244 in 82 windows; tok/s 27.8 -> 28.4; hits 0.936
+p5 | e-force top1 198/200 KL 3.16e-03 | f-force top1 197/200 KL 2.90e-03 | greedy e/f differ at 78 (200/200 tokens); accepted 133/196 in 66 windows; tok/s 23.5 -> 26.8; hits 0.889
+ALL e-force vs all-GPU: top-1 982/993 = 98.89%, mean KL 3.783e-03
+ALL f-force vs all-GPU: top-1 983/993 = 98.99%, mean KL 3.688e-03
+f - e mean KL: -9.511e-05, 95% CI [-4.239e-04, 2.241e-04]
+MTP: accepted 680/925 = 73.5% of drafts, 3.19 tokens per verify window
+decode tok/s without MTP 26.4, with MTP 31.6 (mean of the five)
+twin check (layer 3, with MTP windows): 9880 rows, 0 differ

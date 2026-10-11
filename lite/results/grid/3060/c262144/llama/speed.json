@@ -1,0 +1,99 @@
+{
+ "label": "llama-c262144-N19",
+ "vram_load_mib": 11672,
+ "requests": {
+  "p5k": {
+   "prompt_tokens": 5402,
+   "cold": {
+    "code": 200,
+    "wall_s": 19.41,
+    "prompt_n": 5402,
+    "prompt_ms": 13978.04,
+    "prompt_per_second": 386.46,
+    "predicted_n": 256,
+    "predicted_ms": 5431.29,
+    "predicted_per_second": 46.95,
+    "draft_n": 232,
+    "draft_n_accepted": 176,
+    "cache_n": 0
+   },
+   "warm": {
+    "code": 200,
+    "wall_s": 5.51,
+    "prompt_n": 1,
+    "prompt_ms": 84.78,
+    "prompt_per_second": 11.8,
+    "predicted_n": 256,
+    "predicted_ms": 5416.0,
+    "predicted_per_second": 47.08,
+    "draft_n": 228,
+    "draft_n_accepted": 178,
+    "cache_n": 5401
+   },
+   "vram_peak_mib": 11702
+  },
+  "p15k": {
+   "prompt_tokens": 15449,
+   "cold": {
+    "code": 200,
+    "wall_s": 45.19,
+    "prompt_n": 15449,
+    "prompt_ms": 38221.99,
+    "prompt_per_second": 404.19,
+    "predicted_n": 256,
+    "predicted_ms": 6804.08,
+    "predicted_per_second": 37.48,
+    "draft_n": 278,
+    "draft_n_accepted": 161,
+    "cache_n": 0
+   },
+   "warm": {
+    "code": 200,
+    "wall_s": 6.87,
+    "prompt_n": 1,
+    "prompt_ms": 81.21,
+    "prompt_per_second": 12.31,
+    "predicted_n": 256,
+    "predicted_ms": 6779.59,
+    "predicted_per_second": 37.61,
+    "draft_n": 281,
+    "draft_n_accepted": 161,
+    "cache_n": 15448
+   },
+   "vram_peak_mib": 11702
+  },
+  "p157k": {
+   "prompt_tokens": 157494,
+   "cold": {
+    "code": 200,
+    "wall_s": 483.83,
+    "prompt_n": 157494,
+    "prompt_ms": 473548.84,
+    "prompt_per_second": 332.58,
+    "predicted_n": 256,
+    "predicted_ms": 10011.11,
+    "predicted_per_second": 25.47,
+    "draft_n": 243,
+    "draft_n_accepted": 173,
+    "cache_n": 0
+   },
+   "warm": {
+    "code": 200,
+    "wall_s": 10.58,
+    "prompt_n": 1,
+    "prompt_ms": 126.53,
+    "prompt_per_second": 7.9,
+    "predicted_n": 256,
+    "predicted_ms": 10369.1,
+    "predicted_per_second": 24.59,
+    "draft_n": 252,
+    "draft_n_accepted": 170,
+    "cache_n": 157493
+   },
+   "vram_peak_mib": 11702
+  }
+ },
+ "props_strata": null,
+ "props_strata_end": null,
+ "vram_peak_mib": 11702
+}

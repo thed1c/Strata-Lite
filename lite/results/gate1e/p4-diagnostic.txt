@@ -1,0 +1,7 @@
+[ 75%] Built target strata_cpu_pool
+[100%] Built target strata-gemma4
+full                 KL 7.92e-03 top1 195/200 hits 0.932 swaps 2851 refill 503 tok/s 24.5
+A-refill-frozen      KL 8.06e-03 top1 196/200 hits 0.784 swaps 503 refill 503 tok/s 28.9
+B-no-refill-swaps    KL 7.95e-03 top1 197/200 hits 0.930 swaps 2753 refill 0 tok/s 24.6
+C-static             KL 3.10e-03 top1 194/200 hits 0.783 swaps 0 refill 0 tok/s 32.1
+pair (90%, 4070) on p4: KL 4.81e-03

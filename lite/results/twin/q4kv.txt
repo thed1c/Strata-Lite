@@ -1,0 +1,5 @@
+p1 rows 1696 gpu 1574 bad 0 KL vs all-GPU 3.68e-03 top1 193/195 commits 2830
+p2 rows 1656 gpu 1571 bad 0 KL vs all-GPU 4.09e-03 top1 197/198 commits 2698
+p3 rows 1984 gpu 1879 bad 0 KL vs all-GPU 9.42e-03 top1 198/200 commits 2583
+p4 rows 2424 gpu 2297 bad 0 KL vs all-GPU 3.22e-02 top1 184/200 commits 2883
+p5 rows 2104 gpu 1915 bad 0 KL vs all-GPU 9.18e-03 top1 194/200 commits 3531

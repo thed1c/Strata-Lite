@@ -1,0 +1,1 @@
+{"tokens":"q35b/p2.oracle.tokens","mode":"greedy","n_cpu_moe":40,"prompt":690,"cont":200,"steps_compared":200,"logits_bit_identical":200,"first_nonidentical_step":-1,"max_abs_diff":0,"argmax_same":200,"greedy_tokens_matching_before_first_diff":200,"first_token_diff":-1,"kl_mean":0,"kl_max":0,"load_s":0.89,"prefill_s":8.32,"decode_s":7.60}

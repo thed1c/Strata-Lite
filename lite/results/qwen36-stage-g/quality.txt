@@ -1,0 +1,10 @@
+p1: reads in 512 top1 164/168 KL 1.74e-03 | one chunk (597 tokens, lent 6.0 GB) top1 167/168 KL 2.08e-03, prefill 2.59 -> 1.78 s
+p2: reads in 512 top1 198/200 KL 2.97e-03 | one chunk (690 tokens, lent 6.0 GB) top1 198/200 KL 1.47e-03, prefill 2.78 -> 1.95 s
+p3: reads in 512 top1 196/200 KL 5.14e-03 | one chunk (4978 tokens, lent 6.0 GB) top1 196/200 KL 7.47e-03, prefill 14.02 -> 3.22 s
+p4: reads in 512 top1 195/200 KL 6.24e-03 | one chunk (6525 tokens, lent 6.0 GB) top1 195/200 KL 6.30e-03, prefill 18.57 -> 3.77 s
+p5: reads in 512 top1 195/200 KL 5.60e-03 | one chunk (6523 tokens, lent 6.0 GB) top1 197/200 KL 7.00e-03, prefill 18.35 -> 3.75 s
+ALL reads 512 vs all-GPU: top-1 948/968, mean KL 4.422e-03
+ALL reads chunked vs all-GPU: top-1 953/968, mean KL 4.955e-03
+chunked - 512 mean KL: 5.331e-04, 95% CI [-1.605e-04, 1.321e-03]
+twin check (layer 3, chunked reads with lending, MTP windows): 10192 rows, 0 differ
+QUALITY-DONE

@@ -1,0 +1,62 @@
+{
+ "agent-tool-turn": {
+  "identical": true,
+  "common_prefix_chars": 0,
+  "chars": [
+   0,
+   0
+  ],
+  "similarity": 1.0,
+  "reasoning_chars": [
+   0,
+   0
+  ],
+  "tool_calls_same": true,
+  "n_tool_calls": [
+   1,
+   1
+  ],
+  "finish": [
+   "tool_calls",
+   "tool_calls"
+  ],
+  "wall_s": [
+   0.91,
+   2.57
+  ],
+  "http": [
+   200,
+   200
+  ]
+ },
+ "studio-shot-notes": {
+  "identical": false,
+  "common_prefix_chars": 41,
+  "chars": [
+   2475,
+   2504
+  ],
+  "similarity": 0.735,
+  "reasoning_chars": [
+   0,
+   0
+  ],
+  "tool_calls_same": true,
+  "n_tool_calls": [
+   0,
+   0
+  ],
+  "finish": [
+   "stop",
+   "stop"
+  ],
+  "wall_s": [
+   15.38,
+   17.94
+  ],
+  "http": [
+   200,
+   200
+  ]
+ }
+}

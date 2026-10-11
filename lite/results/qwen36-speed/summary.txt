@@ -1,0 +1,15 @@
+p1 | force top1 sync 164/168 KL 1.74e-03, async 164/168 KL 1.74e-03 | greedy tok/s 26.6 -> 48.6; accepted 119/147; hits 0.709; swap issue 107 ms (sync 2148); pool 514 ms, join wait 361 ms, miss-free layer-steps 17/1960; draft 260 ms; decode 3.43 s
+p2 | force top1 sync 198/200 KL 2.97e-03, async 198/200 KL 2.97e-03 | greedy tok/s 28.9 -> 51.3; accepted 147/157; hits 0.696; swap issue 118 ms (sync 2323); pool 596 ms, join wait 438 ms, miss-free layer-steps 9/2120; draft 277 ms; decode 3.88 s
+p3 | force top1 sync 196/200 KL 5.14e-03, async 196/200 KL 5.14e-03 | greedy tok/s 27.7 -> 47.3; accepted 132/202; hits 0.799; swap issue 140 ms (sync 2547); pool 526 ms, join wait 342 ms, miss-free layer-steps 138/2720; draft 357 ms; decode 4.20 s
+p4 | force top1 sync 195/200 KL 6.24e-03, async 195/200 KL 6.24e-03 | greedy tok/s 24.6 -> 40.3; accepted 111/261; hits 0.822; swap issue 166 ms (sync 2900); pool 600 ms, join wait 388 ms, miss-free layer-steps 387/3520; draft 463 ms; decode 4.94 s
+p5 | force top1 sync 195/200 KL 5.60e-03, async 195/200 KL 5.60e-03 | greedy tok/s 26.5 -> 46.7; accepted 131/204; hits 0.771; swap issue 142 ms (sync 2696); pool 580 ms, join wait 372 ms, miss-free layer-steps 38/2720; draft 365 ms; decode 4.26 s
+ALL sync vs all-GPU: top-1 948/968 = 97.93%, mean KL 4.422e-03
+ALL async vs all-GPU: top-1 948/968 = 97.93%, mean KL 4.422e-03
+async - sync mean KL: 0.000e+00, 95% CI [0.000e+00, 0.000e+00]
+greedy decode tok/s, mean of five: sync 26.8, async + overlap 46.9
+twin check (layer 3, async + overlap, MTP windows): 10376 rows, 0 differ
+
+slot sweep (5070, 8k context, MTP + shared head + async + overlap, greedy; peak VRAM from nvidia-smi every 2 s):
+S=64  (25 %)   p1 48.9 tok/s hits 0.709 | p4 41.6 tok/s hits 0.822 | peak 8,484 MiB
+S=96  (37.5 %) p1 51.6 tok/s hits 0.822 | p4 47.4 tok/s hits 0.899 | peak 11,072 MiB
+S=112, 128: out of memory on the 12,227 MiB card

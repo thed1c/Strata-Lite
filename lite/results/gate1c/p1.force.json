@@ -1,0 +1,1 @@
+{"tokens":"noise/p1.ncm30.tokens","mode":"force","pool":1,"n_cpu_moe":30,"prompt":603,"cont":195,"steps_compared":195,"logits_bit_identical":195,"first_nonidentical_step":-1,"max_abs_diff":0,"argmax_same":195,"greedy_tokens_matching_before_first_diff":195,"first_token_diff":-1,"load_s":1.0,"prefill_s":6.65,"decode_s":8.06}

@@ -1,0 +1,20 @@
+p3.base.json: 200 tokens, 60 windows, 45.3 tok/s, hits 0.934, accepted 139/180
+  drafts (180 drafter graphs)                                 171.3 ms   2.85 ms/window   3.9%
+  verify: graph build + alloc + inputs                        155.3 ms   2.59 ms/window   3.5%
+  verify: compute, CPU pool on the misses (GPU idle)          416.9 ms   6.95 ms/window   9.5%
+  verify: compute, the rest (GPU work, transfers, syncs)      875.8 ms  14.60 ms/window  19.9%
+  verify: readbacks (logits, hidden rows, routing)             63.4 ms   1.06 ms/window   1.4%
+  adapt: score updates                                         14.7 ms   0.25 ms/window   0.3%
+  adapt: blocking swap copies                                2130.4 ms  35.51 ms/window  48.5%
+  adapt: refill after the read                                522.8 ms   8.71 ms/window  11.9%
+  accounted / decode wall                                    4350.6 / 4390.0 ms; 62.0 graph splits per verify ubatch
+p1.base.json: 195 tokens, 51 windows, 42.7 tok/s, hits 0.893, accepted 143/153
+  drafts (153 drafter graphs)                                 139.5 ms   2.74 ms/window   3.1%
+  verify: graph build + alloc + inputs                        132.9 ms   2.61 ms/window   2.9%
+  verify: compute, CPU pool on the misses (GPU idle)          555.9 ms  10.90 ms/window  12.2%
+  verify: compute, the rest (GPU work, transfers, syncs)      750.8 ms  14.72 ms/window  16.5%
+  verify: readbacks (logits, hidden rows, routing)             53.9 ms   1.06 ms/window   1.2%
+  adapt: score updates                                         12.5 ms   0.25 ms/window   0.3%
+  adapt: blocking swap copies                                2270.0 ms  44.51 ms/window  49.9%
+  adapt: refill after the read                                595.3 ms  11.67 ms/window  13.1%
+  accounted / decode wall                                    4510.8 / 4550.0 ms; 62.0 graph splits per verify ubatch

@@ -1,0 +1,11 @@
+{
+ "req": "q35b/p5.oracle.tokens",
+ "prompt_tokens": 6523,
+ "dropped": 0,
+ "thinking": 0,
+ "gen_tokens": 199,
+ "prefill_s": 51.73,
+ "decode_s": 6.25,
+ "records": 0,
+ "bad_ids": 0
+}

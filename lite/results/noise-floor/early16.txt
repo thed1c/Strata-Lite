@@ -1,0 +1,15 @@
+p1 early16-vs-ncm30 {"steps":195,"top1_agree":195,"top1_rate":1.0000,"kl_mean":0.000667317,"kl_max":0.0333572}
+p1 early16-vs-ncm14 {"steps":195,"top1_agree":195,"top1_rate":1.0000,"kl_mean":0.00061977,"kl_max":0.0370299}
+  early16 gen 194 (4.5 s, 43.0 tok/s) records 0 bad 0
+p2 early16-vs-ncm30 {"steps":198,"top1_agree":198,"top1_rate":1.0000,"kl_mean":0.000429271,"kl_max":0.0274754}
+p2 early16-vs-ncm14 {"steps":198,"top1_agree":198,"top1_rate":1.0000,"kl_mean":0.000462493,"kl_max":0.0298666}
+  early16 gen 197 (4.6 s, 42.6 tok/s) records 0 bad 0
+p3 early16-vs-ncm30 {"steps":200,"top1_agree":198,"top1_rate":0.9900,"kl_mean":0.00160792,"kl_max":0.0490108}
+p3 early16-vs-ncm14 {"steps":200,"top1_agree":198,"top1_rate":0.9900,"kl_mean":0.00187648,"kl_max":0.0597802}
+  early16 gen 199 (4.7 s, 42.7 tok/s) records 0 bad 0
+p4 early16-vs-ncm30 {"steps":200,"top1_agree":197,"top1_rate":0.9850,"kl_mean":0.00347379,"kl_max":0.0635026}
+p4 early16-vs-ncm14 {"steps":200,"top1_agree":198,"top1_rate":0.9900,"kl_mean":0.00351424,"kl_max":0.05088}
+  early16 gen 199 (4.7 s, 42.3 tok/s) records 0 bad 0
+p5 early16-vs-ncm30 {"steps":200,"top1_agree":196,"top1_rate":0.9800,"kl_mean":0.00140348,"kl_max":0.0171013}
+p5 early16-vs-ncm14 {"steps":200,"top1_agree":196,"top1_rate":0.9800,"kl_mean":0.00132545,"kl_max":0.0150165}
+  early16 gen 199 (4.9 s, 40.3 tok/s) records 0 bad 0

@@ -1,0 +1,773 @@
+{
+ "server": {
+  "/health": {
+   "code": 200,
+   "shape": {
+    "status": "str"
+   },
+   "s": 0.03,
+   "checks": [
+    [
+     true,
+     "/health 200"
+    ]
+   ]
+  },
+  "/v1/models": {
+   "code": 200,
+   "shape": {
+    "data": [
+     {
+      "aliases": [
+       "str"
+      ],
+      "created": "int",
+      "id": "str",
+      "meta": {
+       "n_ctx": "int",
+       "n_ctx_train": "int",
+       "n_embd": "int",
+       "n_vocab": "int",
+       "vocab_type": "bool"
+      },
+      "object": "str",
+      "owned_by": "str"
+     }
+    ],
+    "object": "str"
+   },
+   "s": 0.0,
+   "checks": [
+    [
+     true,
+     "/v1/models 200"
+    ],
+    [
+     true,
+     "/v1/models lists reference"
+    ]
+   ]
+  },
+  "/props": {
+   "code": 200,
+   "shape": {
+    "build_info": "str",
+    "chat_template": "str",
+    "chat_template_caps": {
+     "supports_object_arguments": "bool",
+     "supports_parallel_tool_calls": "bool",
+     "supports_preserve_reasoning": "bool",
+     "supports_reasoning_effort": "bool",
+     "supports_string_content": "bool",
+     "supports_system_role": "bool",
+     "supports_tool_calls": "bool",
+     "supports_tools": "bool",
+     "supports_typed_content": "bool"
+    },
+    "default_generation_settings": {
+     "n_ctx": "int",
+     "params": {
+      "adaptive_decay": "float",
+      "adaptive_target": "float",
+      "backend_sampling": "bool",
+      "chat_format": "str",
+      "dry_allowed_length": "int",
+      "dry_base": "float",
+      "dry_multiplier": "float",
+      "dry_penalty_last_n": "int",
+      "dynatemp_exponent": "float",
+      "dynatemp_range": "float",
+      "frequency_penalty": "float",
+      "generation_prompt": "str",
+      "ignore_eos": "bool",
+      "lora": [],
+      "max_tokens": "int",
+      "min_keep": "int",
+      "min_p": "float",
+      "mirostat": "int",
+      "mirostat_eta": "float",
+      "mirostat_tau": "float",
+      "n_discard": "int",
+      "n_keep": "int",
+      "n_predict": "int",
+      "n_probs": "int",
+      "post_sampling_probs": "bool",
+      "presence_penalty": "float",
+      "reasoning_format": "str",
+      "reasoning_in_content": "bool",
+      "repeat_last_n": "int",
+      "repeat_penalty": "float",
+      "samplers": [
+       "str"
+      ],
+      "seed": "int",
+      "speculative.types": "str",
+      "stream": "bool",
+      "temperature": "float",
+      "timings_per_token": "bool",
+      "top_k": "int",
+      "top_n_sigma": "float",
+      "top_p": "float",
+      "typical_p": "float",
+      "xtc_probability": "float",
+      "xtc_threshold": "float"
+     }
+    },
+    "endpoint_metrics": "bool",
+    "endpoint_props": "bool",
+    "endpoint_slots": "bool",
+    "is_sleeping": "bool",
+    "media_marker": "str",
+    "modalities": {
+     "audio": "bool",
+     "video": "bool",
+     "vision": "bool"
+    },
+    "model_alias": "str",
+    "model_path": "str",
+    "total_slots": "int"
+   },
+   "s": 0.0,
+   "checks": [
+    [
+     true,
+     "props.model_path basename = Gemma4-26B-A4B-QAT-Uncensored-HauhauCS-Balanced-Q4_K_M.gguf"
+    ],
+    [
+     true,
+     "props.modalities.vision true"
+    ]
+   ]
+  },
+  "/slots": {
+   "code": 200,
+   "shape": [
+    {
+     "id": "int",
+     "is_processing": "bool",
+     "n_ctx": "int",
+     "speculative": "bool"
+    }
+   ],
+   "s": 0.0,
+   "checks": [
+    [
+     true,
+     "/slots non-empty list with is_processing"
+    ]
+   ]
+  },
+  "agent_tools": {
+   "code": 200,
+   "shape": {
+    "choices": [
+     {
+      "finish_reason": "str",
+      "index": "int",
+      "message": {
+       "content": "str",
+       "role": "str",
+       "tool_calls": [
+        {
+         "function": "dict",
+         "id": "str",
+         "type": "str"
+        }
+       ]
+      }
+     }
+    ],
+    "created": "int",
+    "id": "str",
+    "model": "str",
+    "object": "str",
+    "system_fingerprint": "str",
+    "timings": {
+     "cache_n": "int",
+     "draft_n": "int",
+     "draft_n_accepted": "int",
+     "predicted_ms": "float",
+     "predicted_n": "int",
+     "predicted_per_second": "float",
+     "predicted_per_token_ms": "float",
+     "prompt_ms": "float",
+     "prompt_n": "int",
+     "prompt_per_second": "float",
+     "prompt_per_token_ms": "float"
+    },
+    "usage": {
+     "completion_tokens": "int",
+     "prompt_tokens": "int",
+     "prompt_tokens_details": {
+      "cached_tokens": "int"
+     },
+     "total_tokens": "int"
+    }
+   },
+   "s": 1.92,
+   "ctype": "application/json; charset=utf-8",
+   "checks": [
+    [
+     true,
+     "HTTP 200 (got 200)"
+    ],
+    [
+     true,
+     "model echoed as reference (got reference)"
+    ],
+    [
+     true,
+     "choices non-empty"
+    ],
+    [
+     true,
+     "finish_reason (tool_calls)"
+    ],
+    [
+     true,
+     "usage.prompt/completion/total_tokens"
+    ],
+    [
+     true,
+     "timings.prompt_n/cache_n/predicted_n/*_per_second"
+    ],
+    [
+     true,
+     "a tool call"
+    ],
+    [
+     true,
+     "tool_calls[0].function name + JSON-object arguments"
+    ]
+   ]
+  },
+  "dashboard": {
+   "code": 200,
+   "shape": {
+    "choices": [
+     {
+      "finish_reason": "str",
+      "index": "int",
+      "message": {
+       "content": "str",
+       "role": "str"
+      }
+     }
+    ],
+    "created": "int",
+    "id": "str",
+    "model": "str",
+    "object": "str",
+    "system_fingerprint": "str",
+    "timings": {
+     "cache_n": "int",
+     "draft_n": "int",
+     "draft_n_accepted": "int",
+     "predicted_ms": "float",
+     "predicted_n": "int",
+     "predicted_per_second": "float",
+     "predicted_per_token_ms": "float",
+     "prompt_ms": "float",
+     "prompt_n": "int",
+     "prompt_per_second": "float",
+     "prompt_per_token_ms": "float"
+    },
+    "usage": {
+     "completion_tokens": "int",
+     "prompt_tokens": "int",
+     "prompt_tokens_details": {
+      "cached_tokens": "int"
+     },
+     "total_tokens": "int"
+    }
+   },
+   "s": 0.49,
+   "ctype": "application/json; charset=utf-8",
+   "checks": [
+    [
+     true,
+     "HTTP 200 (got 200)"
+    ],
+    [
+     true,
+     "model echoed as reference (got reference)"
+    ],
+    [
+     true,
+     "choices non-empty"
+    ],
+    [
+     true,
+     "finish_reason (stop)"
+    ],
+    [
+     true,
+     "usage.prompt/completion/total_tokens"
+    ],
+    [
+     true,
+     "timings.prompt_n/cache_n/predicted_n/*_per_second"
+    ],
+    [
+     true,
+     "content non-empty"
+    ]
+   ]
+  },
+  "studio_image": {
+   "code": 200,
+   "shape": {
+    "choices": [
+     {
+      "finish_reason": "str",
+      "index": "int",
+      "message": {
+       "content": "str",
+       "role": "str"
+      }
+     }
+    ],
+    "created": "int",
+    "id": "str",
+    "model": "str",
+    "object": "str",
+    "system_fingerprint": "str",
+    "timings": {
+     "cache_n": "int",
+     "draft_n": "int",
+     "draft_n_accepted": "int",
+     "predicted_ms": "float",
+     "predicted_n": "int",
+     "predicted_per_second": "float",
+     "predicted_per_token_ms": "float",
+     "prompt_ms": "float",
+     "prompt_n": "int",
+     "prompt_per_second": "float",
+     "prompt_per_token_ms": "float"
+    },
+    "usage": {
+     "completion_tokens": "int",
+     "prompt_tokens": "int",
+     "prompt_tokens_details": {
+      "cached_tokens": "int"
+     },
+     "total_tokens": "int"
+    }
+   },
+   "s": 1.33,
+   "ctype": "application/json; charset=utf-8",
+   "checks": [
+    [
+     true,
+     "HTTP 200 (got 200)"
+    ],
+    [
+     true,
+     "model echoed as reference (got reference)"
+    ],
+    [
+     true,
+     "choices non-empty"
+    ],
+    [
+     true,
+     "finish_reason (stop)"
+    ],
+    [
+     true,
+     "usage.prompt/completion/total_tokens"
+    ],
+    [
+     true,
+     "timings.prompt_n/cache_n/predicted_n/*_per_second"
+    ],
+    [
+     true,
+     "content non-empty"
+    ]
+   ]
+  },
+  "owner_cache_1": {
+   "code": 200,
+   "shape": {
+    "choices": [
+     {
+      "finish_reason": "str",
+      "index": "int",
+      "message": {
+       "content": "str",
+       "role": "str"
+      }
+     }
+    ],
+    "created": "int",
+    "id": "str",
+    "model": "str",
+    "object": "str",
+    "system_fingerprint": "str",
+    "timings": {
+     "cache_n": "int",
+     "draft_n": "int",
+     "draft_n_accepted": "int",
+     "predicted_ms": "float",
+     "predicted_n": "int",
+     "predicted_per_second": "float",
+     "predicted_per_token_ms": "float",
+     "prompt_ms": "float",
+     "prompt_n": "int",
+     "prompt_per_second": "float",
+     "prompt_per_token_ms": "float"
+    },
+    "usage": {
+     "completion_tokens": "int",
+     "prompt_tokens": "int",
+     "prompt_tokens_details": {
+      "cached_tokens": "int"
+     },
+     "total_tokens": "int"
+    }
+   },
+   "s": 2.55,
+   "ctype": "application/json; charset=utf-8",
+   "checks": [
+    [
+     true,
+     "HTTP 200 (got 200)"
+    ],
+    [
+     true,
+     "model echoed as reference (got reference)"
+    ],
+    [
+     true,
+     "choices non-empty"
+    ],
+    [
+     true,
+     "finish_reason (stop)"
+    ],
+    [
+     true,
+     "usage.prompt/completion/total_tokens"
+    ],
+    [
+     true,
+     "timings.prompt_n/cache_n/predicted_n/*_per_second"
+    ]
+   ]
+  },
+  "owner_cache_2": {
+   "code": 200,
+   "shape": {
+    "choices": [
+     {
+      "finish_reason": "str",
+      "index": "int",
+      "message": {
+       "content": "str",
+       "role": "str"
+      }
+     }
+    ],
+    "created": "int",
+    "id": "str",
+    "model": "str",
+    "object": "str",
+    "system_fingerprint": "str",
+    "timings": {
+     "cache_n": "int",
+     "draft_n": "int",
+     "draft_n_accepted": "int",
+     "predicted_ms": "float",
+     "predicted_n": "int",
+     "predicted_per_second": "float",
+     "predicted_per_token_ms": "float",
+     "prompt_ms": "float",
+     "prompt_n": "int",
+     "prompt_per_second": "float",
+     "prompt_per_token_ms": "float"
+    },
+    "usage": {
+     "completion_tokens": "int",
+     "prompt_tokens": "int",
+     "prompt_tokens_details": {
+      "cached_tokens": "int"
+     },
+     "total_tokens": "int"
+    }
+   },
+   "s": 0.77,
+   "ctype": "application/json; charset=utf-8",
+   "checks": [
+    [
+     true,
+     "HTTP 200 (got 200)"
+    ],
+    [
+     true,
+     "model echoed as reference (got reference)"
+    ],
+    [
+     true,
+     "choices non-empty"
+    ],
+    [
+     true,
+     "finish_reason (stop)"
+    ],
+    [
+     true,
+     "usage.prompt/completion/total_tokens"
+    ],
+    [
+     true,
+     "timings.prompt_n/cache_n/predicted_n/*_per_second"
+    ],
+    [
+     true,
+     "cache_prompt reused the prefix (cache_n 1347)"
+    ]
+   ]
+  },
+  "coordinator_schema": {
+   "code": 200,
+   "shape": {
+    "choices": [
+     {
+      "finish_reason": "str",
+      "index": "int",
+      "message": {
+       "content": "str",
+       "reasoning_content": "str",
+       "role": "str"
+      }
+     }
+    ],
+    "created": "int",
+    "id": "str",
+    "model": "str",
+    "object": "str",
+    "system_fingerprint": "str",
+    "timings": {
+     "cache_n": "int",
+     "draft_n": "int",
+     "draft_n_accepted": "int",
+     "predicted_ms": "float",
+     "predicted_n": "int",
+     "predicted_per_second": "float",
+     "predicted_per_token_ms": "float",
+     "prompt_ms": "float",
+     "prompt_n": "int",
+     "prompt_per_second": "float",
+     "prompt_per_token_ms": "float"
+    },
+    "usage": {
+     "completion_tokens": "int",
+     "prompt_tokens": "int",
+     "prompt_tokens_details": {
+      "cached_tokens": "int"
+     },
+     "total_tokens": "int"
+    }
+   },
+   "s": 6.62,
+   "ctype": "application/json; charset=utf-8",
+   "checks": [
+    [
+     true,
+     "HTTP 200 (got 200)"
+    ],
+    [
+     true,
+     "model echoed as reference (got reference)"
+    ],
+    [
+     true,
+     "choices non-empty"
+    ],
+    [
+     true,
+     "finish_reason (stop)"
+    ],
+    [
+     true,
+     "usage.prompt/completion/total_tokens"
+    ],
+    [
+     true,
+     "timings.prompt_n/cache_n/predicted_n/*_per_second"
+    ],
+    [
+     true,
+     "content is JSON matching the strict schema"
+    ]
+   ]
+  },
+  "thinking_default": {
+   "code": 200,
+   "shape": {
+    "choices": [
+     {
+      "finish_reason": "str",
+      "index": "int",
+      "message": {
+       "content": "str",
+       "reasoning_content": "str",
+       "role": "str"
+      }
+     }
+    ],
+    "created": "int",
+    "id": "str",
+    "model": "str",
+    "object": "str",
+    "system_fingerprint": "str",
+    "timings": {
+     "cache_n": "int",
+     "draft_n": "int",
+     "draft_n_accepted": "int",
+     "predicted_ms": "float",
+     "predicted_n": "int",
+     "predicted_per_second": "float",
+     "predicted_per_token_ms": "float",
+     "prompt_ms": "float",
+     "prompt_n": "int",
+     "prompt_per_second": "float",
+     "prompt_per_token_ms": "float"
+    },
+    "usage": {
+     "completion_tokens": "int",
+     "prompt_tokens": "int",
+     "prompt_tokens_details": {
+      "cached_tokens": "int"
+     },
+     "total_tokens": "int"
+    }
+   },
+   "s": 3.63,
+   "ctype": "application/json; charset=utf-8",
+   "checks": [
+    [
+     true,
+     "HTTP 200 (got 200)"
+    ],
+    [
+     true,
+     "model echoed as reference (got reference)"
+    ],
+    [
+     true,
+     "choices non-empty"
+    ],
+    [
+     true,
+     "finish_reason (length)"
+    ],
+    [
+     true,
+     "usage.prompt/completion/total_tokens"
+    ],
+    [
+     true,
+     "timings.prompt_n/cache_n/predicted_n/*_per_second"
+    ],
+    [
+     true,
+     "reasoning_content or content present"
+    ]
+   ]
+  },
+  "watchdog_image": {
+   "code": 200,
+   "shape": {
+    "choices": [
+     {
+      "finish_reason": "str",
+      "index": "int",
+      "message": {
+       "content": "str",
+       "role": "str"
+      }
+     }
+    ],
+    "created": "int",
+    "id": "str",
+    "model": "str",
+    "object": "str",
+    "system_fingerprint": "str",
+    "timings": {
+     "cache_n": "int",
+     "predicted_ms": "float",
+     "predicted_n": "int",
+     "predicted_per_second": "float",
+     "predicted_per_token_ms": "float",
+     "prompt_ms": "float",
+     "prompt_n": "int",
+     "prompt_per_second": "float",
+     "prompt_per_token_ms": "float"
+    },
+    "usage": {
+     "completion_tokens": "int",
+     "prompt_tokens": "int",
+     "prompt_tokens_details": {
+      "cached_tokens": "int"
+     },
+     "total_tokens": "int"
+    }
+   },
+   "s": 1.07,
+   "ctype": "application/json; charset=utf-8",
+   "checks": [
+    [
+     true,
+     "HTTP 200 (got 200)"
+    ],
+    [
+     true,
+     "model echoed as reference (got reference)"
+    ],
+    [
+     true,
+     "choices non-empty"
+    ],
+    [
+     true,
+     "finish_reason (length)"
+    ],
+    [
+     true,
+     "usage.prompt/completion/total_tokens"
+    ],
+    [
+     true,
+     "timings.prompt_n/cache_n/predicted_n/*_per_second"
+    ],
+    [
+     true,
+     "one-token image reply inside the watchdog's 12 s (1.1 s)"
+    ]
+   ]
+  },
+  "overflow": {
+   "code": 400,
+   "shape": {
+    "error": {
+     "code": "int",
+     "message": "str",
+     "n_ctx": "int",
+     "n_prompt_tokens": "int",
+     "type": "str"
+    }
+   },
+   "s": 5.37,
+   "ctype": "application/json; charset=utf-8",
+   "checks": [
+    [
+     true,
+     "context overflow is a 4xx (got 400)"
+    ]
+   ]
+  }
+ },
+ "reference": null
+}

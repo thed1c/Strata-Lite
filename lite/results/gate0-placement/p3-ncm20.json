@@ -1,0 +1,11 @@
+{
+ "req": "inputs/p3.json",
+ "prompt_tokens": 5402,
+ "dropped": 0,
+ "thinking": 0,
+ "gen_tokens": 200,
+ "prefill_s": 21.64,
+ "decode_s": 6.68,
+ "records": 6330,
+ "bad_ids": 0
+}

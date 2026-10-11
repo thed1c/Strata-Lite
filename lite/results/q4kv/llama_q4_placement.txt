@@ -1,0 +1,5 @@
+p1 llama-q4-cpu-vs-gpu {"steps":195,"top1_agree":192,"top1_rate":0.9846,"kl_mean":0.00768432,"kl_max":0.502196}
+p2 llama-q4-cpu-vs-gpu {"steps":198,"top1_agree":197,"top1_rate":0.9949,"kl_mean":0.00241098,"kl_max":0.290753}
+p3 llama-q4-cpu-vs-gpu {"steps":200,"top1_agree":194,"top1_rate":0.9700,"kl_mean":0.013164,"kl_max":0.259466}
+p4 llama-q4-cpu-vs-gpu {"steps":200,"top1_agree":185,"top1_rate":0.9250,"kl_mean":0.0286498,"kl_max":0.317335}
+p5 llama-q4-cpu-vs-gpu {"steps":200,"top1_agree":188,"top1_rate":0.9400,"kl_mean":0.0152458,"kl_max":0.280934}

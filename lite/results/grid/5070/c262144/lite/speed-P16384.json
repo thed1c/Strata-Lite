@@ -1,0 +1,86 @@
+{
+ "label": "lite-c262144-P16384",
+ "vram_load_mib": 11420,
+ "requests": {
+  "p5k": {
+   "prompt_tokens": 5402,
+   "cold": {
+    "code": 200,
+    "wall_s": 6.48,
+    "prompt_n": 5402,
+    "prompt_ms": 2741.38,
+    "prompt_per_second": 1970.54,
+    "predicted_n": 256,
+    "predicted_ms": 3730.74,
+    "predicted_per_second": 68.35,
+    "draft_n": 240,
+    "draft_n_accepted": 175,
+    "cache_n": 0
+   },
+   "warm": {
+    "code": 200,
+    "wall_s": 2.63,
+    "prompt_n": 1,
+    "prompt_ms": 46.08,
+    "prompt_per_second": 21.7,
+    "predicted_n": 256,
+    "predicted_ms": 2581.52,
+    "predicted_per_second": 98.78,
+    "draft_n": 221,
+    "draft_n_accepted": 181,
+    "cache_n": 5401
+   },
+   "vram_peak_mib": 11238
+  },
+  "p15k": {
+   "prompt_tokens": 15449,
+   "cold": {
+    "code": 200,
+    "wall_s": 12.33,
+    "prompt_n": 15449,
+    "prompt_ms": 7481.14,
+    "prompt_per_second": 2065.06,
+    "predicted_n": 256,
+    "predicted_ms": 4838.84,
+    "predicted_per_second": 52.7,
+    "draft_n": 295,
+    "draft_n_accepted": 156,
+    "cache_n": 0
+   },
+   "warm": {
+    "code": 200,
+    "wall_s": 3.76,
+    "prompt_n": 1,
+    "prompt_ms": 21.47,
+    "prompt_per_second": 46.58,
+    "predicted_n": 256,
+    "predicted_ms": 3732.1,
+    "predicted_per_second": 68.33,
+    "draft_n": 291,
+    "draft_n_accepted": 158,
+    "cache_n": 15448
+   },
+   "vram_peak_mib": 11320
+  },
+  "p157k": {
+   "prompt_tokens": 157494,
+   "cold": {
+    "code": null,
+    "error": "RemoteDisconnected",
+    "wall_s": 46.55
+   },
+   "warm": null,
+   "vram_peak_mib": 11608
+  }
+ },
+ "props_strata": {
+  "slots": 69,
+  "arena_shrinks": 0,
+  "n_cpu_moe": 30,
+  "prefill_ubatch": 16384,
+  "lend": true,
+  "mtp": true,
+  "vision": false
+ },
+ "vram_peak_mib": 11608
+}

@@ -1,0 +1,26 @@
+p1 1 exactness (plain vs llama.cpp, q4 KV): bit-identical 168/168 first diff -1 greedy first diff 101
+p1 2 llama.cpp all-GPU q4 vs f16: {"steps":168,"top1_agree":166,"top1_rate":0.9881,"kl_mean":0.00607604,"kl_max":0.26915}
+p1 3 full engine q4 KV vs allgpu: top1 162/168 KL 5.014e-03 twins 1536 bad 0
+p1 3 full engine q4 KV vs allgpu-q4: top1 164/168 KL 8.790e-03 twins 1536 bad 0
+p2 1 exactness (plain vs llama.cpp, q4 KV): bit-identical 200/200 first diff -1 greedy first diff 144
+p2 2 llama.cpp all-GPU q4 vs f16: {"steps":200,"top1_agree":197,"top1_rate":0.9850,"kl_mean":0.00489047,"kl_max":0.204353}
+p2 3 full engine q4 KV vs allgpu: top1 199/200 KL 5.163e-03 twins 1744 bad 0
+p2 3 full engine q4 KV vs allgpu-q4: top1 198/200 KL 3.046e-03 twins 1744 bad 0
+p3 1 exactness (plain vs llama.cpp, q4 KV): bit-identical 200/200 first diff -1 greedy first diff 9
+p3 2 llama.cpp all-GPU q4 vs f16: {"steps":200,"top1_agree":195,"top1_rate":0.9750,"kl_mean":0.0144111,"kl_max":0.299917}
+p3 3 full engine q4 KV vs allgpu: top1 192/200 KL 1.443e-02 twins 2128 bad 0
+p3 3 full engine q4 KV vs allgpu-q4: top1 193/200 KL 1.827e-02 twins 2128 bad 0
+p4 1 exactness (plain vs llama.cpp, q4 KV): bit-identical 200/200 first diff -1 greedy first diff 7
+p4 2 llama.cpp all-GPU q4 vs f16: {"steps":200,"top1_agree":191,"top1_rate":0.9550,"kl_mean":0.0114835,"kl_max":0.13684}
+p4 3 full engine q4 KV vs allgpu: top1 192/200 KL 1.393e-02 twins 2552 bad 0
+p4 3 full engine q4 KV vs allgpu-q4: top1 189/200 KL 1.684e-02 twins 2552 bad 0
+p5 1 exactness (plain vs llama.cpp, q4 KV): bit-identical 200/200 first diff -1 greedy first diff 1
+p5 2 llama.cpp all-GPU q4 vs f16: {"steps":200,"top1_agree":191,"top1_rate":0.9550,"kl_mean":0.0157914,"kl_max":0.241065}
+p5 3 full engine q4 KV vs allgpu: top1 195/200 KL 1.093e-02 twins 2336 bad 0
+p5 3 full engine q4 KV vs allgpu-q4: top1 192/200 KL 1.621e-02 twins 2336 bad 0
+Q4KV-DONE
+c=160256 S=64 rc=0 strata: reading 157519 tokens at position 0 in 8192-token chunks (cap 8192) | first token 146.9s 1073 tok/s decode 39.0 tok/s hits 0.722 read buf 4468 MB lent 5.5 GB refill 0.52s slots after 64 acc 132/202 | peak VRAM 9814 MiB
+c=160256 S=80 rc=0 strata: reading 157519 tokens at position 0 in 8192-token chunks (cap 8192) | first token 146.8s 1073 tok/s decode 40.7 tok/s hits 0.793 read buf 4468 MB lent 6.9 GB refill 0.62s slots after 80 acc 134/198 | peak VRAM 11108 MiB
+c=262144 S=64 rc=0 strata: reading 157519 tokens at position 0 in 8192-token chunks (cap 8192) | first token 147.3s 1070 tok/s decode 38.7 tok/s hits 0.722 read buf 4468 MB lent 5.5 GB refill 0.52s slots after 64 acc 132/202 | peak VRAM 10864 MiB
+c=262144 S=48 rc=0 strata: reading 157519 tokens at position 0 in 8192-token chunks (cap 8192) | first token 146.9s 1072 tok/s decode 38.2 tok/s hits 0.641 read buf 4468 MB lent 4.2 GB refill 0.41s slots after 48 acc 131/204 | peak VRAM 9572 MiB
+LONG-DONE

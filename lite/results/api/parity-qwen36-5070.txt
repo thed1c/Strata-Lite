@@ -1,0 +1,83 @@
+PASS  /health              /health 200
+PASS  /v1/models           /v1/models 200
+PASS  /v1/models           /v1/models lists reference
+DIFF  /v1/models           shape .data[0].meta.ftype: missing here
+DIFF  /v1/models           shape .data[0].meta.n_params: missing here
+DIFF  /v1/models           shape .data[0].meta.size: missing here
+DIFF  /v1/models           shape .data[0].tags: missing here
+note  /v1/models           shape .models: missing here
+PASS  /props               props.model_path basename = Qwen3.6-35B-A3B-Uncensored-HauhauCS-Aggressive-Q4_K_P.gguf
+PASS  /props               props.modalities.vision true
+note  /props               shape .bos_token: missing here
+note  /props               shape .cors_proxy_enabled: missing here
+note  /props               shape .eos_token: missing here
+note  /props               shape .model_ftype: missing here
+note  /props               shape .strata: extra here
+note  /props               shape .ui: missing here
+note  /props               shape .ui_settings: missing here
+PASS  /slots               /slots non-empty list with is_processing
+note  /slots               shape [0].id_task: missing here
+note  /slots               shape [0].n_prompt_tokens: missing here
+note  /slots               shape [0].n_prompt_tokens_cache: missing here
+note  /slots               shape [0].n_prompt_tokens_processed: missing here
+note  /slots               shape [0].next_token: missing here
+note  /slots               shape [0].params: missing here
+PASS  agent_tools           HTTP 200 (got 200)
+PASS  agent_tools           model echoed as reference (got reference)
+PASS  agent_tools           choices non-empty
+PASS  agent_tools           finish_reason (tool_calls)
+PASS  agent_tools           usage.prompt/completion/total_tokens
+PASS  agent_tools           timings.prompt_n/cache_n/predicted_n/*_per_second
+PASS  agent_tools           a tool call
+PASS  agent_tools           tool_calls[0].function name + JSON-object arguments
+PASS  dashboard            HTTP 200 (got 200)
+PASS  dashboard            model echoed as reference (got reference)
+PASS  dashboard            choices non-empty
+PASS  dashboard            finish_reason (stop)
+PASS  dashboard            usage.prompt/completion/total_tokens
+PASS  dashboard            timings.prompt_n/cache_n/predicted_n/*_per_second
+PASS  dashboard            content non-empty
+PASS  studio_image         HTTP 200 (got 200)
+PASS  studio_image         model echoed as reference (got reference)
+PASS  studio_image         choices non-empty
+PASS  studio_image         finish_reason (stop)
+PASS  studio_image         usage.prompt/completion/total_tokens
+PASS  studio_image         timings.prompt_n/cache_n/predicted_n/*_per_second
+PASS  studio_image         content non-empty
+PASS  owner_cache_1        HTTP 200 (got 200)
+PASS  owner_cache_1        model echoed as reference (got reference)
+PASS  owner_cache_1        choices non-empty
+PASS  owner_cache_1        finish_reason (stop)
+PASS  owner_cache_1        usage.prompt/completion/total_tokens
+PASS  owner_cache_1        timings.prompt_n/cache_n/predicted_n/*_per_second
+PASS  owner_cache_2        HTTP 200 (got 200)
+PASS  owner_cache_2        model echoed as reference (got reference)
+PASS  owner_cache_2        choices non-empty
+PASS  owner_cache_2        finish_reason (stop)
+PASS  owner_cache_2        usage.prompt/completion/total_tokens
+PASS  owner_cache_2        timings.prompt_n/cache_n/predicted_n/*_per_second
+PASS  owner_cache_2        cache_prompt reused the prefix (cache_n 851)
+PASS  coordinator_schema   HTTP 200 (got 200)
+PASS  coordinator_schema   model echoed as reference (got reference)
+PASS  coordinator_schema   choices non-empty
+PASS  coordinator_schema   finish_reason (stop)
+PASS  coordinator_schema   usage.prompt/completion/total_tokens
+PASS  coordinator_schema   timings.prompt_n/cache_n/predicted_n/*_per_second
+PASS  coordinator_schema   content is JSON matching the strict schema
+PASS  thinking_default     HTTP 200 (got 200)
+PASS  thinking_default     model echoed as reference (got reference)
+PASS  thinking_default     choices non-empty
+PASS  thinking_default     finish_reason (length)
+PASS  thinking_default     usage.prompt/completion/total_tokens
+PASS  thinking_default     timings.prompt_n/cache_n/predicted_n/*_per_second
+PASS  thinking_default     reasoning_content or content present
+PASS  watchdog_image       HTTP 200 (got 200)
+PASS  watchdog_image       model echoed as reference (got reference)
+PASS  watchdog_image       choices non-empty
+PASS  watchdog_image       finish_reason (length)
+PASS  watchdog_image       usage.prompt/completion/total_tokens
+PASS  watchdog_image       timings.prompt_n/cache_n/predicted_n/*_per_second
+PASS  watchdog_image       one-token image reply inside the watchdog's 12 s (0.4 s)
+PASS  overflow             context overflow is a 4xx (got 400)
+
+63/63 checks pass

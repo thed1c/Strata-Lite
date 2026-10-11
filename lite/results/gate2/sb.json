@@ -1,0 +1,305 @@
+{
+ "label": "reference",
+ "base": "http://127.0.0.1:18199",
+ "n_ctx": 262144,
+ "build": "b1-b6b003d",
+ "vram_idle_mib": {
+  "GPU-85445eeb": 10672,
+  "GPU-ab7c264d": 10598,
+  "GPU-077aa169": 4192
+ },
+ "requests": {
+  "p1": {
+   "cold": {
+    "code": 200,
+    "wall_s": 3.91,
+    "finish": "stop",
+    "prompt_n": 603,
+    "cache_n": 0,
+    "predicted_n": 186,
+    "prompt_tok_s": 905.2,
+    "gen_tok_s": 57.3,
+    "draft_n": null,
+    "draft_accepted": null,
+    "content_chars": 522,
+    "reasoning_chars": 0
+   },
+   "warm": {
+    "code": 200,
+    "wall_s": 3.36,
+    "finish": "stop",
+    "prompt_n": 5,
+    "cache_n": 598,
+    "predicted_n": 186,
+    "prompt_tok_s": 48.2,
+    "gen_tok_s": 57.0,
+    "draft_n": null,
+    "draft_accepted": null,
+    "content_chars": 522,
+    "reasoning_chars": 0
+   },
+   "vram_mib": {
+    "GPU-85445eeb": 10696,
+    "GPU-ab7c264d": 10622,
+    "GPU-077aa169": 4094
+   }
+  },
+  "p2": {
+   "cold": {
+    "code": 200,
+    "wall_s": 4.05,
+    "finish": "stop",
+    "prompt_n": 694,
+    "cache_n": 1,
+    "predicted_n": 198,
+    "prompt_tok_s": 1283.4,
+    "gen_tok_s": 57.6,
+    "draft_n": null,
+    "draft_accepted": null,
+    "content_chars": 465,
+    "reasoning_chars": 0
+   },
+   "warm": {
+    "code": 200,
+    "wall_s": 3.56,
+    "finish": "stop",
+    "prompt_n": 5,
+    "cache_n": 690,
+    "predicted_n": 198,
+    "prompt_tok_s": 44.4,
+    "gen_tok_s": 57.2,
+    "draft_n": null,
+    "draft_accepted": null,
+    "content_chars": 465,
+    "reasoning_chars": 0
+   },
+   "vram_mib": {
+    "GPU-85445eeb": 10696,
+    "GPU-ab7c264d": 10622,
+    "GPU-077aa169": 4092
+   }
+  },
+  "p3": {
+   "cold": {
+    "code": 200,
+    "wall_s": 8.04,
+    "finish": "length",
+    "prompt_n": 5401,
+    "cache_n": 1,
+    "predicted_n": 300,
+    "prompt_tok_s": 2231.2,
+    "gen_tok_s": 54.3,
+    "draft_n": null,
+    "draft_accepted": null,
+    "content_chars": 733,
+    "reasoning_chars": 0
+   },
+   "warm": {
+    "code": 200,
+    "wall_s": 5.62,
+    "finish": "length",
+    "prompt_n": 1,
+    "cache_n": 5401,
+    "predicted_n": 300,
+    "prompt_tok_s": 15.4,
+    "gen_tok_s": 54.0,
+    "draft_n": null,
+    "draft_accepted": null,
+    "content_chars": 745,
+    "reasoning_chars": 0
+   },
+   "vram_mib": {
+    "GPU-85445eeb": 10698,
+    "GPU-ab7c264d": 10624,
+    "GPU-077aa169": 4021
+   }
+  },
+  "p3-think": {
+   "cold": {
+    "code": 200,
+    "wall_s": 8.12,
+    "finish": "length",
+    "prompt_n": 5404,
+    "cache_n": 1,
+    "predicted_n": 300,
+    "prompt_tok_s": 2173.8,
+    "gen_tok_s": 54.8,
+    "draft_n": null,
+    "draft_accepted": null,
+    "content_chars": 0,
+    "reasoning_chars": 1054
+   },
+   "warm": {
+    "code": 200,
+    "wall_s": 5.81,
+    "finish": "length",
+    "prompt_n": 1,
+    "cache_n": 5404,
+    "predicted_n": 300,
+    "prompt_tok_s": 15.4,
+    "gen_tok_s": 52.2,
+    "draft_n": null,
+    "draft_accepted": null,
+    "content_chars": 0,
+    "reasoning_chars": 981
+   },
+   "vram_mib": {
+    "GPU-85445eeb": 10698,
+    "GPU-ab7c264d": 10624,
+    "GPU-077aa169": 4226
+   }
+  },
+  "p4": {
+   "cold": {
+    "code": 200,
+    "wall_s": 8.88,
+    "finish": "length",
+    "prompt_n": 6769,
+    "cache_n": 1,
+    "predicted_n": 300,
+    "prompt_tok_s": 2267.8,
+    "gen_tok_s": 52.3,
+    "draft_n": null,
+    "draft_accepted": null,
+    "content_chars": 1042,
+    "reasoning_chars": 0
+   },
+   "warm": {
+    "code": 200,
+    "wall_s": 5.84,
+    "finish": "length",
+    "prompt_n": 1,
+    "cache_n": 6769,
+    "predicted_n": 300,
+    "prompt_tok_s": 15.1,
+    "gen_tok_s": 52.0,
+    "draft_n": null,
+    "draft_accepted": null,
+    "content_chars": 1060,
+    "reasoning_chars": 0
+   },
+   "vram_mib": {
+    "GPU-85445eeb": 10698,
+    "GPU-ab7c264d": 10624,
+    "GPU-077aa169": 4129
+   }
+  },
+  "p5": {
+   "cold": {
+    "code": 200,
+    "wall_s": 8.77,
+    "finish": "length",
+    "prompt_n": 6772,
+    "cache_n": 1,
+    "predicted_n": 300,
+    "prompt_tok_s": 2235.0,
+    "gen_tok_s": 53.9,
+    "draft_n": null,
+    "draft_accepted": null,
+    "content_chars": 0,
+    "reasoning_chars": 1057
+   },
+   "warm": {
+    "code": 200,
+    "wall_s": 5.65,
+    "finish": "length",
+    "prompt_n": 1,
+    "cache_n": 6772,
+    "predicted_n": 300,
+    "prompt_tok_s": 15.2,
+    "gen_tok_s": 53.8,
+    "draft_n": null,
+    "draft_accepted": null,
+    "content_chars": 0,
+    "reasoning_chars": 1121
+   },
+   "vram_mib": {
+    "GPU-85445eeb": 10698,
+    "GPU-ab7c264d": 10624,
+    "GPU-077aa169": 4145
+   }
+  },
+  "long-a": {
+   "cold": {
+    "code": 200,
+    "wall_s": 135.01,
+    "finish": "length",
+    "prompt_n": 157493,
+    "cache_n": 1,
+    "predicted_n": 300,
+    "prompt_tok_s": 1289.2,
+    "gen_tok_s": 24.5,
+    "draft_n": null,
+    "draft_accepted": null,
+    "content_chars": 1269,
+    "reasoning_chars": 0
+   },
+   "warm": {
+    "code": 200,
+    "wall_s": 12.78,
+    "finish": "length",
+    "prompt_n": 1,
+    "cache_n": 157493,
+    "predicted_n": 300,
+    "prompt_tok_s": 7.9,
+    "gen_tok_s": 24.5,
+    "draft_n": null,
+    "draft_accepted": null,
+    "content_chars": 1079,
+    "reasoning_chars": 0
+   },
+   "vram_mib": {
+    "GPU-85445eeb": 10698,
+    "GPU-ab7c264d": 10624,
+    "GPU-077aa169": 4101
+   }
+  },
+  "image-x1": {
+   "cold": {
+    "code": 200,
+    "wall_s": 3.59,
+    "finish": "stop",
+    "prompt_n": 288,
+    "cache_n": 1,
+    "predicted_n": 14,
+    "prompt_tok_s": 110.6,
+    "gen_tok_s": 55.7,
+    "draft_n": null,
+    "draft_accepted": null,
+    "content_chars": 58,
+    "reasoning_chars": 0,
+    "vram_mib": {
+     "GPU-85445eeb": 10704,
+     "GPU-ab7c264d": 10630,
+     "GPU-077aa169": 4039
+    }
+   }
+  },
+  "image-x8": {
+   "cold": {
+    "code": 200,
+    "wall_s": 19.02,
+    "finish": "stop",
+    "prompt_n": 2164,
+    "cache_n": 1,
+    "predicted_n": 12,
+    "prompt_tok_s": 116.3,
+    "gen_tok_s": 52.9,
+    "draft_n": null,
+    "draft_accepted": null,
+    "content_chars": 45,
+    "reasoning_chars": 0,
+    "vram_mib": {
+     "GPU-85445eeb": 10704,
+     "GPU-ab7c264d": 10630,
+     "GPU-077aa169": 4293
+    }
+   }
+  }
+ },
+ "vram_end_mib": {
+  "GPU-85445eeb": 10704,
+  "GPU-ab7c264d": 10630,
+  "GPU-077aa169": 4293
+ }
+}

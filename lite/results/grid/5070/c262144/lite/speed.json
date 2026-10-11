@@ -1,0 +1,115 @@
+{
+ "label": "lite-c262144-P8192",
+ "vram_load_mib": 11420,
+ "requests": {
+  "p5k": {
+   "prompt_tokens": 5402,
+   "cold": {
+    "code": 200,
+    "wall_s": 6.54,
+    "prompt_n": 5402,
+    "prompt_ms": 2780.89,
+    "prompt_per_second": 1942.55,
+    "predicted_n": 256,
+    "predicted_ms": 3745.7,
+    "predicted_per_second": 68.08,
+    "draft_n": 240,
+    "draft_n_accepted": 175,
+    "cache_n": 0
+   },
+   "warm": {
+    "code": 200,
+    "wall_s": 2.61,
+    "prompt_n": 1,
+    "prompt_ms": 55.32,
+    "prompt_per_second": 18.08,
+    "predicted_n": 256,
+    "predicted_ms": 2544.49,
+    "predicted_per_second": 100.22,
+    "draft_n": 221,
+    "draft_n_accepted": 181,
+    "cache_n": 5401
+   },
+   "vram_peak_mib": 11238
+  },
+  "p15k": {
+   "prompt_tokens": 15449,
+   "cold": {
+    "code": 200,
+    "wall_s": 11.27,
+    "prompt_n": 15449,
+    "prompt_ms": 7147.37,
+    "prompt_per_second": 2161.49,
+    "predicted_n": 256,
+    "predicted_ms": 4114.17,
+    "predicted_per_second": 61.98,
+    "draft_n": 262,
+    "draft_n_accepted": 167,
+    "cache_n": 0
+   },
+   "warm": {
+    "code": 200,
+    "wall_s": 3.61,
+    "prompt_n": 1,
+    "prompt_ms": 23.29,
+    "prompt_per_second": 42.93,
+    "predicted_n": 256,
+    "predicted_ms": 3580.92,
+    "predicted_per_second": 71.21,
+    "draft_n": 279,
+    "draft_n_accepted": 162,
+    "cache_n": 15448
+   },
+   "vram_peak_mib": 11354
+  },
+  "p157k": {
+   "prompt_tokens": 157494,
+   "cold": {
+    "code": 200,
+    "wall_s": 165.58,
+    "prompt_n": 157494,
+    "prompt_ms": 158604.38,
+    "prompt_per_second": 993.0,
+    "predicted_n": 256,
+    "predicted_ms": 6905.26,
+    "predicted_per_second": 36.93,
+    "draft_n": 278,
+    "draft_n_accepted": 162,
+    "cache_n": 0
+   },
+   "warm": {
+    "code": 200,
+    "wall_s": 5.68,
+    "prompt_n": 1,
+    "prompt_ms": 42.09,
+    "prompt_per_second": 23.76,
+    "predicted_n": 256,
+    "predicted_ms": 5562.24,
+    "predicted_per_second": 45.84,
+    "draft_n": 272,
+    "draft_n_accepted": 164,
+    "cache_n": 157493
+   },
+   "vram_peak_mib": 11354
+  }
+ },
+ "props_strata": {
+  "slots": 69,
+  "arena_shrinks": 0,
+  "n_cpu_moe": 30,
+  "prefill_ubatch": 8192,
+  "lend": true,
+  "mtp": true,
+  "vision": false
+ },
+ "props_strata_end": {
+  "slots": 58,
+  "arena_shrinks": 2,
+  "n_cpu_moe": 30,
+  "prefill_ubatch": 8192,
+  "lend": true,
+  "mtp": true,
+  "vision": false
+ },
+ "vram_peak_mib": 11354
+}

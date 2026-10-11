@@ -1,0 +1,30 @@
+p3.async.json: 200 tokens, 59 windows, 103.8 tok/s, hits 0.920, accepted 140/177
+  drafts (177 drafter graphs)                                 205.5 ms   3.48 ms/window  10.7%
+  verify: graph build + alloc + inputs                        212.0 ms   3.59 ms/window  11.0%
+  verify: compute, CPU pool on the misses (GPU idle)          221.7 ms   3.76 ms/window  11.5%
+  verify: compute, the rest (GPU work, transfers, syncs)     1068.1 ms  18.10 ms/window  55.6%
+  verify: readbacks (logits, hidden rows, routing)             72.7 ms   1.23 ms/window   3.8%
+  adapt: score updates                                         14.6 ms   0.25 ms/window   0.8%
+  adapt: blocking swap copies                                  68.4 ms   1.16 ms/window   3.6%
+  adapt: refill after the read                                  3.7 ms   0.06 ms/window   0.2%
+  accounted / decode wall                                    1866.7 / 1920.0 ms; 62.0 graph splits per verify ubatch
+p1.async.json: 195 tokens, 51 windows, 103.4 tok/s, hits 0.872, accepted 144/153
+  drafts (153 drafter graphs)                                 173.0 ms   3.39 ms/window   9.2%
+  verify: graph build + alloc + inputs                        203.8 ms   4.00 ms/window  10.8%
+  verify: compute, CPU pool on the misses (GPU idle)          290.5 ms   5.70 ms/window  15.5%
+  verify: compute, the rest (GPU work, transfers, syncs)      999.9 ms  19.61 ms/window  53.2%
+  verify: readbacks (logits, hidden rows, routing)             62.7 ms   1.23 ms/window   3.3%
+  adapt: score updates                                         12.8 ms   0.25 ms/window   0.7%
+  adapt: blocking swap copies                                  65.9 ms   1.29 ms/window   3.5%
+  adapt: refill after the read                                 23.0 ms   0.45 ms/window   1.2%
+  accounted / decode wall                                    1831.6 / 1880.0 ms; 62.0 graph splits per verify ubatch
+p4.async.json: 200 tokens, 80 windows, 81.4 tok/s, hits 0.925, accepted 119/240
+  drafts (240 drafter graphs)                                 273.1 ms   3.41 ms/window  11.1%
+  verify: graph build + alloc + inputs                        274.1 ms   3.43 ms/window  11.2%
+  verify: compute, CPU pool on the misses (GPU idle)          278.8 ms   3.49 ms/window  11.4%
+  verify: compute, the rest (GPU work, transfers, syncs)     1368.2 ms  17.10 ms/window  55.8%
+  verify: readbacks (logits, hidden rows, routing)             85.7 ms   1.07 ms/window   3.5%
+  adapt: score updates                                         19.7 ms   0.25 ms/window   0.8%
+  adapt: blocking swap copies                                  83.1 ms   1.04 ms/window   3.4%
+  adapt: refill after the read                                  3.7 ms   0.05 ms/window   0.2%
+  accounted / decode wall                                    2386.4 / 2450.0 ms; 62.0 graph splits per verify ubatch

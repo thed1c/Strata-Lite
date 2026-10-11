@@ -1,0 +1,68 @@
+{
+ "max_tokens": 512,
+ "temperature": 0.6,
+ "chat_template_kwargs": {
+  "enable_thinking": false
+ },
+ "messages": [
+  {
+   "role": "system",
+   "content": "You are Atlas, the operations assistant for a small render farm. You manage scheduled jobs with the tools you are given. Call a tool whenever the user asks about or changes a job; never invent job state. Keep replies short and address the user as 'Captain'."
+  },
+  {
+   "role": "user",
+   "content": "Atlas, the nightly thumbnail job has been failing since Tuesday. Check its status, and if it has failed three or more times in a row, pause it until I look at it tomorrow morning."
+  }
+ ],
+ "tools": [
+  {
+   "type": "function",
+   "function": {
+    "name": "get_job_status",
+    "description": "Status and recent run history of a scheduled job.",
+    "parameters": {
+     "type": "object",
+     "properties": {
+      "job": {
+       "type": "string",
+       "description": "job name"
+      },
+      "runs": {
+       "type": "integer",
+       "description": "how many recent runs to return"
+      }
+     },
+     "required": [
+      "job"
+     ]
+    }
+   }
+  },
+  {
+   "type": "function",
+   "function": {
+    "name": "pause_job",
+    "description": "Pause a scheduled job until a time.",
+    "parameters": {
+     "type": "object",
+     "properties": {
+      "job": {
+       "type": "string"
+      },
+      "until": {
+       "type": "string",
+       "description": "ISO 8601 time"
+      },
+      "reason": {
+       "type": "string"
+      }
+     },
+     "required": [
+      "job",
+      "reason"
+     ]
+    }
+   }
+  }
+ ]
+}

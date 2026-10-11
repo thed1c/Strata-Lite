@@ -1,0 +1,134 @@
+{
+ "long-e": {
+  "req": "long-e.json",
+  "prompt_tokens": 133433,
+  "dropped": 0,
+  "thinking": 0,
+  "gen_tokens": 768,
+  "prefill_s": 290.52,
+  "decode_s": 20.89,
+  "records": 30870,
+  "bad_ids": 0
+ },
+ "p5": {
+  "req": "p5.json",
+  "prompt_tokens": 6773,
+  "dropped": 0,
+  "thinking": 1,
+  "gen_tokens": 768,
+  "prefill_s": 13.8,
+  "decode_s": 12.61,
+  "records": 23460,
+  "bad_ids": 0
+ },
+ "p4": {
+  "req": "p4.json",
+  "prompt_tokens": 6770,
+  "dropped": 0,
+  "thinking": 0,
+  "gen_tokens": 338,
+  "prefill_s": 15.01,
+  "decode_s": 5.91,
+  "records": 10560,
+  "bad_ids": 0
+ },
+ "long-a": {
+  "req": "long-a.json",
+  "prompt_tokens": 157494,
+  "dropped": 0,
+  "thinking": 0,
+  "gen_tokens": 768,
+  "prefill_s": 354.97,
+  "decode_s": 22.78,
+  "records": 32280,
+  "bad_ids": 0
+ },
+ "long-b": {
+  "req": "long-b.json",
+  "prompt_tokens": 157490,
+  "dropped": 0,
+  "thinking": 0,
+  "gen_tokens": 768,
+  "prefill_s": 369.98,
+  "decode_s": 22.81,
+  "records": 32280,
+  "bad_ids": 0
+ },
+ "long-c": {
+  "req": "long-c.json",
+  "prompt_tokens": 157491,
+  "dropped": 0,
+  "thinking": 0,
+  "gen_tokens": 768,
+  "prefill_s": 371.82,
+  "decode_s": 23.36,
+  "records": 32280,
+  "bad_ids": 0
+ },
+ "p1-think": {
+  "req": "p1-think.json",
+  "prompt_tokens": 606,
+  "dropped": 0,
+  "thinking": 1,
+  "gen_tokens": 768,
+  "prefill_s": 2.09,
+  "decode_s": 12.69,
+  "records": 23100,
+  "bad_ids": 0
+ },
+ "p1": {
+  "req": "p1.json",
+  "prompt_tokens": 603,
+  "dropped": 0,
+  "thinking": 0,
+  "gen_tokens": 192,
+  "prefill_s": 2.08,
+  "decode_s": 2.9,
+  "records": 5820,
+  "bad_ids": 0
+ },
+ "p2": {
+  "req": "p2.json",
+  "prompt_tokens": 695,
+  "dropped": 0,
+  "thinking": 0,
+  "gen_tokens": 186,
+  "prefill_s": 2.15,
+  "decode_s": 2.98,
+  "records": 5640,
+  "bad_ids": 0
+ },
+ "long-d": {
+  "req": "long-d.json",
+  "prompt_tokens": 157554,
+  "dropped": 0,
+  "thinking": 0,
+  "gen_tokens": 91,
+  "prefill_s": 353.58,
+  "decode_s": 2.77,
+  "records": 11970,
+  "bad_ids": 0
+ },
+ "p3-think": {
+  "req": "p3-think.json",
+  "prompt_tokens": 5405,
+  "dropped": 0,
+  "thinking": 1,
+  "gen_tokens": 768,
+  "prefill_s": 11.8,
+  "decode_s": 12.95,
+  "records": 23370,
+  "bad_ids": 0
+ },
+ "p3": {
+  "req": "p3.json",
+  "prompt_tokens": 5402,
+  "dropped": 0,
+  "thinking": 0,
+  "gen_tokens": 361,
+  "prefill_s": 10.9,
+  "decode_s": 5.69,
+  "records": 11160,
+  "bad_ids": 0
+ }
+}

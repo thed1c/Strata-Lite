@@ -1,0 +1,2644 @@
+embd	GET_ROWS	CPU
+inp_scaled	SCALE	CUDA0
+norm-0	RMS_NORM	CUDA0
+attn_norm-0	MUL	CUDA0
+Qcur-0	MUL_MAT	CUDA0
+Qcur-0 (reshaped)	RESHAPE	CUDA0
+norm-0	RMS_NORM	CUDA0
+Qcur_normed-0	MUL	CUDA0
+Qcur_pos-0	ROPE	CUDA0
+Kcur-0	MUL_MAT	CUDA0
+Kcur-0 (reshaped)	RESHAPE	CUDA0
+norm-0	RMS_NORM	CUDA0
+Kcur_normed-0	MUL	CUDA0
+Kcur_pos-0	ROPE	CUDA0
+Vcur-0	MUL_MAT	CUDA0
+Vcur-0 (reshaped)	RESHAPE	CUDA0
+Vcur_normed-0	RMS_NORM	CUDA0
+Kcur_pos-0 (view)	VIEW	CUDA0
+cache_k_l0 (view)	SET_ROWS	CUDA0
+Vcur_normed-0 (view)	VIEW	CUDA0
+cache_v_l0 (view)	SET_ROWS	CUDA0
+Qcur_pos-0 (view)	VIEW	CUDA0
+Qcur_pos-0 (view) (permuted)	PERMUTE	CUDA0
+cache_k_l0 (view)	VIEW	CUDA0
+cache_k_l0 (view) (permuted)	PERMUTE	CUDA0
+cache_v_l0 (view)	VIEW	CUDA0
+cache_v_l0 (view) (permuted)	PERMUTE	CUDA0
+node_27	FLASH_ATTN_EXT	CUDA0
+kqv_out-0	RESHAPE	CUDA0
+node_29	MUL_MAT	CUDA0
+norm-0	RMS_NORM	CUDA0
+attn_post_norm-0	MUL	CUDA0
+attn_out-0	ADD	CUDA0
+node_33	RMS_NORM	CUDA0
+node_34	SCALE	CUDA0
+node_35	MUL	CUDA0
+ffn_moe_logits-0	MUL_MAT	CUDA0
+ffn_moe_probs-0	SOFT_MAX	CUDA0
+ffn_moe_probs-0 (reshaped)	RESHAPE	CUDA0
+ffn_moe_argsort-0	ARGSORT	CUDA0
+ffn_moe_topk-0	VIEW	CUDA0
+ffn_moe_weights-0	GET_ROWS	CUDA0
+ffn_moe_weights-0 (reshaped)	RESHAPE	CUDA0
+ffn_moe_weights_sum-0	SUM_ROWS	CUDA0
+ffn_moe_weights_sum_clamped-0	CLAMP	CUDA0
+ffn_moe_weights_norm-0	DIV	CUDA0
+ffn_moe_weights_norm-0 (reshaped)	RESHAPE	CUDA0
+norm-0	RMS_NORM	CUDA0
+ffn_norm_2-0	MUL	CUDA0
+ffn_norm_2-0 (reshaped)	RESHAPE	CUDA0
+ffn_moe_gate_up-0	MUL_MAT_ID	CPU
+ffn_moe_gate-0	VIEW	CPU
+ffn_moe_up-0	VIEW	CPU
+ffn_moe_geglu-0	GEGLU	CPU
+node_54	MUL_MAT_ID	CPU
+blk.0.ffn_down_exps.scale (reshaped)	RESHAPE	CPU
+node_56	REPEAT	CUDA0
+node_57	GET_ROWS	CUDA0
+ffn_moe_down-0	MUL	CUDA0
+ffn_moe_weighted-0	MUL	CUDA0
+ffn_moe_weighted-0 (view)	VIEW	CUDA0
+ffn_moe_weighted-0 (view)	VIEW	CUDA0
+ffn_moe_weighted-0 (view)	VIEW	CUDA0
+ffn_moe_weighted-0 (view)	VIEW	CUDA0
+ffn_moe_weighted-0 (view)	VIEW	CUDA0
+ffn_moe_weighted-0 (view)	VIEW	CUDA0
+ffn_moe_weighted-0 (view)	VIEW	CUDA0
+ffn_moe_weighted-0 (view)	VIEW	CUDA0
+node_68	ADD	CUDA0
+node_69	ADD	CUDA0
+node_70	ADD	CUDA0
+node_71	ADD	CUDA0
+node_72	ADD	CUDA0
+node_73	ADD	CUDA0
+ffn_moe_out-0	ADD	CUDA0
+norm-0	RMS_NORM	CUDA0
+ffn_norm_1-0	MUL	CUDA0
+ffn_gate-0	MUL_MAT	CUDA0
+ffn_up-0	MUL_MAT	CUDA0
+ffn_geglu-0	GEGLU	CUDA0
+node_80	MUL_MAT	CUDA0
+norm-0	RMS_NORM	CUDA0
+ffn_mlp-0	MUL	CUDA0
+norm-0	RMS_NORM	CUDA0
+ffn_moe-0	MUL	CUDA0
+ffn_moe_combined-0	ADD	CUDA0
+norm	RMS_NORM	CUDA0
+ffn_post_norm-0	MUL	CUDA0
+node_88	ADD	CUDA0
+l_out-0	MUL	CUDA0
+norm-1	RMS_NORM	CUDA0
+attn_norm-1	MUL	CUDA0
+Qcur-1	MUL_MAT	CUDA0
+Qcur-1 (reshaped)	RESHAPE	CUDA0
+norm-1	RMS_NORM	CUDA0
+Qcur_normed-1	MUL	CUDA0
+Qcur_pos-1	ROPE	CUDA0
+Kcur-1	MUL_MAT	CUDA0
+Kcur-1 (reshaped)	RESHAPE	CUDA0
+norm-1	RMS_NORM	CUDA0
+Kcur_normed-1	MUL	CUDA0
+Kcur_pos-1	ROPE	CUDA0
+Vcur-1	MUL_MAT	CUDA0
+Vcur-1 (reshaped)	RESHAPE	CUDA0
+Vcur_normed-1	RMS_NORM	CUDA0
+Kcur_pos-1 (view)	VIEW	CUDA0
+cache_k_l1 (view)	SET_ROWS	CUDA0
+Vcur_normed-1 (view)	VIEW	CUDA0
+cache_v_l1 (view)	SET_ROWS	CUDA0
+Qcur_pos-1 (view)	VIEW	CUDA0
+Qcur_pos-1 (view) (permuted)	PERMUTE	CUDA0
+cache_k_l1 (view)	VIEW	CUDA0
+cache_k_l1 (view) (permuted)	PERMUTE	CUDA0
+cache_v_l1 (view)	VIEW	CUDA0
+cache_v_l1 (view) (permuted)	PERMUTE	CUDA0
+node_115	FLASH_ATTN_EXT	CUDA0
+kqv_out-1	RESHAPE	CUDA0
+node_117	MUL_MAT	CUDA0
+norm-1	RMS_NORM	CUDA0
+attn_post_norm-1	MUL	CUDA0
+attn_out-1	ADD	CUDA0
+node_121	RMS_NORM	CUDA0
+node_122	SCALE	CUDA0
+node_123	MUL	CUDA0
+ffn_moe_logits-1	MUL_MAT	CUDA0
+ffn_moe_probs-1	SOFT_MAX	CUDA0
+ffn_moe_probs-1 (reshaped)	RESHAPE	CUDA0
+ffn_moe_argsort-1	ARGSORT	CUDA0
+ffn_moe_topk-1	VIEW	CUDA0
+ffn_moe_weights-1	GET_ROWS	CUDA0
+ffn_moe_weights-1 (reshaped)	RESHAPE	CUDA0
+ffn_moe_weights_sum-1	SUM_ROWS	CUDA0
+ffn_moe_weights_sum_clamped-1	CLAMP	CUDA0
+ffn_moe_weights_norm-1	DIV	CUDA0
+ffn_moe_weights_norm-1 (reshaped)	RESHAPE	CUDA0
+norm-1	RMS_NORM	CUDA0
+ffn_norm_2-1	MUL	CUDA0
+ffn_norm_2-1 (reshaped)	RESHAPE	CUDA0
+ffn_moe_gate_up-1	MUL_MAT_ID	CPU
+ffn_moe_gate-1	VIEW	CPU
+ffn_moe_up-1	VIEW	CPU
+ffn_moe_geglu-1	GEGLU	CPU
+node_142	MUL_MAT_ID	CPU
+blk.1.ffn_down_exps.scale (reshaped)	RESHAPE	CPU
+node_144	REPEAT	CUDA0
+node_145	GET_ROWS	CUDA0
+ffn_moe_down-1	MUL	CUDA0
+ffn_moe_weighted-1	MUL	CUDA0
+ffn_moe_weighted-1 (view)	VIEW	CUDA0
+ffn_moe_weighted-1 (view)	VIEW	CUDA0
+ffn_moe_weighted-1 (view)	VIEW	CUDA0
+ffn_moe_weighted-1 (view)	VIEW	CUDA0
+ffn_moe_weighted-1 (view)	VIEW	CUDA0
+ffn_moe_weighted-1 (view)	VIEW	CUDA0
+ffn_moe_weighted-1 (view)	VIEW	CUDA0
+ffn_moe_weighted-1 (view)	VIEW	CUDA0
+node_156	ADD	CUDA0
+node_157	ADD	CUDA0
+node_158	ADD	CUDA0
+node_159	ADD	CUDA0
+node_160	ADD	CUDA0
+node_161	ADD	CUDA0
+ffn_moe_out-1	ADD	CUDA0
+norm-1	RMS_NORM	CUDA0
+ffn_norm_1-1	MUL	CUDA0
+ffn_gate-1	MUL_MAT	CUDA0
+ffn_up-1	MUL_MAT	CUDA0
+ffn_geglu-1	GEGLU	CUDA0
+node_168	MUL_MAT	CUDA0
+norm-1	RMS_NORM	CUDA0
+ffn_mlp-1	MUL	CUDA0
+norm-1	RMS_NORM	CUDA0
+ffn_moe-1	MUL	CUDA0
+ffn_moe_combined-1	ADD	CUDA0
+norm	RMS_NORM	CUDA0
+ffn_post_norm-1	MUL	CUDA0
+node_176	ADD	CUDA0
+l_out-1	MUL	CUDA0
+norm-2	RMS_NORM	CUDA0
+attn_norm-2	MUL	CUDA0
+Qcur-2	MUL_MAT	CUDA0
+Qcur-2 (reshaped)	RESHAPE	CUDA0
+norm-2	RMS_NORM	CUDA0
+Qcur_normed-2	MUL	CUDA0
+Qcur_pos-2	ROPE	CUDA0
+Kcur-2	MUL_MAT	CUDA0
+Kcur-2 (reshaped)	RESHAPE	CUDA0
+norm-2	RMS_NORM	CUDA0
+Kcur_normed-2	MUL	CUDA0
+Kcur_pos-2	ROPE	CUDA0
+Vcur-2	MUL_MAT	CUDA0
+Vcur-2 (reshaped)	RESHAPE	CUDA0
+Vcur_normed-2	RMS_NORM	CUDA0
+Kcur_pos-2 (view)	VIEW	CUDA0
+cache_k_l2 (view)	SET_ROWS	CUDA0
+Vcur_normed-2 (view)	VIEW	CUDA0
+cache_v_l2 (view)	SET_ROWS	CUDA0
+Qcur_pos-2 (view)	VIEW	CUDA0
+Qcur_pos-2 (view) (permuted)	PERMUTE	CUDA0
+cache_k_l2 (view)	VIEW	CUDA0
+cache_k_l2 (view) (permuted)	PERMUTE	CUDA0
+cache_v_l2 (view)	VIEW	CUDA0
+cache_v_l2 (view) (permuted)	PERMUTE	CUDA0
+node_203	FLASH_ATTN_EXT	CUDA0
+kqv_out-2	RESHAPE	CUDA0
+node_205	MUL_MAT	CUDA0
+norm-2	RMS_NORM	CUDA0
+attn_post_norm-2	MUL	CUDA0
+attn_out-2	ADD	CUDA0
+node_209	RMS_NORM	CUDA0
+node_210	SCALE	CUDA0
+node_211	MUL	CUDA0
+ffn_moe_logits-2	MUL_MAT	CUDA0
+ffn_moe_probs-2	SOFT_MAX	CUDA0
+ffn_moe_probs-2 (reshaped)	RESHAPE	CUDA0
+ffn_moe_argsort-2	ARGSORT	CUDA0
+ffn_moe_topk-2	VIEW	CUDA0
+ffn_moe_weights-2	GET_ROWS	CUDA0
+ffn_moe_weights-2 (reshaped)	RESHAPE	CUDA0
+ffn_moe_weights_sum-2	SUM_ROWS	CUDA0
+ffn_moe_weights_sum_clamped-2	CLAMP	CUDA0
+ffn_moe_weights_norm-2	DIV	CUDA0
+ffn_moe_weights_norm-2 (reshaped)	RESHAPE	CUDA0
+norm-2	RMS_NORM	CUDA0
+ffn_norm_2-2	MUL	CUDA0
+ffn_norm_2-2 (reshaped)	RESHAPE	CUDA0
+ffn_moe_gate_up-2	MUL_MAT_ID	CPU
+ffn_moe_gate-2	VIEW	CPU
+ffn_moe_up-2	VIEW	CPU
+ffn_moe_geglu-2	GEGLU	CPU
+node_230	MUL_MAT_ID	CPU
+blk.2.ffn_down_exps.scale (reshaped)	RESHAPE	CPU
+node_232	REPEAT	CUDA0
+node_233	GET_ROWS	CUDA0
+ffn_moe_down-2	MUL	CUDA0
+ffn_moe_weighted-2	MUL	CUDA0
+ffn_moe_weighted-2 (view)	VIEW	CUDA0
+ffn_moe_weighted-2 (view)	VIEW	CUDA0
+ffn_moe_weighted-2 (view)	VIEW	CUDA0
+ffn_moe_weighted-2 (view)	VIEW	CUDA0
+ffn_moe_weighted-2 (view)	VIEW	CUDA0
+ffn_moe_weighted-2 (view)	VIEW	CUDA0
+ffn_moe_weighted-2 (view)	VIEW	CUDA0
+ffn_moe_weighted-2 (view)	VIEW	CUDA0
+node_244	ADD	CUDA0
+node_245	ADD	CUDA0
+node_246	ADD	CUDA0
+node_247	ADD	CUDA0
+node_248	ADD	CUDA0
+node_249	ADD	CUDA0
+ffn_moe_out-2	ADD	CUDA0
+norm-2	RMS_NORM	CUDA0
+ffn_norm_1-2	MUL	CUDA0
+ffn_gate-2	MUL_MAT	CUDA0
+ffn_up-2	MUL_MAT	CUDA0
+ffn_geglu-2	GEGLU	CUDA0
+node_256	MUL_MAT	CUDA0
+norm-2	RMS_NORM	CUDA0
+ffn_mlp-2	MUL	CUDA0
+norm-2	RMS_NORM	CUDA0
+ffn_moe-2	MUL	CUDA0
+ffn_moe_combined-2	ADD	CUDA0
+norm	RMS_NORM	CUDA0
+ffn_post_norm-2	MUL	CUDA0
+node_264	ADD	CUDA0
+l_out-2	MUL	CUDA0
+norm-3	RMS_NORM	CUDA0
+attn_norm-3	MUL	CUDA0
+Qcur-3	MUL_MAT	CUDA0
+Qcur-3 (reshaped)	RESHAPE	CUDA0
+norm-3	RMS_NORM	CUDA0
+Qcur_normed-3	MUL	CUDA0
+Qcur_pos-3	ROPE	CUDA0
+Kcur-3	MUL_MAT	CUDA0
+Kcur-3 (reshaped)	RESHAPE	CUDA0
+norm-3	RMS_NORM	CUDA0
+Kcur_normed-3	MUL	CUDA0
+Kcur_pos-3	ROPE	CUDA0
+Vcur-3	MUL_MAT	CUDA0
+Vcur-3 (reshaped)	RESHAPE	CUDA0
+Vcur_normed-3	RMS_NORM	CUDA0
+Kcur_pos-3 (view)	VIEW	CUDA0
+cache_k_l3 (view)	SET_ROWS	CUDA0
+Vcur_normed-3 (view)	VIEW	CUDA0
+cache_v_l3 (view)	SET_ROWS	CUDA0
+Qcur_pos-3 (view)	VIEW	CUDA0
+Qcur_pos-3 (view) (permuted)	PERMUTE	CUDA0
+cache_k_l3 (view)	VIEW	CUDA0
+cache_k_l3 (view) (permuted)	PERMUTE	CUDA0
+cache_v_l3 (view)	VIEW	CUDA0
+cache_v_l3 (view) (permuted)	PERMUTE	CUDA0
+node_291	FLASH_ATTN_EXT	CUDA0
+kqv_out-3	RESHAPE	CUDA0
+node_293	MUL_MAT	CUDA0
+norm-3	RMS_NORM	CUDA0
+attn_post_norm-3	MUL	CUDA0
+attn_out-3	ADD	CUDA0
+node_297	RMS_NORM	CUDA0
+node_298	SCALE	CUDA0
+node_299	MUL	CUDA0
+ffn_moe_logits-3	MUL_MAT	CUDA0
+ffn_moe_probs-3	SOFT_MAX	CUDA0
+ffn_moe_probs-3 (reshaped)	RESHAPE	CUDA0
+ffn_moe_argsort-3	ARGSORT	CUDA0
+ffn_moe_topk-3	VIEW	CUDA0
+ffn_moe_weights-3	GET_ROWS	CUDA0
+ffn_moe_weights-3 (reshaped)	RESHAPE	CUDA0
+ffn_moe_weights_sum-3	SUM_ROWS	CUDA0
+ffn_moe_weights_sum_clamped-3	CLAMP	CUDA0
+ffn_moe_weights_norm-3	DIV	CUDA0
+ffn_moe_weights_norm-3 (reshaped)	RESHAPE	CUDA0
+norm-3	RMS_NORM	CUDA0
+ffn_norm_2-3	MUL	CUDA0
+ffn_norm_2-3 (reshaped)	RESHAPE	CUDA0
+ffn_moe_gate_up-3	MUL_MAT_ID	CPU
+ffn_moe_gate-3	VIEW	CPU
+ffn_moe_up-3	VIEW	CPU
+ffn_moe_geglu-3	GEGLU	CPU
+node_318	MUL_MAT_ID	CPU
+blk.3.ffn_down_exps.scale (reshaped)	RESHAPE	CPU
+node_320	REPEAT	CUDA0
+node_321	GET_ROWS	CUDA0
+ffn_moe_down-3	MUL	CUDA0
+ffn_moe_weighted-3	MUL	CUDA0
+ffn_moe_weighted-3 (view)	VIEW	CUDA0
+ffn_moe_weighted-3 (view)	VIEW	CUDA0
+ffn_moe_weighted-3 (view)	VIEW	CUDA0
+ffn_moe_weighted-3 (view)	VIEW	CUDA0
+ffn_moe_weighted-3 (view)	VIEW	CUDA0
+ffn_moe_weighted-3 (view)	VIEW	CUDA0
+ffn_moe_weighted-3 (view)	VIEW	CUDA0
+ffn_moe_weighted-3 (view)	VIEW	CUDA0
+node_332	ADD	CUDA0
+node_333	ADD	CUDA0
+node_334	ADD	CUDA0
+node_335	ADD	CUDA0
+node_336	ADD	CUDA0
+node_337	ADD	CUDA0
+ffn_moe_out-3	ADD	CUDA0
+norm-3	RMS_NORM	CUDA0
+ffn_norm_1-3	MUL	CUDA0
+ffn_gate-3	MUL_MAT	CUDA0
+ffn_up-3	MUL_MAT	CUDA0
+ffn_geglu-3	GEGLU	CUDA0
+node_344	MUL_MAT	CUDA0
+norm-3	RMS_NORM	CUDA0
+ffn_mlp-3	MUL	CUDA0
+norm-3	RMS_NORM	CUDA0
+ffn_moe-3	MUL	CUDA0
+ffn_moe_combined-3	ADD	CUDA0
+norm	RMS_NORM	CUDA0
+ffn_post_norm-3	MUL	CUDA0
+node_352	ADD	CUDA0
+l_out-3	MUL	CUDA0
+norm-4	RMS_NORM	CUDA0
+attn_norm-4	MUL	CUDA0
+Qcur-4	MUL_MAT	CUDA0
+Qcur-4 (reshaped)	RESHAPE	CUDA0
+norm-4	RMS_NORM	CUDA0
+Qcur_normed-4	MUL	CUDA0
+Qcur_pos-4	ROPE	CUDA0
+Kcur-4	MUL_MAT	CUDA0
+Kcur-4 (reshaped)	RESHAPE	CUDA0
+norm-4	RMS_NORM	CUDA0
+Kcur_normed-4	MUL	CUDA0
+Kcur_pos-4	ROPE	CUDA0
+Vcur-4	MUL_MAT	CUDA0
+Vcur-4 (reshaped)	RESHAPE	CUDA0
+Vcur_normed-4	RMS_NORM	CUDA0
+Kcur_pos-4 (view)	VIEW	CUDA0
+cache_k_l4 (view)	SET_ROWS	CUDA0
+Vcur_normed-4 (view)	VIEW	CUDA0
+cache_v_l4 (view)	SET_ROWS	CUDA0
+Qcur_pos-4 (view)	VIEW	CUDA0
+Qcur_pos-4 (view) (permuted)	PERMUTE	CUDA0
+cache_k_l4 (view)	VIEW	CUDA0
+cache_k_l4 (view) (permuted)	PERMUTE	CUDA0
+cache_v_l4 (view)	VIEW	CUDA0
+cache_v_l4 (view) (permuted)	PERMUTE	CUDA0
+node_379	FLASH_ATTN_EXT	CUDA0
+kqv_out-4	RESHAPE	CUDA0
+node_381	MUL_MAT	CUDA0
+norm-4	RMS_NORM	CUDA0
+attn_post_norm-4	MUL	CUDA0
+attn_out-4	ADD	CUDA0
+node_385	RMS_NORM	CUDA0
+node_386	SCALE	CUDA0
+node_387	MUL	CUDA0
+ffn_moe_logits-4	MUL_MAT	CUDA0
+ffn_moe_probs-4	SOFT_MAX	CUDA0
+ffn_moe_probs-4 (reshaped)	RESHAPE	CUDA0
+ffn_moe_argsort-4	ARGSORT	CUDA0
+ffn_moe_topk-4	VIEW	CUDA0
+ffn_moe_weights-4	GET_ROWS	CUDA0
+ffn_moe_weights-4 (reshaped)	RESHAPE	CUDA0
+ffn_moe_weights_sum-4	SUM_ROWS	CUDA0
+ffn_moe_weights_sum_clamped-4	CLAMP	CUDA0
+ffn_moe_weights_norm-4	DIV	CUDA0
+ffn_moe_weights_norm-4 (reshaped)	RESHAPE	CUDA0
+norm-4	RMS_NORM	CUDA0
+ffn_norm_2-4	MUL	CUDA0
+ffn_norm_2-4 (reshaped)	RESHAPE	CUDA0
+ffn_moe_gate_up-4	MUL_MAT_ID	CPU
+ffn_moe_gate-4	VIEW	CPU
+ffn_moe_up-4	VIEW	CPU
+ffn_moe_geglu-4	GEGLU	CPU
+node_406	MUL_MAT_ID	CPU
+blk.4.ffn_down_exps.scale (reshaped)	RESHAPE	CPU
+node_408	REPEAT	CUDA0
+node_409	GET_ROWS	CUDA0
+ffn_moe_down-4	MUL	CUDA0
+ffn_moe_weighted-4	MUL	CUDA0
+ffn_moe_weighted-4 (view)	VIEW	CUDA0
+ffn_moe_weighted-4 (view)	VIEW	CUDA0
+ffn_moe_weighted-4 (view)	VIEW	CUDA0
+ffn_moe_weighted-4 (view)	VIEW	CUDA0
+ffn_moe_weighted-4 (view)	VIEW	CUDA0
+ffn_moe_weighted-4 (view)	VIEW	CUDA0
+ffn_moe_weighted-4 (view)	VIEW	CUDA0
+ffn_moe_weighted-4 (view)	VIEW	CUDA0
+node_420	ADD	CUDA0
+node_421	ADD	CUDA0
+node_422	ADD	CUDA0
+node_423	ADD	CUDA0
+node_424	ADD	CUDA0
+node_425	ADD	CUDA0
+ffn_moe_out-4	ADD	CUDA0
+norm-4	RMS_NORM	CUDA0
+ffn_norm_1-4	MUL	CUDA0
+ffn_gate-4	MUL_MAT	CUDA0
+ffn_up-4	MUL_MAT	CUDA0
+ffn_geglu-4	GEGLU	CUDA0
+node_432	MUL_MAT	CUDA0
+norm-4	RMS_NORM	CUDA0
+ffn_mlp-4	MUL	CUDA0
+norm-4	RMS_NORM	CUDA0
+ffn_moe-4	MUL	CUDA0
+ffn_moe_combined-4	ADD	CUDA0
+norm	RMS_NORM	CUDA0
+ffn_post_norm-4	MUL	CUDA0
+node_440	ADD	CUDA0
+l_out-4	MUL	CUDA0
+norm-5	RMS_NORM	CUDA0
+attn_norm-5	MUL	CUDA0
+Qcur-5	MUL_MAT	CUDA0
+Qcur-5 (reshaped)	RESHAPE	CUDA0
+norm-5	RMS_NORM	CUDA0
+Qcur_normed-5	MUL	CUDA0
+Qcur_pos-5	ROPE	CUDA0
+Vcur-5	MUL_MAT	CUDA0
+Vcur-5 (reshaped)	RESHAPE	CUDA0
+norm-5	RMS_NORM	CUDA0
+Kcur_normed-5	MUL	CUDA0
+Kcur_pos-5	ROPE	CUDA0
+Vcur-5 (reshaped)	RESHAPE	CUDA0
+Vcur_normed-5	RMS_NORM	CUDA0
+Kcur_pos-5 (view)	VIEW	CUDA0
+cache_k_l5 (view)	SET_ROWS	CUDA0
+Vcur_normed-5 (view)	VIEW	CUDA0
+cache_v_l5 (view)	SET_ROWS	CUDA0
+Qcur_pos-5 (view)	VIEW	CUDA0
+Qcur_pos-5 (view) (permuted)	PERMUTE	CUDA0
+cache_k_l5 (view)	VIEW	CUDA0
+cache_k_l5 (view) (permuted)	PERMUTE	CUDA0
+cache_v_l5 (view)	VIEW	CUDA0
+cache_v_l5 (view) (permuted)	PERMUTE	CUDA0
+node_466	FLASH_ATTN_EXT	CUDA0
+kqv_out-5	RESHAPE	CUDA0
+node_468	MUL_MAT	CUDA0
+norm-5	RMS_NORM	CUDA0
+attn_post_norm-5	MUL	CUDA0
+attn_out-5	ADD	CUDA0
+node_472	RMS_NORM	CUDA0
+node_473	SCALE	CUDA0
+node_474	MUL	CUDA0
+ffn_moe_logits-5	MUL_MAT	CUDA0
+ffn_moe_probs-5	SOFT_MAX	CUDA0
+ffn_moe_probs-5 (reshaped)	RESHAPE	CUDA0
+ffn_moe_argsort-5	ARGSORT	CUDA0
+ffn_moe_topk-5	VIEW	CUDA0
+ffn_moe_weights-5	GET_ROWS	CUDA0
+ffn_moe_weights-5 (reshaped)	RESHAPE	CUDA0
+ffn_moe_weights_sum-5	SUM_ROWS	CUDA0
+ffn_moe_weights_sum_clamped-5	CLAMP	CUDA0
+ffn_moe_weights_norm-5	DIV	CUDA0
+ffn_moe_weights_norm-5 (reshaped)	RESHAPE	CUDA0
+norm-5	RMS_NORM	CUDA0
+ffn_norm_2-5	MUL	CUDA0
+ffn_norm_2-5 (reshaped)	RESHAPE	CUDA0
+ffn_moe_gate_up-5	MUL_MAT_ID	CPU
+ffn_moe_gate-5	VIEW	CPU
+ffn_moe_up-5	VIEW	CPU
+ffn_moe_geglu-5	GEGLU	CPU
+node_493	MUL_MAT_ID	CPU
+blk.5.ffn_down_exps.scale (reshaped)	RESHAPE	CPU
+node_495	REPEAT	CUDA0
+node_496	GET_ROWS	CUDA0
+ffn_moe_down-5	MUL	CUDA0
+ffn_moe_weighted-5	MUL	CUDA0
+ffn_moe_weighted-5 (view)	VIEW	CUDA0
+ffn_moe_weighted-5 (view)	VIEW	CUDA0
+ffn_moe_weighted-5 (view)	VIEW	CUDA0
+ffn_moe_weighted-5 (view)	VIEW	CUDA0
+ffn_moe_weighted-5 (view)	VIEW	CUDA0
+ffn_moe_weighted-5 (view)	VIEW	CUDA0
+ffn_moe_weighted-5 (view)	VIEW	CUDA0
+ffn_moe_weighted-5 (view)	VIEW	CUDA0
+node_507	ADD	CUDA0
+node_508	ADD	CUDA0
+node_509	ADD	CUDA0
+node_510	ADD	CUDA0
+node_511	ADD	CUDA0
+node_512	ADD	CUDA0
+ffn_moe_out-5	ADD	CUDA0
+norm-5	RMS_NORM	CUDA0
+ffn_norm_1-5	MUL	CUDA0
+ffn_gate-5	MUL_MAT	CUDA0
+ffn_up-5	MUL_MAT	CUDA0
+ffn_geglu-5	GEGLU	CUDA0
+node_519	MUL_MAT	CUDA0
+norm-5	RMS_NORM	CUDA0
+ffn_mlp-5	MUL	CUDA0
+norm-5	RMS_NORM	CUDA0
+ffn_moe-5	MUL	CUDA0
+ffn_moe_combined-5	ADD	CUDA0
+norm	RMS_NORM	CUDA0
+ffn_post_norm-5	MUL	CUDA0
+node_527	ADD	CUDA0
+l_out-5	MUL	CUDA0
+norm-6	RMS_NORM	CUDA0
+attn_norm-6	MUL	CUDA0
+Qcur-6	MUL_MAT	CUDA0
+Qcur-6 (reshaped)	RESHAPE	CUDA0
+norm-6	RMS_NORM	CUDA0
+Qcur_normed-6	MUL	CUDA0
+Qcur_pos-6	ROPE	CUDA0
+Kcur-6	MUL_MAT	CUDA0
+Kcur-6 (reshaped)	RESHAPE	CUDA0
+norm-6	RMS_NORM	CUDA0
+Kcur_normed-6	MUL	CUDA0
+Kcur_pos-6	ROPE	CUDA0
+Vcur-6	MUL_MAT	CUDA0
+Vcur-6 (reshaped)	RESHAPE	CUDA0
+Vcur_normed-6	RMS_NORM	CUDA0
+Kcur_pos-6 (view)	VIEW	CUDA0
+cache_k_l6 (view)	SET_ROWS	CUDA0
+Vcur_normed-6 (view)	VIEW	CUDA0
+cache_v_l6 (view)	SET_ROWS	CUDA0
+Qcur_pos-6 (view)	VIEW	CUDA0
+Qcur_pos-6 (view) (permuted)	PERMUTE	CUDA0
+cache_k_l6 (view)	VIEW	CUDA0
+cache_k_l6 (view) (permuted)	PERMUTE	CUDA0
+cache_v_l6 (view)	VIEW	CUDA0
+cache_v_l6 (view) (permuted)	PERMUTE	CUDA0
+node_554	FLASH_ATTN_EXT	CUDA0
+kqv_out-6	RESHAPE	CUDA0
+node_556	MUL_MAT	CUDA0
+norm-6	RMS_NORM	CUDA0
+attn_post_norm-6	MUL	CUDA0
+attn_out-6	ADD	CUDA0
+node_560	RMS_NORM	CUDA0
+node_561	SCALE	CUDA0
+node_562	MUL	CUDA0
+ffn_moe_logits-6	MUL_MAT	CUDA0
+ffn_moe_probs-6	SOFT_MAX	CUDA0
+ffn_moe_probs-6 (reshaped)	RESHAPE	CUDA0
+ffn_moe_argsort-6	ARGSORT	CUDA0
+ffn_moe_topk-6	VIEW	CUDA0
+ffn_moe_weights-6	GET_ROWS	CUDA0
+ffn_moe_weights-6 (reshaped)	RESHAPE	CUDA0
+ffn_moe_weights_sum-6	SUM_ROWS	CUDA0
+ffn_moe_weights_sum_clamped-6	CLAMP	CUDA0
+ffn_moe_weights_norm-6	DIV	CUDA0
+ffn_moe_weights_norm-6 (reshaped)	RESHAPE	CUDA0
+norm-6	RMS_NORM	CUDA0
+ffn_norm_2-6	MUL	CUDA0
+ffn_norm_2-6 (reshaped)	RESHAPE	CUDA0
+ffn_moe_gate_up-6	MUL_MAT_ID	CPU
+ffn_moe_gate-6	VIEW	CPU
+ffn_moe_up-6	VIEW	CPU
+ffn_moe_geglu-6	GEGLU	CPU
+node_581	MUL_MAT_ID	CPU
+blk.6.ffn_down_exps.scale (reshaped)	RESHAPE	CPU
+node_583	REPEAT	CUDA0
+node_584	GET_ROWS	CUDA0
+ffn_moe_down-6	MUL	CUDA0
+ffn_moe_weighted-6	MUL	CUDA0
+ffn_moe_weighted-6 (view)	VIEW	CUDA0
+ffn_moe_weighted-6 (view)	VIEW	CUDA0
+ffn_moe_weighted-6 (view)	VIEW	CUDA0
+ffn_moe_weighted-6 (view)	VIEW	CUDA0
+ffn_moe_weighted-6 (view)	VIEW	CUDA0
+ffn_moe_weighted-6 (view)	VIEW	CUDA0
+ffn_moe_weighted-6 (view)	VIEW	CUDA0
+ffn_moe_weighted-6 (view)	VIEW	CUDA0
+node_595	ADD	CUDA0
+node_596	ADD	CUDA0
+node_597	ADD	CUDA0
+node_598	ADD	CUDA0
+node_599	ADD	CUDA0
+node_600	ADD	CUDA0
+ffn_moe_out-6	ADD	CUDA0
+norm-6	RMS_NORM	CUDA0
+ffn_norm_1-6	MUL	CUDA0
+ffn_gate-6	MUL_MAT	CUDA0
+ffn_up-6	MUL_MAT	CUDA0
+ffn_geglu-6	GEGLU	CUDA0
+node_607	MUL_MAT	CUDA0
+norm-6	RMS_NORM	CUDA0
+ffn_mlp-6	MUL	CUDA0
+norm-6	RMS_NORM	CUDA0
+ffn_moe-6	MUL	CUDA0
+ffn_moe_combined-6	ADD	CUDA0
+norm	RMS_NORM	CUDA0
+ffn_post_norm-6	MUL	CUDA0
+node_615	ADD	CUDA0
+l_out-6	MUL	CUDA0
+norm-7	RMS_NORM	CUDA0
+attn_norm-7	MUL	CUDA0
+Qcur-7	MUL_MAT	CUDA0
+Qcur-7 (reshaped)	RESHAPE	CUDA0
+norm-7	RMS_NORM	CUDA0
+Qcur_normed-7	MUL	CUDA0
+Qcur_pos-7	ROPE	CUDA0
+Kcur-7	MUL_MAT	CUDA0
+Kcur-7 (reshaped)	RESHAPE	CUDA0
+norm-7	RMS_NORM	CUDA0
+Kcur_normed-7	MUL	CUDA0
+Kcur_pos-7	ROPE	CUDA0
+Vcur-7	MUL_MAT	CUDA0
+Vcur-7 (reshaped)	RESHAPE	CUDA0
+Vcur_normed-7	RMS_NORM	CUDA0
+Kcur_pos-7 (view)	VIEW	CUDA0
+cache_k_l7 (view)	SET_ROWS	CUDA0
+Vcur_normed-7 (view)	VIEW	CUDA0
+cache_v_l7 (view)	SET_ROWS	CUDA0
+Qcur_pos-7 (view)	VIEW	CUDA0
+Qcur_pos-7 (view) (permuted)	PERMUTE	CUDA0
+cache_k_l7 (view)	VIEW	CUDA0
+cache_k_l7 (view) (permuted)	PERMUTE	CUDA0
+cache_v_l7 (view)	VIEW	CUDA0
+cache_v_l7 (view) (permuted)	PERMUTE	CUDA0
+node_642	FLASH_ATTN_EXT	CUDA0
+kqv_out-7	RESHAPE	CUDA0
+node_644	MUL_MAT	CUDA0
+norm-7	RMS_NORM	CUDA0
+attn_post_norm-7	MUL	CUDA0
+attn_out-7	ADD	CUDA0
+node_648	RMS_NORM	CUDA0
+node_649	SCALE	CUDA0
+node_650	MUL	CUDA0
+ffn_moe_logits-7	MUL_MAT	CUDA0
+ffn_moe_probs-7	SOFT_MAX	CUDA0
+ffn_moe_probs-7 (reshaped)	RESHAPE	CUDA0
+ffn_moe_argsort-7	ARGSORT	CUDA0
+ffn_moe_topk-7	VIEW	CUDA0
+ffn_moe_weights-7	GET_ROWS	CUDA0
+ffn_moe_weights-7 (reshaped)	RESHAPE	CUDA0
+ffn_moe_weights_sum-7	SUM_ROWS	CUDA0
+ffn_moe_weights_sum_clamped-7	CLAMP	CUDA0
+ffn_moe_weights_norm-7	DIV	CUDA0
+ffn_moe_weights_norm-7 (reshaped)	RESHAPE	CUDA0
+norm-7	RMS_NORM	CUDA0
+ffn_norm_2-7	MUL	CUDA0
+ffn_norm_2-7 (reshaped)	RESHAPE	CUDA0
+ffn_moe_gate_up-7	MUL_MAT_ID	CPU
+ffn_moe_gate-7	VIEW	CPU
+ffn_moe_up-7	VIEW	CPU
+ffn_moe_geglu-7	GEGLU	CPU
+node_669	MUL_MAT_ID	CPU
+blk.7.ffn_down_exps.scale (reshaped)	RESHAPE	CPU
+node_671	REPEAT	CUDA0
+node_672	GET_ROWS	CUDA0
+ffn_moe_down-7	MUL	CUDA0
+ffn_moe_weighted-7	MUL	CUDA0
+ffn_moe_weighted-7 (view)	VIEW	CUDA0
+ffn_moe_weighted-7 (view)	VIEW	CUDA0
+ffn_moe_weighted-7 (view)	VIEW	CUDA0
+ffn_moe_weighted-7 (view)	VIEW	CUDA0
+ffn_moe_weighted-7 (view)	VIEW	CUDA0
+ffn_moe_weighted-7 (view)	VIEW	CUDA0
+ffn_moe_weighted-7 (view)	VIEW	CUDA0
+ffn_moe_weighted-7 (view)	VIEW	CUDA0
+node_683	ADD	CUDA0
+node_684	ADD	CUDA0
+node_685	ADD	CUDA0
+node_686	ADD	CUDA0
+node_687	ADD	CUDA0
+node_688	ADD	CUDA0
+ffn_moe_out-7	ADD	CUDA0
+norm-7	RMS_NORM	CUDA0
+ffn_norm_1-7	MUL	CUDA0
+ffn_gate-7	MUL_MAT	CUDA0
+ffn_up-7	MUL_MAT	CUDA0
+ffn_geglu-7	GEGLU	CUDA0
+node_695	MUL_MAT	CUDA0
+norm-7	RMS_NORM	CUDA0
+ffn_mlp-7	MUL	CUDA0
+norm-7	RMS_NORM	CUDA0
+ffn_moe-7	MUL	CUDA0
+ffn_moe_combined-7	ADD	CUDA0
+norm	RMS_NORM	CUDA0
+ffn_post_norm-7	MUL	CUDA0
+node_703	ADD	CUDA0
+l_out-7	MUL	CUDA0
+norm-8	RMS_NORM	CUDA0
+attn_norm-8	MUL	CUDA0
+Qcur-8	MUL_MAT	CUDA0
+Qcur-8 (reshaped)	RESHAPE	CUDA0
+norm-8	RMS_NORM	CUDA0
+Qcur_normed-8	MUL	CUDA0
+Qcur_pos-8	ROPE	CUDA0
+Kcur-8	MUL_MAT	CUDA0
+Kcur-8 (reshaped)	RESHAPE	CUDA0
+norm-8	RMS_NORM	CUDA0
+Kcur_normed-8	MUL	CUDA0
+Kcur_pos-8	ROPE	CUDA0
+Vcur-8	MUL_MAT	CUDA0
+Vcur-8 (reshaped)	RESHAPE	CUDA0
+Vcur_normed-8	RMS_NORM	CUDA0
+Kcur_pos-8 (view)	VIEW	CUDA0
+cache_k_l8 (view)	SET_ROWS	CUDA0
+Vcur_normed-8 (view)	VIEW	CUDA0
+cache_v_l8 (view)	SET_ROWS	CUDA0
+Qcur_pos-8 (view)	VIEW	CUDA0
+Qcur_pos-8 (view) (permuted)	PERMUTE	CUDA0
+cache_k_l8 (view)	VIEW	CUDA0
+cache_k_l8 (view) (permuted)	PERMUTE	CUDA0
+cache_v_l8 (view)	VIEW	CUDA0
+cache_v_l8 (view) (permuted)	PERMUTE	CUDA0
+node_730	FLASH_ATTN_EXT	CUDA0
+kqv_out-8	RESHAPE	CUDA0
+node_732	MUL_MAT	CUDA0
+norm-8	RMS_NORM	CUDA0
+attn_post_norm-8	MUL	CUDA0
+attn_out-8	ADD	CUDA0
+node_736	RMS_NORM	CUDA0
+node_737	SCALE	CUDA0
+node_738	MUL	CUDA0
+ffn_moe_logits-8	MUL_MAT	CUDA0
+ffn_moe_probs-8	SOFT_MAX	CUDA0
+ffn_moe_probs-8 (reshaped)	RESHAPE	CUDA0
+ffn_moe_argsort-8	ARGSORT	CUDA0
+ffn_moe_topk-8	VIEW	CUDA0
+ffn_moe_weights-8	GET_ROWS	CUDA0
+ffn_moe_weights-8 (reshaped)	RESHAPE	CUDA0
+ffn_moe_weights_sum-8	SUM_ROWS	CUDA0
+ffn_moe_weights_sum_clamped-8	CLAMP	CUDA0
+ffn_moe_weights_norm-8	DIV	CUDA0
+ffn_moe_weights_norm-8 (reshaped)	RESHAPE	CUDA0
+norm-8	RMS_NORM	CUDA0
+ffn_norm_2-8	MUL	CUDA0
+ffn_norm_2-8 (reshaped)	RESHAPE	CUDA0
+ffn_moe_gate_up-8	MUL_MAT_ID	CPU
+ffn_moe_gate-8	VIEW	CPU
+ffn_moe_up-8	VIEW	CPU
+ffn_moe_geglu-8	GEGLU	CPU
+node_757	MUL_MAT_ID	CPU
+blk.8.ffn_down_exps.scale (reshaped)	RESHAPE	CPU
+node_759	REPEAT	CUDA0
+node_760	GET_ROWS	CUDA0
+ffn_moe_down-8	MUL	CUDA0
+ffn_moe_weighted-8	MUL	CUDA0
+ffn_moe_weighted-8 (view)	VIEW	CUDA0
+ffn_moe_weighted-8 (view)	VIEW	CUDA0
+ffn_moe_weighted-8 (view)	VIEW	CUDA0
+ffn_moe_weighted-8 (view)	VIEW	CUDA0
+ffn_moe_weighted-8 (view)	VIEW	CUDA0
+ffn_moe_weighted-8 (view)	VIEW	CUDA0
+ffn_moe_weighted-8 (view)	VIEW	CUDA0
+ffn_moe_weighted-8 (view)	VIEW	CUDA0
+node_771	ADD	CUDA0
+node_772	ADD	CUDA0
+node_773	ADD	CUDA0
+node_774	ADD	CUDA0
+node_775	ADD	CUDA0
+node_776	ADD	CUDA0
+ffn_moe_out-8	ADD	CUDA0
+norm-8	RMS_NORM	CUDA0
+ffn_norm_1-8	MUL	CUDA0
+ffn_gate-8	MUL_MAT	CUDA0
+ffn_up-8	MUL_MAT	CUDA0
+ffn_geglu-8	GEGLU	CUDA0
+node_783	MUL_MAT	CUDA0
+norm-8	RMS_NORM	CUDA0
+ffn_mlp-8	MUL	CUDA0
+norm-8	RMS_NORM	CUDA0
+ffn_moe-8	MUL	CUDA0
+ffn_moe_combined-8	ADD	CUDA0
+norm	RMS_NORM	CUDA0
+ffn_post_norm-8	MUL	CUDA0
+node_791	ADD	CUDA0
+l_out-8	MUL	CUDA0
+norm-9	RMS_NORM	CUDA0
+attn_norm-9	MUL	CUDA0
+Qcur-9	MUL_MAT	CUDA0
+Qcur-9 (reshaped)	RESHAPE	CUDA0
+norm-9	RMS_NORM	CUDA0
+Qcur_normed-9	MUL	CUDA0
+Qcur_pos-9	ROPE	CUDA0
+Kcur-9	MUL_MAT	CUDA0
+Kcur-9 (reshaped)	RESHAPE	CUDA0
+norm-9	RMS_NORM	CUDA0
+Kcur_normed-9	MUL	CUDA0
+Kcur_pos-9	ROPE	CUDA0
+Vcur-9	MUL_MAT	CUDA0
+Vcur-9 (reshaped)	RESHAPE	CUDA0
+Vcur_normed-9	RMS_NORM	CUDA0
+Kcur_pos-9 (view)	VIEW	CUDA0
+cache_k_l9 (view)	SET_ROWS	CUDA0
+Vcur_normed-9 (view)	VIEW	CUDA0
+cache_v_l9 (view)	SET_ROWS	CUDA0
+Qcur_pos-9 (view)	VIEW	CUDA0
+Qcur_pos-9 (view) (permuted)	PERMUTE	CUDA0
+cache_k_l9 (view)	VIEW	CUDA0
+cache_k_l9 (view) (permuted)	PERMUTE	CUDA0
+cache_v_l9 (view)	VIEW	CUDA0
+cache_v_l9 (view) (permuted)	PERMUTE	CUDA0
+node_818	FLASH_ATTN_EXT	CUDA0
+kqv_out-9	RESHAPE	CUDA0
+node_820	MUL_MAT	CUDA0
+norm-9	RMS_NORM	CUDA0
+attn_post_norm-9	MUL	CUDA0
+attn_out-9	ADD	CUDA0
+node_824	RMS_NORM	CUDA0
+node_825	SCALE	CUDA0
+node_826	MUL	CUDA0
+ffn_moe_logits-9	MUL_MAT	CUDA0
+ffn_moe_probs-9	SOFT_MAX	CUDA0
+ffn_moe_probs-9 (reshaped)	RESHAPE	CUDA0
+ffn_moe_argsort-9	ARGSORT	CUDA0
+ffn_moe_topk-9	VIEW	CUDA0
+ffn_moe_weights-9	GET_ROWS	CUDA0
+ffn_moe_weights-9 (reshaped)	RESHAPE	CUDA0
+ffn_moe_weights_sum-9	SUM_ROWS	CUDA0
+ffn_moe_weights_sum_clamped-9	CLAMP	CUDA0
+ffn_moe_weights_norm-9	DIV	CUDA0
+ffn_moe_weights_norm-9 (reshaped)	RESHAPE	CUDA0
+norm-9	RMS_NORM	CUDA0
+ffn_norm_2-9	MUL	CUDA0
+ffn_norm_2-9 (reshaped)	RESHAPE	CUDA0
+ffn_moe_gate_up-9	MUL_MAT_ID	CPU
+ffn_moe_gate-9	VIEW	CPU
+ffn_moe_up-9	VIEW	CPU
+ffn_moe_geglu-9	GEGLU	CPU
+node_845	MUL_MAT_ID	CPU
+blk.9.ffn_down_exps.scale (reshaped)	RESHAPE	CPU
+node_847	REPEAT	CUDA0
+node_848	GET_ROWS	CUDA0
+ffn_moe_down-9	MUL	CUDA0
+ffn_moe_weighted-9	MUL	CUDA0
+ffn_moe_weighted-9 (view)	VIEW	CUDA0
+ffn_moe_weighted-9 (view)	VIEW	CUDA0
+ffn_moe_weighted-9 (view)	VIEW	CUDA0
+ffn_moe_weighted-9 (view)	VIEW	CUDA0
+ffn_moe_weighted-9 (view)	VIEW	CUDA0
+ffn_moe_weighted-9 (view)	VIEW	CUDA0
+ffn_moe_weighted-9 (view)	VIEW	CUDA0
+ffn_moe_weighted-9 (view)	VIEW	CUDA0
+node_859	ADD	CUDA0
+node_860	ADD	CUDA0
+node_861	ADD	CUDA0
+node_862	ADD	CUDA0
+node_863	ADD	CUDA0
+node_864	ADD	CUDA0
+ffn_moe_out-9	ADD	CUDA0
+norm-9	RMS_NORM	CUDA0
+ffn_norm_1-9	MUL	CUDA0
+ffn_gate-9	MUL_MAT	CUDA0
+ffn_up-9	MUL_MAT	CUDA0
+ffn_geglu-9	GEGLU	CUDA0
+node_871	MUL_MAT	CUDA0
+norm-9	RMS_NORM	CUDA0
+ffn_mlp-9	MUL	CUDA0
+norm-9	RMS_NORM	CUDA0
+ffn_moe-9	MUL	CUDA0
+ffn_moe_combined-9	ADD	CUDA0
+norm	RMS_NORM	CUDA0
+ffn_post_norm-9	MUL	CUDA0
+node_879	ADD	CUDA0
+l_out-9	MUL	CUDA0
+norm-10	RMS_NORM	CUDA0
+attn_norm-10	MUL	CUDA0
+Qcur-10	MUL_MAT	CUDA0
+Qcur-10 (reshaped)	RESHAPE	CUDA0
+norm-10	RMS_NORM	CUDA0
+Qcur_normed-10	MUL	CUDA0
+Qcur_pos-10	ROPE	CUDA0
+Kcur-10	MUL_MAT	CUDA0
+Kcur-10 (reshaped)	RESHAPE	CUDA0
+norm-10	RMS_NORM	CUDA0
+Kcur_normed-10	MUL	CUDA0
+Kcur_pos-10	ROPE	CUDA0
+Vcur-10	MUL_MAT	CUDA0
+Vcur-10 (reshaped)	RESHAPE	CUDA0
+Vcur_normed-10	RMS_NORM	CUDA0
+Kcur_pos-10 (view)	VIEW	CUDA0
+cache_k_l10 (view)	SET_ROWS	CUDA0
+Vcur_normed-10 (view)	VIEW	CUDA0
+cache_v_l10 (view)	SET_ROWS	CUDA0
+Qcur_pos-10 (view)	VIEW	CUDA0
+Qcur_pos-10 (view) (permuted)	PERMUTE	CUDA0
+cache_k_l10 (view)	VIEW	CUDA0
+cache_k_l10 (view) (permuted)	PERMUTE	CUDA0
+cache_v_l10 (view)	VIEW	CUDA0
+cache_v_l10 (view) (permuted)	PERMUTE	CUDA0
+node_906	FLASH_ATTN_EXT	CUDA0
+kqv_out-10	RESHAPE	CUDA0
+node_908	MUL_MAT	CUDA0
+norm-10	RMS_NORM	CUDA0
+attn_post_norm-10	MUL	CUDA0
+attn_out-10	ADD	CUDA0
+node_912	RMS_NORM	CUDA0
+node_913	SCALE	CUDA0
+node_914	MUL	CUDA0
+ffn_moe_logits-10	MUL_MAT	CUDA0
+ffn_moe_probs-10	SOFT_MAX	CUDA0
+ffn_moe_probs-10 (reshaped)	RESHAPE	CUDA0
+ffn_moe_argsort-10	ARGSORT	CUDA0
+ffn_moe_topk-10	VIEW	CUDA0
+ffn_moe_weights-10	GET_ROWS	CUDA0
+ffn_moe_weights-10 (reshaped)	RESHAPE	CUDA0
+ffn_moe_weights_sum-10	SUM_ROWS	CUDA0
+ffn_moe_weights_sum_clamped-10	CLAMP	CUDA0
+ffn_moe_weights_norm-10	DIV	CUDA0
+ffn_moe_weights_norm-10 (reshaped)	RESHAPE	CUDA0
+norm-10	RMS_NORM	CUDA0
+ffn_norm_2-10	MUL	CUDA0
+ffn_norm_2-10 (reshaped)	RESHAPE	CUDA0
+ffn_moe_gate_up-10	MUL_MAT_ID	CPU
+ffn_moe_gate-10	VIEW	CPU
+ffn_moe_up-10	VIEW	CPU
+ffn_moe_geglu-10	GEGLU	CPU
+node_933	MUL_MAT_ID	CPU
+blk.10.ffn_down_exps.scale (reshaped)	RESHAPE	CPU
+node_935	REPEAT	CUDA0
+node_936	GET_ROWS	CUDA0
+ffn_moe_down-10	MUL	CUDA0
+ffn_moe_weighted-10	MUL	CUDA0
+ffn_moe_weighted-10 (view)	VIEW	CUDA0
+ffn_moe_weighted-10 (view)	VIEW	CUDA0
+ffn_moe_weighted-10 (view)	VIEW	CUDA0
+ffn_moe_weighted-10 (view)	VIEW	CUDA0
+ffn_moe_weighted-10 (view)	VIEW	CUDA0
+ffn_moe_weighted-10 (view)	VIEW	CUDA0
+ffn_moe_weighted-10 (view)	VIEW	CUDA0
+ffn_moe_weighted-10 (view)	VIEW	CUDA0
+node_947	ADD	CUDA0
+node_948	ADD	CUDA0
+node_949	ADD	CUDA0
+node_950	ADD	CUDA0
+node_951	ADD	CUDA0
+node_952	ADD	CUDA0
+ffn_moe_out-10	ADD	CUDA0
+norm-10	RMS_NORM	CUDA0
+ffn_norm_1-10	MUL	CUDA0
+ffn_gate-10	MUL_MAT	CUDA0
+ffn_up-10	MUL_MAT	CUDA0
+ffn_geglu-10	GEGLU	CUDA0
+node_959	MUL_MAT	CUDA0
+norm-10	RMS_NORM	CUDA0
+ffn_mlp-10	MUL	CUDA0
+norm-10	RMS_NORM	CUDA0
+ffn_moe-10	MUL	CUDA0
+ffn_moe_combined-10	ADD	CUDA0
+norm	RMS_NORM	CUDA0
+ffn_post_norm-10	MUL	CUDA0
+node_967	ADD	CUDA0
+l_out-10	MUL	CUDA0
+norm-11	RMS_NORM	CUDA0
+attn_norm-11	MUL	CUDA0
+Qcur-11	MUL_MAT	CUDA0
+Qcur-11 (reshaped)	RESHAPE	CUDA0
+norm-11	RMS_NORM	CUDA0
+Qcur_normed-11	MUL	CUDA0
+Qcur_pos-11	ROPE	CUDA0
+Vcur-11	MUL_MAT	CUDA0
+Vcur-11 (reshaped)	RESHAPE	CUDA0
+norm-11	RMS_NORM	CUDA0
+Kcur_normed-11	MUL	CUDA0
+Kcur_pos-11	ROPE	CUDA0
+Vcur-11 (reshaped)	RESHAPE	CUDA0
+Vcur_normed-11	RMS_NORM	CUDA0
+Kcur_pos-11 (view)	VIEW	CUDA0
+cache_k_l11 (view)	SET_ROWS	CUDA0
+Vcur_normed-11 (view)	VIEW	CUDA0
+cache_v_l11 (view)	SET_ROWS	CUDA0
+Qcur_pos-11 (view)	VIEW	CUDA0
+Qcur_pos-11 (view) (permuted)	PERMUTE	CUDA0
+cache_k_l11 (view)	VIEW	CUDA0
+cache_k_l11 (view) (permuted)	PERMUTE	CUDA0
+cache_v_l11 (view)	VIEW	CUDA0
+cache_v_l11 (view) (permuted)	PERMUTE	CUDA0
+node_993	FLASH_ATTN_EXT	CUDA0
+kqv_out-11	RESHAPE	CUDA0
+node_995	MUL_MAT	CUDA0
+norm-11	RMS_NORM	CUDA0
+attn_post_norm-11	MUL	CUDA0
+attn_out-11	ADD	CUDA0
+node_999	RMS_NORM	CUDA0
+node_1000	SCALE	CUDA0
+node_1001	MUL	CUDA0
+ffn_moe_logits-11	MUL_MAT	CUDA0
+ffn_moe_probs-11	SOFT_MAX	CUDA0
+ffn_moe_probs-11 (reshaped)	RESHAPE	CUDA0
+ffn_moe_argsort-11	ARGSORT	CUDA0
+ffn_moe_topk-11	VIEW	CUDA0
+ffn_moe_weights-11	GET_ROWS	CUDA0
+ffn_moe_weights-11 (reshaped)	RESHAPE	CUDA0
+ffn_moe_weights_sum-11	SUM_ROWS	CUDA0
+ffn_moe_weights_sum_clamped-11	CLAMP	CUDA0
+ffn_moe_weights_norm-11	DIV	CUDA0
+ffn_moe_weights_norm-11 (reshaped)	RESHAPE	CUDA0
+norm-11	RMS_NORM	CUDA0
+ffn_norm_2-11	MUL	CUDA0
+ffn_norm_2-11 (reshaped)	RESHAPE	CUDA0
+ffn_moe_gate_up-11	MUL_MAT_ID	CPU
+ffn_moe_gate-11	VIEW	CPU
+ffn_moe_up-11	VIEW	CPU
+ffn_moe_geglu-11	GEGLU	CPU
+node_1020	MUL_MAT_ID	CPU
+blk.11.ffn_down_exps.scale (reshaped)	RESHAPE	CPU
+node_1022	REPEAT	CUDA0
+node_1023	GET_ROWS	CUDA0
+ffn_moe_down-11	MUL	CUDA0
+ffn_moe_weighted-11	MUL	CUDA0
+ffn_moe_weighted-11 (view)	VIEW	CUDA0
+ffn_moe_weighted-11 (view)	VIEW	CUDA0
+ffn_moe_weighted-11 (view)	VIEW	CUDA0
+ffn_moe_weighted-11 (view)	VIEW	CUDA0
+ffn_moe_weighted-11 (view)	VIEW	CUDA0
+ffn_moe_weighted-11 (view)	VIEW	CUDA0
+ffn_moe_weighted-11 (view)	VIEW	CUDA0
+ffn_moe_weighted-11 (view)	VIEW	CUDA0
+node_1034	ADD	CUDA0
+node_1035	ADD	CUDA0
+node_1036	ADD	CUDA0
+node_1037	ADD	CUDA0
+node_1038	ADD	CUDA0
+node_1039	ADD	CUDA0
+ffn_moe_out-11	ADD	CUDA0
+norm-11	RMS_NORM	CUDA0
+ffn_norm_1-11	MUL	CUDA0
+ffn_gate-11	MUL_MAT	CUDA0
+ffn_up-11	MUL_MAT	CUDA0
+ffn_geglu-11	GEGLU	CUDA0
+node_1046	MUL_MAT	CUDA0
+norm-11	RMS_NORM	CUDA0
+ffn_mlp-11	MUL	CUDA0
+norm-11	RMS_NORM	CUDA0
+ffn_moe-11	MUL	CUDA0
+ffn_moe_combined-11	ADD	CUDA0
+norm	RMS_NORM	CUDA0
+ffn_post_norm-11	MUL	CUDA0
+node_1054	ADD	CUDA0
+l_out-11	MUL	CUDA0
+norm-12	RMS_NORM	CUDA0
+attn_norm-12	MUL	CUDA0
+Qcur-12	MUL_MAT	CUDA0
+Qcur-12 (reshaped)	RESHAPE	CUDA0
+norm-12	RMS_NORM	CUDA0
+Qcur_normed-12	MUL	CUDA0
+Qcur_pos-12	ROPE	CUDA0
+Kcur-12	MUL_MAT	CUDA0
+Kcur-12 (reshaped)	RESHAPE	CUDA0
+norm-12	RMS_NORM	CUDA0
+Kcur_normed-12	MUL	CUDA0
+Kcur_pos-12	ROPE	CUDA0
+Vcur-12	MUL_MAT	CUDA0
+Vcur-12 (reshaped)	RESHAPE	CUDA0
+Vcur_normed-12	RMS_NORM	CUDA0
+Kcur_pos-12 (view)	VIEW	CUDA0
+cache_k_l12 (view)	SET_ROWS	CUDA0
+Vcur_normed-12 (view)	VIEW	CUDA0
+cache_v_l12 (view)	SET_ROWS	CUDA0
+Qcur_pos-12 (view)	VIEW	CUDA0
+Qcur_pos-12 (view) (permuted)	PERMUTE	CUDA0
+cache_k_l12 (view)	VIEW	CUDA0
+cache_k_l12 (view) (permuted)	PERMUTE	CUDA0
+cache_v_l12 (view)	VIEW	CUDA0
+cache_v_l12 (view) (permuted)	PERMUTE	CUDA0
+node_1081	FLASH_ATTN_EXT	CUDA0
+kqv_out-12	RESHAPE	CUDA0
+node_1083	MUL_MAT	CUDA0
+norm-12	RMS_NORM	CUDA0
+attn_post_norm-12	MUL	CUDA0
+attn_out-12	ADD	CUDA0
+node_1087	RMS_NORM	CUDA0
+node_1088	SCALE	CUDA0
+node_1089	MUL	CUDA0
+ffn_moe_logits-12	MUL_MAT	CUDA0
+ffn_moe_probs-12	SOFT_MAX	CUDA0
+ffn_moe_probs-12 (reshaped)	RESHAPE	CUDA0
+ffn_moe_argsort-12	ARGSORT	CUDA0
+ffn_moe_topk-12	VIEW	CUDA0
+ffn_moe_weights-12	GET_ROWS	CUDA0
+ffn_moe_weights-12 (reshaped)	RESHAPE	CUDA0
+ffn_moe_weights_sum-12	SUM_ROWS	CUDA0
+ffn_moe_weights_sum_clamped-12	CLAMP	CUDA0
+ffn_moe_weights_norm-12	DIV	CUDA0
+ffn_moe_weights_norm-12 (reshaped)	RESHAPE	CUDA0
+norm-12	RMS_NORM	CUDA0
+ffn_norm_2-12	MUL	CUDA0
+ffn_norm_2-12 (reshaped)	RESHAPE	CUDA0
+ffn_moe_gate_up-12	MUL_MAT_ID	CPU
+ffn_moe_gate-12	VIEW	CPU
+ffn_moe_up-12	VIEW	CPU
+ffn_moe_geglu-12	GEGLU	CPU
+node_1108	MUL_MAT_ID	CPU
+blk.12.ffn_down_exps.scale (reshaped)	RESHAPE	CPU
+node_1110	REPEAT	CUDA0
+node_1111	GET_ROWS	CUDA0
+ffn_moe_down-12	MUL	CUDA0
+ffn_moe_weighted-12	MUL	CUDA0
+ffn_moe_weighted-12 (view)	VIEW	CUDA0
+ffn_moe_weighted-12 (view)	VIEW	CUDA0
+ffn_moe_weighted-12 (view)	VIEW	CUDA0
+ffn_moe_weighted-12 (view)	VIEW	CUDA0
+ffn_moe_weighted-12 (view)	VIEW	CUDA0
+ffn_moe_weighted-12 (view)	VIEW	CUDA0
+ffn_moe_weighted-12 (view)	VIEW	CUDA0
+ffn_moe_weighted-12 (view)	VIEW	CUDA0
+node_1122	ADD	CUDA0
+node_1123	ADD	CUDA0
+node_1124	ADD	CUDA0
+node_1125	ADD	CUDA0
+node_1126	ADD	CUDA0
+node_1127	ADD	CUDA0
+ffn_moe_out-12	ADD	CUDA0
+norm-12	RMS_NORM	CUDA0
+ffn_norm_1-12	MUL	CUDA0
+ffn_gate-12	MUL_MAT	CUDA0
+ffn_up-12	MUL_MAT	CUDA0
+ffn_geglu-12	GEGLU	CUDA0
+node_1134	MUL_MAT	CUDA0
+norm-12	RMS_NORM	CUDA0
+ffn_mlp-12	MUL	CUDA0
+norm-12	RMS_NORM	CUDA0
+ffn_moe-12	MUL	CUDA0
+ffn_moe_combined-12	ADD	CUDA0
+norm	RMS_NORM	CUDA0
+ffn_post_norm-12	MUL	CUDA0
+node_1142	ADD	CUDA0
+l_out-12	MUL	CUDA0
+norm-13	RMS_NORM	CUDA0
+attn_norm-13	MUL	CUDA0
+Qcur-13	MUL_MAT	CUDA0
+Qcur-13 (reshaped)	RESHAPE	CUDA0
+norm-13	RMS_NORM	CUDA0
+Qcur_normed-13	MUL	CUDA0
+Qcur_pos-13	ROPE	CUDA0
+Kcur-13	MUL_MAT	CUDA0
+Kcur-13 (reshaped)	RESHAPE	CUDA0
+norm-13	RMS_NORM	CUDA0
+Kcur_normed-13	MUL	CUDA0
+Kcur_pos-13	ROPE	CUDA0
+Vcur-13	MUL_MAT	CUDA0
+Vcur-13 (reshaped)	RESHAPE	CUDA0
+Vcur_normed-13	RMS_NORM	CUDA0
+Kcur_pos-13 (view)	VIEW	CUDA0
+cache_k_l13 (view)	SET_ROWS	CUDA0
+Vcur_normed-13 (view)	VIEW	CUDA0
+cache_v_l13 (view)	SET_ROWS	CUDA0
+Qcur_pos-13 (view)	VIEW	CUDA0
+Qcur_pos-13 (view) (permuted)	PERMUTE	CUDA0
+cache_k_l13 (view)	VIEW	CUDA0
+cache_k_l13 (view) (permuted)	PERMUTE	CUDA0
+cache_v_l13 (view)	VIEW	CUDA0
+cache_v_l13 (view) (permuted)	PERMUTE	CUDA0
+node_1169	FLASH_ATTN_EXT	CUDA0
+kqv_out-13	RESHAPE	CUDA0
+node_1171	MUL_MAT	CUDA0
+norm-13	RMS_NORM	CUDA0
+attn_post_norm-13	MUL	CUDA0
+attn_out-13	ADD	CUDA0
+node_1175	RMS_NORM	CUDA0
+node_1176	SCALE	CUDA0
+node_1177	MUL	CUDA0
+ffn_moe_logits-13	MUL_MAT	CUDA0
+ffn_moe_probs-13	SOFT_MAX	CUDA0
+ffn_moe_probs-13 (reshaped)	RESHAPE	CUDA0
+ffn_moe_argsort-13	ARGSORT	CUDA0
+ffn_moe_topk-13	VIEW	CUDA0
+ffn_moe_weights-13	GET_ROWS	CUDA0
+ffn_moe_weights-13 (reshaped)	RESHAPE	CUDA0
+ffn_moe_weights_sum-13	SUM_ROWS	CUDA0
+ffn_moe_weights_sum_clamped-13	CLAMP	CUDA0
+ffn_moe_weights_norm-13	DIV	CUDA0
+ffn_moe_weights_norm-13 (reshaped)	RESHAPE	CUDA0
+norm-13	RMS_NORM	CUDA0
+ffn_norm_2-13	MUL	CUDA0
+ffn_norm_2-13 (reshaped)	RESHAPE	CUDA0
+ffn_moe_gate_up-13	MUL_MAT_ID	CPU
+ffn_moe_gate-13	VIEW	CPU
+ffn_moe_up-13	VIEW	CPU
+ffn_moe_geglu-13	GEGLU	CPU
+node_1196	MUL_MAT_ID	CPU
+blk.13.ffn_down_exps.scale (reshaped)	RESHAPE	CPU
+node_1198	REPEAT	CUDA0
+node_1199	GET_ROWS	CUDA0
+ffn_moe_down-13	MUL	CUDA0
+ffn_moe_weighted-13	MUL	CUDA0
+ffn_moe_weighted-13 (view)	VIEW	CUDA0
+ffn_moe_weighted-13 (view)	VIEW	CUDA0
+ffn_moe_weighted-13 (view)	VIEW	CUDA0
+ffn_moe_weighted-13 (view)	VIEW	CUDA0
+ffn_moe_weighted-13 (view)	VIEW	CUDA0
+ffn_moe_weighted-13 (view)	VIEW	CUDA0
+ffn_moe_weighted-13 (view)	VIEW	CUDA0
+ffn_moe_weighted-13 (view)	VIEW	CUDA0
+node_1210	ADD	CUDA0
+node_1211	ADD	CUDA0
+node_1212	ADD	CUDA0
+node_1213	ADD	CUDA0
+node_1214	ADD	CUDA0
+node_1215	ADD	CUDA0
+ffn_moe_out-13	ADD	CUDA0
+norm-13	RMS_NORM	CUDA0
+ffn_norm_1-13	MUL	CUDA0
+ffn_gate-13	MUL_MAT	CUDA0
+ffn_up-13	MUL_MAT	CUDA0
+ffn_geglu-13	GEGLU	CUDA0
+node_1222	MUL_MAT	CUDA0
+norm-13	RMS_NORM	CUDA0
+ffn_mlp-13	MUL	CUDA0
+norm-13	RMS_NORM	CUDA0
+ffn_moe-13	MUL	CUDA0
+ffn_moe_combined-13	ADD	CUDA0
+norm	RMS_NORM	CUDA0
+ffn_post_norm-13	MUL	CUDA0
+node_1230	ADD	CUDA0
+l_out-13	MUL	CUDA0
+norm-14	RMS_NORM	CUDA0
+attn_norm-14	MUL	CUDA0
+Qcur-14	MUL_MAT	CUDA0
+Qcur-14 (reshaped)	RESHAPE	CUDA0
+norm-14	RMS_NORM	CUDA0
+Qcur_normed-14	MUL	CUDA0
+Qcur_pos-14	ROPE	CUDA0
+Kcur-14	MUL_MAT	CUDA0
+Kcur-14 (reshaped)	RESHAPE	CUDA0
+norm-14	RMS_NORM	CUDA0
+Kcur_normed-14	MUL	CUDA0
+Kcur_pos-14	ROPE	CUDA0
+Vcur-14	MUL_MAT	CUDA0
+Vcur-14 (reshaped)	RESHAPE	CUDA0
+Vcur_normed-14	RMS_NORM	CUDA0
+Kcur_pos-14 (view)	VIEW	CUDA0
+cache_k_l14 (view)	SET_ROWS	CUDA0
+Vcur_normed-14 (view)	VIEW	CUDA0
+cache_v_l14 (view)	SET_ROWS	CUDA0
+Qcur_pos-14 (view)	VIEW	CUDA0
+Qcur_pos-14 (view) (permuted)	PERMUTE	CUDA0
+cache_k_l14 (view)	VIEW	CUDA0
+cache_k_l14 (view) (permuted)	PERMUTE	CUDA0
+cache_v_l14 (view)	VIEW	CUDA0
+cache_v_l14 (view) (permuted)	PERMUTE	CUDA0
+node_1257	FLASH_ATTN_EXT	CUDA0
+kqv_out-14	RESHAPE	CUDA0
+node_1259	MUL_MAT	CUDA0
+norm-14	RMS_NORM	CUDA0
+attn_post_norm-14	MUL	CUDA0
+attn_out-14	ADD	CUDA0
+node_1263	RMS_NORM	CUDA0
+node_1264	SCALE	CUDA0
+node_1265	MUL	CUDA0
+ffn_moe_logits-14	MUL_MAT	CUDA0
+ffn_moe_probs-14	SOFT_MAX	CUDA0
+ffn_moe_probs-14 (reshaped)	RESHAPE	CUDA0
+ffn_moe_argsort-14	ARGSORT	CUDA0
+ffn_moe_topk-14	VIEW	CUDA0
+ffn_moe_weights-14	GET_ROWS	CUDA0
+ffn_moe_weights-14 (reshaped)	RESHAPE	CUDA0
+ffn_moe_weights_sum-14	SUM_ROWS	CUDA0
+ffn_moe_weights_sum_clamped-14	CLAMP	CUDA0
+ffn_moe_weights_norm-14	DIV	CUDA0
+ffn_moe_weights_norm-14 (reshaped)	RESHAPE	CUDA0
+norm-14	RMS_NORM	CUDA0
+ffn_norm_2-14	MUL	CUDA0
+ffn_norm_2-14 (reshaped)	RESHAPE	CUDA0
+ffn_moe_gate_up-14	MUL_MAT_ID	CPU
+ffn_moe_gate-14	VIEW	CPU
+ffn_moe_up-14	VIEW	CPU
+ffn_moe_geglu-14	GEGLU	CPU
+node_1284	MUL_MAT_ID	CPU
+blk.14.ffn_down_exps.scale (reshaped)	RESHAPE	CPU
+node_1286	REPEAT	CUDA0
+node_1287	GET_ROWS	CUDA0
+ffn_moe_down-14	MUL	CUDA0
+ffn_moe_weighted-14	MUL	CUDA0
+ffn_moe_weighted-14 (view)	VIEW	CUDA0
+ffn_moe_weighted-14 (view)	VIEW	CUDA0
+ffn_moe_weighted-14 (view)	VIEW	CUDA0
+ffn_moe_weighted-14 (view)	VIEW	CUDA0
+ffn_moe_weighted-14 (view)	VIEW	CUDA0
+ffn_moe_weighted-14 (view)	VIEW	CUDA0
+ffn_moe_weighted-14 (view)	VIEW	CUDA0
+ffn_moe_weighted-14 (view)	VIEW	CUDA0
+node_1298	ADD	CUDA0
+node_1299	ADD	CUDA0
+node_1300	ADD	CUDA0
+node_1301	ADD	CUDA0
+node_1302	ADD	CUDA0
+node_1303	ADD	CUDA0
+ffn_moe_out-14	ADD	CUDA0
+norm-14	RMS_NORM	CUDA0
+ffn_norm_1-14	MUL	CUDA0
+ffn_gate-14	MUL_MAT	CUDA0
+ffn_up-14	MUL_MAT	CUDA0
+ffn_geglu-14	GEGLU	CUDA0
+node_1310	MUL_MAT	CUDA0
+norm-14	RMS_NORM	CUDA0
+ffn_mlp-14	MUL	CUDA0
+norm-14	RMS_NORM	CUDA0
+ffn_moe-14	MUL	CUDA0
+ffn_moe_combined-14	ADD	CUDA0
+norm	RMS_NORM	CUDA0
+ffn_post_norm-14	MUL	CUDA0
+node_1318	ADD	CUDA0
+l_out-14	MUL	CUDA0
+norm-15	RMS_NORM	CUDA0
+attn_norm-15	MUL	CUDA0
+Qcur-15	MUL_MAT	CUDA0
+Qcur-15 (reshaped)	RESHAPE	CUDA0
+norm-15	RMS_NORM	CUDA0
+Qcur_normed-15	MUL	CUDA0
+Qcur_pos-15	ROPE	CUDA0
+Kcur-15	MUL_MAT	CUDA0
+Kcur-15 (reshaped)	RESHAPE	CUDA0
+norm-15	RMS_NORM	CUDA0
+Kcur_normed-15	MUL	CUDA0
+Kcur_pos-15	ROPE	CUDA0
+Vcur-15	MUL_MAT	CUDA0
+Vcur-15 (reshaped)	RESHAPE	CUDA0
+Vcur_normed-15	RMS_NORM	CUDA0
+Kcur_pos-15 (view)	VIEW	CUDA0
+cache_k_l15 (view)	SET_ROWS	CUDA0
+Vcur_normed-15 (view)	VIEW	CUDA0
+cache_v_l15 (view)	SET_ROWS	CUDA0
+Qcur_pos-15 (view)	VIEW	CUDA0
+Qcur_pos-15 (view) (permuted)	PERMUTE	CUDA0
+cache_k_l15 (view)	VIEW	CUDA0
+cache_k_l15 (view) (permuted)	PERMUTE	CUDA0
+cache_v_l15 (view)	VIEW	CUDA0
+cache_v_l15 (view) (permuted)	PERMUTE	CUDA0
+node_1345	FLASH_ATTN_EXT	CUDA0
+kqv_out-15	RESHAPE	CUDA0
+node_1347	MUL_MAT	CUDA0
+norm-15	RMS_NORM	CUDA0
+attn_post_norm-15	MUL	CUDA0
+attn_out-15	ADD	CUDA0
+node_1351	RMS_NORM	CUDA0
+node_1352	SCALE	CUDA0
+node_1353	MUL	CUDA0
+ffn_moe_logits-15	MUL_MAT	CUDA0
+ffn_moe_probs-15	SOFT_MAX	CUDA0
+ffn_moe_probs-15 (reshaped)	RESHAPE	CUDA0
+ffn_moe_argsort-15	ARGSORT	CUDA0
+ffn_moe_topk-15	VIEW	CUDA0
+ffn_moe_weights-15	GET_ROWS	CUDA0
+ffn_moe_weights-15 (reshaped)	RESHAPE	CUDA0
+ffn_moe_weights_sum-15	SUM_ROWS	CUDA0
+ffn_moe_weights_sum_clamped-15	CLAMP	CUDA0
+ffn_moe_weights_norm-15	DIV	CUDA0
+ffn_moe_weights_norm-15 (reshaped)	RESHAPE	CUDA0
+norm-15	RMS_NORM	CUDA0
+ffn_norm_2-15	MUL	CUDA0
+ffn_norm_2-15 (reshaped)	RESHAPE	CUDA0
+ffn_moe_gate_up-15	MUL_MAT_ID	CPU
+ffn_moe_gate-15	VIEW	CPU
+ffn_moe_up-15	VIEW	CPU
+ffn_moe_geglu-15	GEGLU	CPU
+node_1372	MUL_MAT_ID	CPU
+blk.15.ffn_down_exps.scale (reshaped)	RESHAPE	CPU
+node_1374	REPEAT	CUDA0
+node_1375	GET_ROWS	CUDA0
+ffn_moe_down-15	MUL	CUDA0
+ffn_moe_weighted-15	MUL	CUDA0
+ffn_moe_weighted-15 (view)	VIEW	CUDA0
+ffn_moe_weighted-15 (view)	VIEW	CUDA0
+ffn_moe_weighted-15 (view)	VIEW	CUDA0
+ffn_moe_weighted-15 (view)	VIEW	CUDA0
+ffn_moe_weighted-15 (view)	VIEW	CUDA0
+ffn_moe_weighted-15 (view)	VIEW	CUDA0
+ffn_moe_weighted-15 (view)	VIEW	CUDA0
+ffn_moe_weighted-15 (view)	VIEW	CUDA0
+node_1386	ADD	CUDA0
+node_1387	ADD	CUDA0
+node_1388	ADD	CUDA0
+node_1389	ADD	CUDA0
+node_1390	ADD	CUDA0
+node_1391	ADD	CUDA0
+ffn_moe_out-15	ADD	CUDA0
+norm-15	RMS_NORM	CUDA0
+ffn_norm_1-15	MUL	CUDA0
+ffn_gate-15	MUL_MAT	CUDA0
+ffn_up-15	MUL_MAT	CUDA0
+ffn_geglu-15	GEGLU	CUDA0
+node_1398	MUL_MAT	CUDA0
+norm-15	RMS_NORM	CUDA0
+ffn_mlp-15	MUL	CUDA0
+norm-15	RMS_NORM	CUDA0
+ffn_moe-15	MUL	CUDA0
+ffn_moe_combined-15	ADD	CUDA0
+norm	RMS_NORM	CUDA0
+ffn_post_norm-15	MUL	CUDA0
+node_1406	ADD	CUDA0
+l_out-15	MUL	CUDA0
+norm-16	RMS_NORM	CUDA0
+attn_norm-16	MUL	CUDA0
+Qcur-16	MUL_MAT	CUDA0
+Qcur-16 (reshaped)	RESHAPE	CUDA0
+norm-16	RMS_NORM	CUDA0
+Qcur_normed-16	MUL	CUDA0
+Qcur_pos-16	ROPE	CUDA0
+Kcur-16	MUL_MAT	CUDA0
+Kcur-16 (reshaped)	RESHAPE	CUDA0
+norm-16	RMS_NORM	CUDA0
+Kcur_normed-16	MUL	CUDA0
+Kcur_pos-16	ROPE	CUDA0
+Vcur-16	MUL_MAT	CUDA0
+Vcur-16 (reshaped)	RESHAPE	CUDA0
+Vcur_normed-16	RMS_NORM	CUDA0
+Kcur_pos-16 (view)	VIEW	CUDA0
+cache_k_l16 (view)	SET_ROWS	CUDA0
+Vcur_normed-16 (view)	VIEW	CUDA0
+cache_v_l16 (view)	SET_ROWS	CUDA0
+Qcur_pos-16 (view)	VIEW	CUDA0
+Qcur_pos-16 (view) (permuted)	PERMUTE	CUDA0
+cache_k_l16 (view)	VIEW	CUDA0
+cache_k_l16 (view) (permuted)	PERMUTE	CUDA0
+cache_v_l16 (view)	VIEW	CUDA0
+cache_v_l16 (view) (permuted)	PERMUTE	CUDA0
+node_1433	FLASH_ATTN_EXT	CUDA0
+kqv_out-16	RESHAPE	CUDA0
+node_1435	MUL_MAT	CUDA0
+norm-16	RMS_NORM	CUDA0
+attn_post_norm-16	MUL	CUDA0
+attn_out-16	ADD	CUDA0
+node_1439	RMS_NORM	CUDA0
+node_1440	SCALE	CUDA0
+node_1441	MUL	CUDA0
+ffn_moe_logits-16	MUL_MAT	CUDA0
+ffn_moe_probs-16	SOFT_MAX	CUDA0
+ffn_moe_probs-16 (reshaped)	RESHAPE	CUDA0
+ffn_moe_argsort-16	ARGSORT	CUDA0
+ffn_moe_topk-16	VIEW	CUDA0
+ffn_moe_weights-16	GET_ROWS	CUDA0
+ffn_moe_weights-16 (reshaped)	RESHAPE	CUDA0
+ffn_moe_weights_sum-16	SUM_ROWS	CUDA0
+ffn_moe_weights_sum_clamped-16	CLAMP	CUDA0
+ffn_moe_weights_norm-16	DIV	CUDA0
+ffn_moe_weights_norm-16 (reshaped)	RESHAPE	CUDA0
+norm-16	RMS_NORM	CUDA0
+ffn_norm_2-16	MUL	CUDA0
+ffn_norm_2-16 (reshaped)	RESHAPE	CUDA0
+ffn_moe_gate_up-16	MUL_MAT_ID	CPU
+ffn_moe_gate-16	VIEW	CPU
+ffn_moe_up-16	VIEW	CPU
+ffn_moe_geglu-16	GEGLU	CPU
+node_1460	MUL_MAT_ID	CPU
+blk.16.ffn_down_exps.scale (reshaped)	RESHAPE	CPU
+node_1462	REPEAT	CUDA0
+node_1463	GET_ROWS	CUDA0
+ffn_moe_down-16	MUL	CUDA0
+ffn_moe_weighted-16	MUL	CUDA0
+ffn_moe_weighted-16 (view)	VIEW	CUDA0
+ffn_moe_weighted-16 (view)	VIEW	CUDA0
+ffn_moe_weighted-16 (view)	VIEW	CUDA0
+ffn_moe_weighted-16 (view)	VIEW	CUDA0
+ffn_moe_weighted-16 (view)	VIEW	CUDA0
+ffn_moe_weighted-16 (view)	VIEW	CUDA0
+ffn_moe_weighted-16 (view)	VIEW	CUDA0
+ffn_moe_weighted-16 (view)	VIEW	CUDA0
+node_1474	ADD	CUDA0
+node_1475	ADD	CUDA0
+node_1476	ADD	CUDA0
+node_1477	ADD	CUDA0
+node_1478	ADD	CUDA0
+node_1479	ADD	CUDA0
+ffn_moe_out-16	ADD	CUDA0
+norm-16	RMS_NORM	CUDA0
+ffn_norm_1-16	MUL	CUDA0
+ffn_gate-16	MUL_MAT	CUDA0
+ffn_up-16	MUL_MAT	CUDA0
+ffn_geglu-16	GEGLU	CUDA0
+node_1486	MUL_MAT	CUDA0
+norm-16	RMS_NORM	CUDA0
+ffn_mlp-16	MUL	CUDA0
+norm-16	RMS_NORM	CUDA0
+ffn_moe-16	MUL	CUDA0
+ffn_moe_combined-16	ADD	CUDA0
+norm	RMS_NORM	CUDA0
+ffn_post_norm-16	MUL	CUDA0
+node_1494	ADD	CUDA0
+l_out-16	MUL	CUDA0
+norm-17	RMS_NORM	CUDA0
+attn_norm-17	MUL	CUDA0
+Qcur-17	MUL_MAT	CUDA0
+Qcur-17 (reshaped)	RESHAPE	CUDA0
+norm-17	RMS_NORM	CUDA0
+Qcur_normed-17	MUL	CUDA0
+Qcur_pos-17	ROPE	CUDA0
+Vcur-17	MUL_MAT	CUDA0
+Vcur-17 (reshaped)	RESHAPE	CUDA0
+norm-17	RMS_NORM	CUDA0
+Kcur_normed-17	MUL	CUDA0
+Kcur_pos-17	ROPE	CUDA0
+Vcur-17 (reshaped)	RESHAPE	CUDA0
+Vcur_normed-17	RMS_NORM	CUDA0
+Kcur_pos-17 (view)	VIEW	CUDA0
+cache_k_l17 (view)	SET_ROWS	CUDA0
+Vcur_normed-17 (view)	VIEW	CUDA0
+cache_v_l17 (view)	SET_ROWS	CUDA0
+Qcur_pos-17 (view)	VIEW	CUDA0
+Qcur_pos-17 (view) (permuted)	PERMUTE	CUDA0
+cache_k_l17 (view)	VIEW	CUDA0
+cache_k_l17 (view) (permuted)	PERMUTE	CUDA0
+cache_v_l17 (view)	VIEW	CUDA0
+cache_v_l17 (view) (permuted)	PERMUTE	CUDA0
+node_1520	FLASH_ATTN_EXT	CUDA0
+kqv_out-17	RESHAPE	CUDA0
+node_1522	MUL_MAT	CUDA0
+norm-17	RMS_NORM	CUDA0
+attn_post_norm-17	MUL	CUDA0
+attn_out-17	ADD	CUDA0
+node_1526	RMS_NORM	CUDA0
+node_1527	SCALE	CUDA0
+node_1528	MUL	CUDA0
+ffn_moe_logits-17	MUL_MAT	CUDA0
+ffn_moe_probs-17	SOFT_MAX	CUDA0
+ffn_moe_probs-17 (reshaped)	RESHAPE	CUDA0
+ffn_moe_argsort-17	ARGSORT	CUDA0
+ffn_moe_topk-17	VIEW	CUDA0
+ffn_moe_weights-17	GET_ROWS	CUDA0
+ffn_moe_weights-17 (reshaped)	RESHAPE	CUDA0
+ffn_moe_weights_sum-17	SUM_ROWS	CUDA0
+ffn_moe_weights_sum_clamped-17	CLAMP	CUDA0
+ffn_moe_weights_norm-17	DIV	CUDA0
+ffn_moe_weights_norm-17 (reshaped)	RESHAPE	CUDA0
+norm-17	RMS_NORM	CUDA0
+ffn_norm_2-17	MUL	CUDA0
+ffn_norm_2-17 (reshaped)	RESHAPE	CUDA0
+ffn_moe_gate_up-17	MUL_MAT_ID	CPU
+ffn_moe_gate-17	VIEW	CPU
+ffn_moe_up-17	VIEW	CPU
+ffn_moe_geglu-17	GEGLU	CPU
+node_1547	MUL_MAT_ID	CPU
+blk.17.ffn_down_exps.scale (reshaped)	RESHAPE	CPU
+node_1549	REPEAT	CUDA0
+node_1550	GET_ROWS	CUDA0
+ffn_moe_down-17	MUL	CUDA0
+ffn_moe_weighted-17	MUL	CUDA0
+ffn_moe_weighted-17 (view)	VIEW	CUDA0
+ffn_moe_weighted-17 (view)	VIEW	CUDA0
+ffn_moe_weighted-17 (view)	VIEW	CUDA0
+ffn_moe_weighted-17 (view)	VIEW	CUDA0
+ffn_moe_weighted-17 (view)	VIEW	CUDA0
+ffn_moe_weighted-17 (view)	VIEW	CUDA0
+ffn_moe_weighted-17 (view)	VIEW	CUDA0
+ffn_moe_weighted-17 (view)	VIEW	CUDA0
+node_1561	ADD	CUDA0
+node_1562	ADD	CUDA0
+node_1563	ADD	CUDA0
+node_1564	ADD	CUDA0
+node_1565	ADD	CUDA0
+node_1566	ADD	CUDA0
+ffn_moe_out-17	ADD	CUDA0
+norm-17	RMS_NORM	CUDA0
+ffn_norm_1-17	MUL	CUDA0
+ffn_gate-17	MUL_MAT	CUDA0
+ffn_up-17	MUL_MAT	CUDA0
+ffn_geglu-17	GEGLU	CUDA0
+node_1573	MUL_MAT	CUDA0
+norm-17	RMS_NORM	CUDA0
+ffn_mlp-17	MUL	CUDA0
+norm-17	RMS_NORM	CUDA0
+ffn_moe-17	MUL	CUDA0
+ffn_moe_combined-17	ADD	CUDA0
+norm	RMS_NORM	CUDA0
+ffn_post_norm-17	MUL	CUDA0
+node_1581	ADD	CUDA0
+l_out-17	MUL	CUDA0
+norm-18	RMS_NORM	CUDA0
+attn_norm-18	MUL	CUDA0
+Qcur-18	MUL_MAT	CUDA0
+Qcur-18 (reshaped)	RESHAPE	CUDA0
+norm-18	RMS_NORM	CUDA0
+Qcur_normed-18	MUL	CUDA0
+Qcur_pos-18	ROPE	CUDA0
+Kcur-18	MUL_MAT	CUDA0
+Kcur-18 (reshaped)	RESHAPE	CUDA0
+norm-18	RMS_NORM	CUDA0
+Kcur_normed-18	MUL	CUDA0
+Kcur_pos-18	ROPE	CUDA0
+Vcur-18	MUL_MAT	CUDA0
+Vcur-18 (reshaped)	RESHAPE	CUDA0
+Vcur_normed-18	RMS_NORM	CUDA0
+Kcur_pos-18 (view)	VIEW	CUDA0
+cache_k_l18 (view)	SET_ROWS	CUDA0
+Vcur_normed-18 (view)	VIEW	CUDA0
+cache_v_l18 (view)	SET_ROWS	CUDA0
+Qcur_pos-18 (view)	VIEW	CUDA0
+Qcur_pos-18 (view) (permuted)	PERMUTE	CUDA0
+cache_k_l18 (view)	VIEW	CUDA0
+cache_k_l18 (view) (permuted)	PERMUTE	CUDA0
+cache_v_l18 (view)	VIEW	CUDA0
+cache_v_l18 (view) (permuted)	PERMUTE	CUDA0
+node_1608	FLASH_ATTN_EXT	CUDA0
+kqv_out-18	RESHAPE	CUDA0
+node_1610	MUL_MAT	CUDA0
+norm-18	RMS_NORM	CUDA0
+attn_post_norm-18	MUL	CUDA0
+attn_out-18	ADD	CUDA0
+node_1614	RMS_NORM	CUDA0
+node_1615	SCALE	CUDA0
+node_1616	MUL	CUDA0
+ffn_moe_logits-18	MUL_MAT	CUDA0
+ffn_moe_probs-18	SOFT_MAX	CUDA0
+ffn_moe_probs-18 (reshaped)	RESHAPE	CUDA0
+ffn_moe_argsort-18	ARGSORT	CUDA0
+ffn_moe_topk-18	VIEW	CUDA0
+ffn_moe_weights-18	GET_ROWS	CUDA0
+ffn_moe_weights-18 (reshaped)	RESHAPE	CUDA0
+ffn_moe_weights_sum-18	SUM_ROWS	CUDA0
+ffn_moe_weights_sum_clamped-18	CLAMP	CUDA0
+ffn_moe_weights_norm-18	DIV	CUDA0
+ffn_moe_weights_norm-18 (reshaped)	RESHAPE	CUDA0
+norm-18	RMS_NORM	CUDA0
+ffn_norm_2-18	MUL	CUDA0
+ffn_norm_2-18 (reshaped)	RESHAPE	CUDA0
+ffn_moe_gate_up-18	MUL_MAT_ID	CPU
+ffn_moe_gate-18	VIEW	CPU
+ffn_moe_up-18	VIEW	CPU
+ffn_moe_geglu-18	GEGLU	CPU
+node_1635	MUL_MAT_ID	CPU
+blk.18.ffn_down_exps.scale (reshaped)	RESHAPE	CPU
+node_1637	REPEAT	CUDA0
+node_1638	GET_ROWS	CUDA0
+ffn_moe_down-18	MUL	CUDA0
+ffn_moe_weighted-18	MUL	CUDA0
+ffn_moe_weighted-18 (view)	VIEW	CUDA0
+ffn_moe_weighted-18 (view)	VIEW	CUDA0
+ffn_moe_weighted-18 (view)	VIEW	CUDA0
+ffn_moe_weighted-18 (view)	VIEW	CUDA0
+ffn_moe_weighted-18 (view)	VIEW	CUDA0
+ffn_moe_weighted-18 (view)	VIEW	CUDA0
+ffn_moe_weighted-18 (view)	VIEW	CUDA0
+ffn_moe_weighted-18 (view)	VIEW	CUDA0
+node_1649	ADD	CUDA0
+node_1650	ADD	CUDA0
+node_1651	ADD	CUDA0
+node_1652	ADD	CUDA0
+node_1653	ADD	CUDA0
+node_1654	ADD	CUDA0
+ffn_moe_out-18	ADD	CUDA0
+norm-18	RMS_NORM	CUDA0
+ffn_norm_1-18	MUL	CUDA0
+ffn_gate-18	MUL_MAT	CUDA0
+ffn_up-18	MUL_MAT	CUDA0
+ffn_geglu-18	GEGLU	CUDA0
+node_1661	MUL_MAT	CUDA0
+norm-18	RMS_NORM	CUDA0
+ffn_mlp-18	MUL	CUDA0
+norm-18	RMS_NORM	CUDA0
+ffn_moe-18	MUL	CUDA0
+ffn_moe_combined-18	ADD	CUDA0
+norm	RMS_NORM	CUDA0
+ffn_post_norm-18	MUL	CUDA0
+node_1669	ADD	CUDA0
+l_out-18	MUL	CUDA0
+norm-19	RMS_NORM	CUDA0
+attn_norm-19	MUL	CUDA0
+Qcur-19	MUL_MAT	CUDA0
+Qcur-19 (reshaped)	RESHAPE	CUDA0
+norm-19	RMS_NORM	CUDA0
+Qcur_normed-19	MUL	CUDA0
+Qcur_pos-19	ROPE	CUDA0
+Kcur-19	MUL_MAT	CUDA0
+Kcur-19 (reshaped)	RESHAPE	CUDA0
+norm-19	RMS_NORM	CUDA0
+Kcur_normed-19	MUL	CUDA0
+Kcur_pos-19	ROPE	CUDA0
+Vcur-19	MUL_MAT	CUDA0
+Vcur-19 (reshaped)	RESHAPE	CUDA0
+Vcur_normed-19	RMS_NORM	CUDA0
+Kcur_pos-19 (view)	VIEW	CUDA0
+cache_k_l19 (view)	SET_ROWS	CUDA0
+Vcur_normed-19 (view)	VIEW	CUDA0
+cache_v_l19 (view)	SET_ROWS	CUDA0
+Qcur_pos-19 (view)	VIEW	CUDA0
+Qcur_pos-19 (view) (permuted)	PERMUTE	CUDA0
+cache_k_l19 (view)	VIEW	CUDA0
+cache_k_l19 (view) (permuted)	PERMUTE	CUDA0
+cache_v_l19 (view)	VIEW	CUDA0
+cache_v_l19 (view) (permuted)	PERMUTE	CUDA0
+node_1696	FLASH_ATTN_EXT	CUDA0
+kqv_out-19	RESHAPE	CUDA0
+node_1698	MUL_MAT	CUDA0
+norm-19	RMS_NORM	CUDA0
+attn_post_norm-19	MUL	CUDA0
+attn_out-19	ADD	CUDA0
+node_1702	RMS_NORM	CUDA0
+node_1703	SCALE	CUDA0
+node_1704	MUL	CUDA0
+ffn_moe_logits-19	MUL_MAT	CUDA0
+ffn_moe_probs-19	SOFT_MAX	CUDA0
+ffn_moe_probs-19 (reshaped)	RESHAPE	CUDA0
+ffn_moe_argsort-19	ARGSORT	CUDA0
+ffn_moe_topk-19	VIEW	CUDA0
+ffn_moe_weights-19	GET_ROWS	CUDA0
+ffn_moe_weights-19 (reshaped)	RESHAPE	CUDA0
+ffn_moe_weights_sum-19	SUM_ROWS	CUDA0
+ffn_moe_weights_sum_clamped-19	CLAMP	CUDA0
+ffn_moe_weights_norm-19	DIV	CUDA0
+ffn_moe_weights_norm-19 (reshaped)	RESHAPE	CUDA0
+norm-19	RMS_NORM	CUDA0
+ffn_norm_2-19	MUL	CUDA0
+ffn_norm_2-19 (reshaped)	RESHAPE	CUDA0
+ffn_moe_gate_up-19	MUL_MAT_ID	CPU
+ffn_moe_gate-19	VIEW	CPU
+ffn_moe_up-19	VIEW	CPU
+ffn_moe_geglu-19	GEGLU	CPU
+node_1723	MUL_MAT_ID	CPU
+blk.19.ffn_down_exps.scale (reshaped)	RESHAPE	CPU
+node_1725	REPEAT	CUDA0
+node_1726	GET_ROWS	CUDA0
+ffn_moe_down-19	MUL	CUDA0
+ffn_moe_weighted-19	MUL	CUDA0
+ffn_moe_weighted-19 (view)	VIEW	CUDA0
+ffn_moe_weighted-19 (view)	VIEW	CUDA0
+ffn_moe_weighted-19 (view)	VIEW	CUDA0
+ffn_moe_weighted-19 (view)	VIEW	CUDA0
+ffn_moe_weighted-19 (view)	VIEW	CUDA0
+ffn_moe_weighted-19 (view)	VIEW	CUDA0
+ffn_moe_weighted-19 (view)	VIEW	CUDA0
+ffn_moe_weighted-19 (view)	VIEW	CUDA0
+node_1737	ADD	CUDA0
+node_1738	ADD	CUDA0
+node_1739	ADD	CUDA0
+node_1740	ADD	CUDA0
+node_1741	ADD	CUDA0
+node_1742	ADD	CUDA0
+ffn_moe_out-19	ADD	CUDA0
+norm-19	RMS_NORM	CUDA0
+ffn_norm_1-19	MUL	CUDA0
+ffn_gate-19	MUL_MAT	CUDA0
+ffn_up-19	MUL_MAT	CUDA0
+ffn_geglu-19	GEGLU	CUDA0
+node_1749	MUL_MAT	CUDA0
+norm-19	RMS_NORM	CUDA0
+ffn_mlp-19	MUL	CUDA0
+norm-19	RMS_NORM	CUDA0
+ffn_moe-19	MUL	CUDA0
+ffn_moe_combined-19	ADD	CUDA0
+norm	RMS_NORM	CUDA0
+ffn_post_norm-19	MUL	CUDA0
+node_1757	ADD	CUDA0
+l_out-19	MUL	CUDA0
+norm-20	RMS_NORM	CUDA0
+attn_norm-20	MUL	CUDA0
+Qcur-20	MUL_MAT	CUDA0
+Qcur-20 (reshaped)	RESHAPE	CUDA0
+norm-20	RMS_NORM	CUDA0
+Qcur_normed-20	MUL	CUDA0
+Qcur_pos-20	ROPE	CUDA0
+Kcur-20	MUL_MAT	CUDA0
+Kcur-20 (reshaped)	RESHAPE	CUDA0
+norm-20	RMS_NORM	CUDA0
+Kcur_normed-20	MUL	CUDA0
+Kcur_pos-20	ROPE	CUDA0
+Vcur-20	MUL_MAT	CUDA0
+Vcur-20 (reshaped)	RESHAPE	CUDA0
+Vcur_normed-20	RMS_NORM	CUDA0
+Kcur_pos-20 (view)	VIEW	CUDA0
+cache_k_l20 (view)	SET_ROWS	CUDA0
+Vcur_normed-20 (view)	VIEW	CUDA0
+cache_v_l20 (view)	SET_ROWS	CUDA0
+Qcur_pos-20 (view)	VIEW	CUDA0
+Qcur_pos-20 (view) (permuted)	PERMUTE	CUDA0
+cache_k_l20 (view)	VIEW	CUDA0
+cache_k_l20 (view) (permuted)	PERMUTE	CUDA0
+cache_v_l20 (view)	VIEW	CUDA0
+cache_v_l20 (view) (permuted)	PERMUTE	CUDA0
+node_1784	FLASH_ATTN_EXT	CUDA0
+kqv_out-20	RESHAPE	CUDA0
+node_1786	MUL_MAT	CUDA0
+norm-20	RMS_NORM	CUDA0
+attn_post_norm-20	MUL	CUDA0
+attn_out-20	ADD	CUDA0
+node_1790	RMS_NORM	CUDA0
+node_1791	SCALE	CUDA0
+node_1792	MUL	CUDA0
+ffn_moe_logits-20	MUL_MAT	CUDA0
+ffn_moe_probs-20	SOFT_MAX	CUDA0
+ffn_moe_probs-20 (reshaped)	RESHAPE	CUDA0
+ffn_moe_argsort-20	ARGSORT	CUDA0
+ffn_moe_topk-20	VIEW	CUDA0
+ffn_moe_weights-20	GET_ROWS	CUDA0
+ffn_moe_weights-20 (reshaped)	RESHAPE	CUDA0
+ffn_moe_weights_sum-20	SUM_ROWS	CUDA0
+ffn_moe_weights_sum_clamped-20	CLAMP	CUDA0
+ffn_moe_weights_norm-20	DIV	CUDA0
+ffn_moe_weights_norm-20 (reshaped)	RESHAPE	CUDA0
+norm-20	RMS_NORM	CUDA0
+ffn_norm_2-20	MUL	CUDA0
+ffn_norm_2-20 (reshaped)	RESHAPE	CUDA0
+ffn_moe_gate_up-20	MUL_MAT_ID	CPU
+ffn_moe_gate-20	VIEW	CPU
+ffn_moe_up-20	VIEW	CPU
+ffn_moe_geglu-20	GEGLU	CPU
+node_1811	MUL_MAT_ID	CPU
+blk.20.ffn_down_exps.scale (reshaped)	RESHAPE	CPU
+node_1813	REPEAT	CUDA0
+node_1814	GET_ROWS	CUDA0
+ffn_moe_down-20	MUL	CUDA0
+ffn_moe_weighted-20	MUL	CUDA0
+ffn_moe_weighted-20 (view)	VIEW	CUDA0
+ffn_moe_weighted-20 (view)	VIEW	CUDA0
+ffn_moe_weighted-20 (view)	VIEW	CUDA0
+ffn_moe_weighted-20 (view)	VIEW	CUDA0
+ffn_moe_weighted-20 (view)	VIEW	CUDA0
+ffn_moe_weighted-20 (view)	VIEW	CUDA0
+ffn_moe_weighted-20 (view)	VIEW	CUDA0
+ffn_moe_weighted-20 (view)	VIEW	CUDA0
+node_1825	ADD	CUDA0
+node_1826	ADD	CUDA0
+node_1827	ADD	CUDA0
+node_1828	ADD	CUDA0
+node_1829	ADD	CUDA0
+node_1830	ADD	CUDA0
+ffn_moe_out-20	ADD	CUDA0
+norm-20	RMS_NORM	CUDA0
+ffn_norm_1-20	MUL	CUDA0
+ffn_gate-20	MUL_MAT	CUDA0
+ffn_up-20	MUL_MAT	CUDA0
+ffn_geglu-20	GEGLU	CUDA0
+node_1837	MUL_MAT	CUDA0
+norm-20	RMS_NORM	CUDA0
+ffn_mlp-20	MUL	CUDA0
+norm-20	RMS_NORM	CUDA0
+ffn_moe-20	MUL	CUDA0
+ffn_moe_combined-20	ADD	CUDA0
+norm	RMS_NORM	CUDA0
+ffn_post_norm-20	MUL	CUDA0
+node_1845	ADD	CUDA0
+l_out-20	MUL	CUDA0
+norm-21	RMS_NORM	CUDA0
+attn_norm-21	MUL	CUDA0
+Qcur-21	MUL_MAT	CUDA0
+Qcur-21 (reshaped)	RESHAPE	CUDA0
+norm-21	RMS_NORM	CUDA0
+Qcur_normed-21	MUL	CUDA0
+Qcur_pos-21	ROPE	CUDA0
+Kcur-21	MUL_MAT	CUDA0
+Kcur-21 (reshaped)	RESHAPE	CUDA0
+norm-21	RMS_NORM	CUDA0
+Kcur_normed-21	MUL	CUDA0
+Kcur_pos-21	ROPE	CUDA0
+Vcur-21	MUL_MAT	CUDA0
+Vcur-21 (reshaped)	RESHAPE	CUDA0
+Vcur_normed-21	RMS_NORM	CUDA0
+Kcur_pos-21 (view)	VIEW	CUDA0
+cache_k_l21 (view)	SET_ROWS	CUDA0
+Vcur_normed-21 (view)	VIEW	CUDA0
+cache_v_l21 (view)	SET_ROWS	CUDA0
+Qcur_pos-21 (view)	VIEW	CUDA0
+Qcur_pos-21 (view) (permuted)	PERMUTE	CUDA0
+cache_k_l21 (view)	VIEW	CUDA0
+cache_k_l21 (view) (permuted)	PERMUTE	CUDA0
+cache_v_l21 (view)	VIEW	CUDA0
+cache_v_l21 (view) (permuted)	PERMUTE	CUDA0
+node_1872	FLASH_ATTN_EXT	CUDA0
+kqv_out-21	RESHAPE	CUDA0
+node_1874	MUL_MAT	CUDA0
+norm-21	RMS_NORM	CUDA0
+attn_post_norm-21	MUL	CUDA0
+attn_out-21	ADD	CUDA0
+node_1878	RMS_NORM	CUDA0
+node_1879	SCALE	CUDA0
+node_1880	MUL	CUDA0
+ffn_moe_logits-21	MUL_MAT	CUDA0
+ffn_moe_probs-21	SOFT_MAX	CUDA0
+ffn_moe_probs-21 (reshaped)	RESHAPE	CUDA0
+ffn_moe_argsort-21	ARGSORT	CUDA0
+ffn_moe_topk-21	VIEW	CUDA0
+ffn_moe_weights-21	GET_ROWS	CUDA0
+ffn_moe_weights-21 (reshaped)	RESHAPE	CUDA0
+ffn_moe_weights_sum-21	SUM_ROWS	CUDA0
+ffn_moe_weights_sum_clamped-21	CLAMP	CUDA0
+ffn_moe_weights_norm-21	DIV	CUDA0
+ffn_moe_weights_norm-21 (reshaped)	RESHAPE	CUDA0
+norm-21	RMS_NORM	CUDA0
+ffn_norm_2-21	MUL	CUDA0
+ffn_norm_2-21 (reshaped)	RESHAPE	CUDA0
+ffn_moe_gate_up-21	MUL_MAT_ID	CPU
+ffn_moe_gate-21	VIEW	CPU
+ffn_moe_up-21	VIEW	CPU
+ffn_moe_geglu-21	GEGLU	CPU
+node_1899	MUL_MAT_ID	CPU
+blk.21.ffn_down_exps.scale (reshaped)	RESHAPE	CPU
+node_1901	REPEAT	CUDA0
+node_1902	GET_ROWS	CUDA0
+ffn_moe_down-21	MUL	CUDA0
+ffn_moe_weighted-21	MUL	CUDA0
+ffn_moe_weighted-21 (view)	VIEW	CUDA0
+ffn_moe_weighted-21 (view)	VIEW	CUDA0
+ffn_moe_weighted-21 (view)	VIEW	CUDA0
+ffn_moe_weighted-21 (view)	VIEW	CUDA0
+ffn_moe_weighted-21 (view)	VIEW	CUDA0
+ffn_moe_weighted-21 (view)	VIEW	CUDA0
+ffn_moe_weighted-21 (view)	VIEW	CUDA0
+ffn_moe_weighted-21 (view)	VIEW	CUDA0
+node_1913	ADD	CUDA0
+node_1914	ADD	CUDA0
+node_1915	ADD	CUDA0
+node_1916	ADD	CUDA0
+node_1917	ADD	CUDA0
+node_1918	ADD	CUDA0
+ffn_moe_out-21	ADD	CUDA0
+norm-21	RMS_NORM	CUDA0
+ffn_norm_1-21	MUL	CUDA0
+ffn_gate-21	MUL_MAT	CUDA0
+ffn_up-21	MUL_MAT	CUDA0
+ffn_geglu-21	GEGLU	CUDA0
+node_1925	MUL_MAT	CUDA0
+norm-21	RMS_NORM	CUDA0
+ffn_mlp-21	MUL	CUDA0
+norm-21	RMS_NORM	CUDA0
+ffn_moe-21	MUL	CUDA0
+ffn_moe_combined-21	ADD	CUDA0
+norm	RMS_NORM	CUDA0
+ffn_post_norm-21	MUL	CUDA0
+node_1933	ADD	CUDA0
+l_out-21	MUL	CUDA0
+norm-22	RMS_NORM	CUDA0
+attn_norm-22	MUL	CUDA0
+Qcur-22	MUL_MAT	CUDA0
+Qcur-22 (reshaped)	RESHAPE	CUDA0
+norm-22	RMS_NORM	CUDA0
+Qcur_normed-22	MUL	CUDA0
+Qcur_pos-22	ROPE	CUDA0
+Kcur-22	MUL_MAT	CUDA0
+Kcur-22 (reshaped)	RESHAPE	CUDA0
+norm-22	RMS_NORM	CUDA0
+Kcur_normed-22	MUL	CUDA0
+Kcur_pos-22	ROPE	CUDA0
+Vcur-22	MUL_MAT	CUDA0
+Vcur-22 (reshaped)	RESHAPE	CUDA0
+Vcur_normed-22	RMS_NORM	CUDA0
+Kcur_pos-22 (view)	VIEW	CUDA0
+cache_k_l22 (view)	SET_ROWS	CUDA0
+Vcur_normed-22 (view)	VIEW	CUDA0
+cache_v_l22 (view)	SET_ROWS	CUDA0
+Qcur_pos-22 (view)	VIEW	CUDA0
+Qcur_pos-22 (view) (permuted)	PERMUTE	CUDA0
+cache_k_l22 (view)	VIEW	CUDA0
+cache_k_l22 (view) (permuted)	PERMUTE	CUDA0
+cache_v_l22 (view)	VIEW	CUDA0
+cache_v_l22 (view) (permuted)	PERMUTE	CUDA0
+node_1960	FLASH_ATTN_EXT	CUDA0
+kqv_out-22	RESHAPE	CUDA0
+node_1962	MUL_MAT	CUDA0
+norm-22	RMS_NORM	CUDA0
+attn_post_norm-22	MUL	CUDA0
+attn_out-22	ADD	CUDA0
+node_1966	RMS_NORM	CUDA0
+node_1967	SCALE	CUDA0
+node_1968	MUL	CUDA0
+ffn_moe_logits-22	MUL_MAT	CUDA0
+ffn_moe_probs-22	SOFT_MAX	CUDA0
+ffn_moe_probs-22 (reshaped)	RESHAPE	CUDA0
+ffn_moe_argsort-22	ARGSORT	CUDA0
+ffn_moe_topk-22	VIEW	CUDA0
+ffn_moe_weights-22	GET_ROWS	CUDA0
+ffn_moe_weights-22 (reshaped)	RESHAPE	CUDA0
+ffn_moe_weights_sum-22	SUM_ROWS	CUDA0
+ffn_moe_weights_sum_clamped-22	CLAMP	CUDA0
+ffn_moe_weights_norm-22	DIV	CUDA0
+ffn_moe_weights_norm-22 (reshaped)	RESHAPE	CUDA0
+norm-22	RMS_NORM	CUDA0
+ffn_norm_2-22	MUL	CUDA0
+ffn_norm_2-22 (reshaped)	RESHAPE	CUDA0
+ffn_moe_gate_up-22	MUL_MAT_ID	CPU
+ffn_moe_gate-22	VIEW	CPU
+ffn_moe_up-22	VIEW	CPU
+ffn_moe_geglu-22	GEGLU	CPU
+node_1987	MUL_MAT_ID	CPU
+blk.22.ffn_down_exps.scale (reshaped)	RESHAPE	CPU
+node_1989	REPEAT	CUDA0
+node_1990	GET_ROWS	CUDA0
+ffn_moe_down-22	MUL	CUDA0
+ffn_moe_weighted-22	MUL	CUDA0
+ffn_moe_weighted-22 (view)	VIEW	CUDA0
+ffn_moe_weighted-22 (view)	VIEW	CUDA0
+ffn_moe_weighted-22 (view)	VIEW	CUDA0
+ffn_moe_weighted-22 (view)	VIEW	CUDA0
+ffn_moe_weighted-22 (view)	VIEW	CUDA0
+ffn_moe_weighted-22 (view)	VIEW	CUDA0
+ffn_moe_weighted-22 (view)	VIEW	CUDA0
+ffn_moe_weighted-22 (view)	VIEW	CUDA0
+node_2001	ADD	CUDA0
+node_2002	ADD	CUDA0
+node_2003	ADD	CUDA0
+node_2004	ADD	CUDA0
+node_2005	ADD	CUDA0
+node_2006	ADD	CUDA0
+ffn_moe_out-22	ADD	CUDA0
+norm-22	RMS_NORM	CUDA0
+ffn_norm_1-22	MUL	CUDA0
+ffn_gate-22	MUL_MAT	CUDA0
+ffn_up-22	MUL_MAT	CUDA0
+ffn_geglu-22	GEGLU	CUDA0
+node_2013	MUL_MAT	CUDA0
+norm-22	RMS_NORM	CUDA0
+ffn_mlp-22	MUL	CUDA0
+norm-22	RMS_NORM	CUDA0
+ffn_moe-22	MUL	CUDA0
+ffn_moe_combined-22	ADD	CUDA0
+norm	RMS_NORM	CUDA0
+ffn_post_norm-22	MUL	CUDA0
+node_2021	ADD	CUDA0
+l_out-22	MUL	CUDA0
+norm-23	RMS_NORM	CUDA0
+attn_norm-23	MUL	CUDA0
+Qcur-23	MUL_MAT	CUDA0
+Qcur-23 (reshaped)	RESHAPE	CUDA0
+norm-23	RMS_NORM	CUDA0
+Qcur_normed-23	MUL	CUDA0
+Qcur_pos-23	ROPE	CUDA0
+Vcur-23	MUL_MAT	CUDA0
+Vcur-23 (reshaped)	RESHAPE	CUDA0
+norm-23	RMS_NORM	CUDA0
+Kcur_normed-23	MUL	CUDA0
+Kcur_pos-23	ROPE	CUDA0
+Vcur-23 (reshaped)	RESHAPE	CUDA0
+Vcur_normed-23	RMS_NORM	CUDA0
+Kcur_pos-23 (view)	VIEW	CUDA0
+cache_k_l23 (view)	SET_ROWS	CUDA0
+Vcur_normed-23 (view)	VIEW	CUDA0
+cache_v_l23 (view)	SET_ROWS	CUDA0
+Qcur_pos-23 (view)	VIEW	CUDA0
+Qcur_pos-23 (view) (permuted)	PERMUTE	CUDA0
+cache_k_l23 (view)	VIEW	CUDA0
+cache_k_l23 (view) (permuted)	PERMUTE	CUDA0
+cache_v_l23 (view)	VIEW	CUDA0
+cache_v_l23 (view) (permuted)	PERMUTE	CUDA0
+node_2047	FLASH_ATTN_EXT	CUDA0
+kqv_out-23	RESHAPE	CUDA0
+node_2049	MUL_MAT	CUDA0
+norm-23	RMS_NORM	CUDA0
+attn_post_norm-23	MUL	CUDA0
+attn_out-23	ADD	CUDA0
+node_2053	RMS_NORM	CUDA0
+node_2054	SCALE	CUDA0
+node_2055	MUL	CUDA0
+ffn_moe_logits-23	MUL_MAT	CUDA0
+ffn_moe_probs-23	SOFT_MAX	CUDA0
+ffn_moe_probs-23 (reshaped)	RESHAPE	CUDA0
+ffn_moe_argsort-23	ARGSORT	CUDA0
+ffn_moe_topk-23	VIEW	CUDA0
+ffn_moe_weights-23	GET_ROWS	CUDA0
+ffn_moe_weights-23 (reshaped)	RESHAPE	CUDA0
+ffn_moe_weights_sum-23	SUM_ROWS	CUDA0
+ffn_moe_weights_sum_clamped-23	CLAMP	CUDA0
+ffn_moe_weights_norm-23	DIV	CUDA0
+ffn_moe_weights_norm-23 (reshaped)	RESHAPE	CUDA0
+norm-23	RMS_NORM	CUDA0
+ffn_norm_2-23	MUL	CUDA0
+ffn_norm_2-23 (reshaped)	RESHAPE	CUDA0
+ffn_moe_gate_up-23	MUL_MAT_ID	CPU
+ffn_moe_gate-23	VIEW	CPU
+ffn_moe_up-23	VIEW	CPU
+ffn_moe_geglu-23	GEGLU	CPU
+node_2074	MUL_MAT_ID	CPU
+blk.23.ffn_down_exps.scale (reshaped)	RESHAPE	CPU
+node_2076	REPEAT	CUDA0
+node_2077	GET_ROWS	CUDA0
+ffn_moe_down-23	MUL	CUDA0
+ffn_moe_weighted-23	MUL	CUDA0
+ffn_moe_weighted-23 (view)	VIEW	CUDA0
+ffn_moe_weighted-23 (view)	VIEW	CUDA0
+ffn_moe_weighted-23 (view)	VIEW	CUDA0
+ffn_moe_weighted-23 (view)	VIEW	CUDA0
+ffn_moe_weighted-23 (view)	VIEW	CUDA0
+ffn_moe_weighted-23 (view)	VIEW	CUDA0
+ffn_moe_weighted-23 (view)	VIEW	CUDA0
+ffn_moe_weighted-23 (view)	VIEW	CUDA0
+node_2088	ADD	CUDA0
+node_2089	ADD	CUDA0
+node_2090	ADD	CUDA0
+node_2091	ADD	CUDA0
+node_2092	ADD	CUDA0
+node_2093	ADD	CUDA0
+ffn_moe_out-23	ADD	CUDA0
+norm-23	RMS_NORM	CUDA0
+ffn_norm_1-23	MUL	CUDA0
+ffn_gate-23	MUL_MAT	CUDA0
+ffn_up-23	MUL_MAT	CUDA0
+ffn_geglu-23	GEGLU	CUDA0
+node_2100	MUL_MAT	CUDA0
+norm-23	RMS_NORM	CUDA0
+ffn_mlp-23	MUL	CUDA0
+norm-23	RMS_NORM	CUDA0
+ffn_moe-23	MUL	CUDA0
+ffn_moe_combined-23	ADD	CUDA0
+norm	RMS_NORM	CUDA0
+ffn_post_norm-23	MUL	CUDA0
+node_2108	ADD	CUDA0
+l_out-23	MUL	CUDA0
+norm-24	RMS_NORM	CUDA0
+attn_norm-24	MUL	CUDA0
+Qcur-24	MUL_MAT	CUDA0
+Qcur-24 (reshaped)	RESHAPE	CUDA0
+norm-24	RMS_NORM	CUDA0
+Qcur_normed-24	MUL	CUDA0
+Qcur_pos-24	ROPE	CUDA0
+Kcur-24	MUL_MAT	CUDA0
+Kcur-24 (reshaped)	RESHAPE	CUDA0
+norm-24	RMS_NORM	CUDA0
+Kcur_normed-24	MUL	CUDA0
+Kcur_pos-24	ROPE	CUDA0
+Vcur-24	MUL_MAT	CUDA0
+Vcur-24 (reshaped)	RESHAPE	CUDA0
+Vcur_normed-24	RMS_NORM	CUDA0
+Kcur_pos-24 (view)	VIEW	CUDA0
+cache_k_l24 (view)	SET_ROWS	CUDA0
+Vcur_normed-24 (view)	VIEW	CUDA0
+cache_v_l24 (view)	SET_ROWS	CUDA0
+Qcur_pos-24 (view)	VIEW	CUDA0
+Qcur_pos-24 (view) (permuted)	PERMUTE	CUDA0
+cache_k_l24 (view)	VIEW	CUDA0
+cache_k_l24 (view) (permuted)	PERMUTE	CUDA0
+cache_v_l24 (view)	VIEW	CUDA0
+cache_v_l24 (view) (permuted)	PERMUTE	CUDA0
+node_2135	FLASH_ATTN_EXT	CUDA0
+kqv_out-24	RESHAPE	CUDA0
+node_2137	MUL_MAT	CUDA0
+norm-24	RMS_NORM	CUDA0
+attn_post_norm-24	MUL	CUDA0
+attn_out-24	ADD	CUDA0
+node_2141	RMS_NORM	CUDA0
+node_2142	SCALE	CUDA0
+node_2143	MUL	CUDA0
+ffn_moe_logits-24	MUL_MAT	CUDA0
+ffn_moe_probs-24	SOFT_MAX	CUDA0
+ffn_moe_probs-24 (reshaped)	RESHAPE	CUDA0
+ffn_moe_argsort-24	ARGSORT	CUDA0
+ffn_moe_topk-24	VIEW	CUDA0
+ffn_moe_weights-24	GET_ROWS	CUDA0
+ffn_moe_weights-24 (reshaped)	RESHAPE	CUDA0
+ffn_moe_weights_sum-24	SUM_ROWS	CUDA0
+ffn_moe_weights_sum_clamped-24	CLAMP	CUDA0
+ffn_moe_weights_norm-24	DIV	CUDA0
+ffn_moe_weights_norm-24 (reshaped)	RESHAPE	CUDA0
+norm-24	RMS_NORM	CUDA0
+ffn_norm_2-24	MUL	CUDA0
+ffn_norm_2-24 (reshaped)	RESHAPE	CUDA0
+ffn_moe_gate_up-24	MUL_MAT_ID	CPU
+ffn_moe_gate-24	VIEW	CPU
+ffn_moe_up-24	VIEW	CPU
+ffn_moe_geglu-24	GEGLU	CPU
+node_2162	MUL_MAT_ID	CPU
+blk.24.ffn_down_exps.scale (reshaped)	RESHAPE	CPU
+node_2164	REPEAT	CUDA0
+node_2165	GET_ROWS	CUDA0
+ffn_moe_down-24	MUL	CUDA0
+ffn_moe_weighted-24	MUL	CUDA0
+ffn_moe_weighted-24 (view)	VIEW	CUDA0
+ffn_moe_weighted-24 (view)	VIEW	CUDA0
+ffn_moe_weighted-24 (view)	VIEW	CUDA0
+ffn_moe_weighted-24 (view)	VIEW	CUDA0
+ffn_moe_weighted-24 (view)	VIEW	CUDA0
+ffn_moe_weighted-24 (view)	VIEW	CUDA0
+ffn_moe_weighted-24 (view)	VIEW	CUDA0
+ffn_moe_weighted-24 (view)	VIEW	CUDA0
+node_2176	ADD	CUDA0
+node_2177	ADD	CUDA0
+node_2178	ADD	CUDA0
+node_2179	ADD	CUDA0
+node_2180	ADD	CUDA0
+node_2181	ADD	CUDA0
+ffn_moe_out-24	ADD	CUDA0
+norm-24	RMS_NORM	CUDA0
+ffn_norm_1-24	MUL	CUDA0
+ffn_gate-24	MUL_MAT	CUDA0
+ffn_up-24	MUL_MAT	CUDA0
+ffn_geglu-24	GEGLU	CUDA0
+node_2188	MUL_MAT	CUDA0
+norm-24	RMS_NORM	CUDA0
+ffn_mlp-24	MUL	CUDA0
+norm-24	RMS_NORM	CUDA0
+ffn_moe-24	MUL	CUDA0
+ffn_moe_combined-24	ADD	CUDA0
+norm	RMS_NORM	CUDA0
+ffn_post_norm-24	MUL	CUDA0
+node_2196	ADD	CUDA0
+l_out-24	MUL	CUDA0
+norm-25	RMS_NORM	CUDA0
+attn_norm-25	MUL	CUDA0
+Qcur-25	MUL_MAT	CUDA0
+Qcur-25 (reshaped)	RESHAPE	CUDA0
+norm-25	RMS_NORM	CUDA0
+Qcur_normed-25	MUL	CUDA0
+Qcur_pos-25	ROPE	CUDA0
+Kcur-25	MUL_MAT	CUDA0
+Kcur-25 (reshaped)	RESHAPE	CUDA0
+norm-25	RMS_NORM	CUDA0
+Kcur_normed-25	MUL	CUDA0
+Kcur_pos-25	ROPE	CUDA0
+Vcur-25	MUL_MAT	CUDA0
+Vcur-25 (reshaped)	RESHAPE	CUDA0
+Vcur_normed-25	RMS_NORM	CUDA0
+Kcur_pos-25 (view)	VIEW	CUDA0
+cache_k_l25 (view)	SET_ROWS	CUDA0
+Vcur_normed-25 (view)	VIEW	CUDA0
+cache_v_l25 (view)	SET_ROWS	CUDA0
+Qcur_pos-25 (view)	VIEW	CUDA0
+Qcur_pos-25 (view) (permuted)	PERMUTE	CUDA0
+cache_k_l25 (view)	VIEW	CUDA0
+cache_k_l25 (view) (permuted)	PERMUTE	CUDA0
+cache_v_l25 (view)	VIEW	CUDA0
+cache_v_l25 (view) (permuted)	PERMUTE	CUDA0
+node_2223	FLASH_ATTN_EXT	CUDA0
+kqv_out-25	RESHAPE	CUDA0
+node_2225	MUL_MAT	CUDA0
+norm-25	RMS_NORM	CUDA0
+attn_post_norm-25	MUL	CUDA0
+attn_out-25	ADD	CUDA0
+node_2229	RMS_NORM	CUDA0
+node_2230	SCALE	CUDA0
+node_2231	MUL	CUDA0
+ffn_moe_logits-25	MUL_MAT	CUDA0
+ffn_moe_probs-25	SOFT_MAX	CUDA0
+ffn_moe_probs-25 (reshaped)	RESHAPE	CUDA0
+ffn_moe_argsort-25	ARGSORT	CUDA0
+ffn_moe_topk-25	VIEW	CUDA0
+ffn_moe_weights-25	GET_ROWS	CUDA0
+ffn_moe_weights-25 (reshaped)	RESHAPE	CUDA0
+ffn_moe_weights_sum-25	SUM_ROWS	CUDA0
+ffn_moe_weights_sum_clamped-25	CLAMP	CUDA0
+ffn_moe_weights_norm-25	DIV	CUDA0
+ffn_moe_weights_norm-25 (reshaped)	RESHAPE	CUDA0
+norm-25	RMS_NORM	CUDA0
+ffn_norm_2-25	MUL	CUDA0
+ffn_norm_2-25 (reshaped)	RESHAPE	CUDA0
+ffn_moe_gate_up-25	MUL_MAT_ID	CPU
+ffn_moe_gate-25	VIEW	CPU
+ffn_moe_up-25	VIEW	CPU
+ffn_moe_geglu-25	GEGLU	CPU
+node_2250	MUL_MAT_ID	CPU
+blk.25.ffn_down_exps.scale (reshaped)	RESHAPE	CPU
+node_2252	REPEAT	CUDA0
+node_2253	GET_ROWS	CUDA0
+ffn_moe_down-25	MUL	CUDA0
+ffn_moe_weighted-25	MUL	CUDA0
+ffn_moe_weighted-25 (view)	VIEW	CUDA0
+ffn_moe_weighted-25 (view)	VIEW	CUDA0
+ffn_moe_weighted-25 (view)	VIEW	CUDA0
+ffn_moe_weighted-25 (view)	VIEW	CUDA0
+ffn_moe_weighted-25 (view)	VIEW	CUDA0
+ffn_moe_weighted-25 (view)	VIEW	CUDA0
+ffn_moe_weighted-25 (view)	VIEW	CUDA0
+ffn_moe_weighted-25 (view)	VIEW	CUDA0
+node_2264	ADD	CUDA0
+node_2265	ADD	CUDA0
+node_2266	ADD	CUDA0
+node_2267	ADD	CUDA0
+node_2268	ADD	CUDA0
+node_2269	ADD	CUDA0
+ffn_moe_out-25	ADD	CUDA0
+norm-25	RMS_NORM	CUDA0
+ffn_norm_1-25	MUL	CUDA0
+ffn_gate-25	MUL_MAT	CUDA0
+ffn_up-25	MUL_MAT	CUDA0
+ffn_geglu-25	GEGLU	CUDA0
+node_2276	MUL_MAT	CUDA0
+norm-25	RMS_NORM	CUDA0
+ffn_mlp-25	MUL	CUDA0
+norm-25	RMS_NORM	CUDA0
+ffn_moe-25	MUL	CUDA0
+ffn_moe_combined-25	ADD	CUDA0
+norm	RMS_NORM	CUDA0
+ffn_post_norm-25	MUL	CUDA0
+node_2284	ADD	CUDA0
+l_out-25	MUL	CUDA0
+norm-26	RMS_NORM	CUDA0
+attn_norm-26	MUL	CUDA0
+Qcur-26	MUL_MAT	CUDA0
+Qcur-26 (reshaped)	RESHAPE	CUDA0
+norm-26	RMS_NORM	CUDA0
+Qcur_normed-26	MUL	CUDA0
+Qcur_pos-26	ROPE	CUDA0
+Kcur-26	MUL_MAT	CUDA0
+Kcur-26 (reshaped)	RESHAPE	CUDA0
+norm-26	RMS_NORM	CUDA0
+Kcur_normed-26	MUL	CUDA0
+Kcur_pos-26	ROPE	CUDA0
+Vcur-26	MUL_MAT	CUDA0
+Vcur-26 (reshaped)	RESHAPE	CUDA0
+Vcur_normed-26	RMS_NORM	CUDA0
+Kcur_pos-26 (view)	VIEW	CUDA0
+cache_k_l26 (view)	SET_ROWS	CUDA0
+Vcur_normed-26 (view)	VIEW	CUDA0
+cache_v_l26 (view)	SET_ROWS	CUDA0
+Qcur_pos-26 (view)	VIEW	CUDA0
+Qcur_pos-26 (view) (permuted)	PERMUTE	CUDA0
+cache_k_l26 (view)	VIEW	CUDA0
+cache_k_l26 (view) (permuted)	PERMUTE	CUDA0
+cache_v_l26 (view)	VIEW	CUDA0
+cache_v_l26 (view) (permuted)	PERMUTE	CUDA0
+node_2311	FLASH_ATTN_EXT	CUDA0
+kqv_out-26	RESHAPE	CUDA0
+node_2313	MUL_MAT	CUDA0
+norm-26	RMS_NORM	CUDA0
+attn_post_norm-26	MUL	CUDA0
+attn_out-26	ADD	CUDA0
+node_2317	RMS_NORM	CUDA0
+node_2318	SCALE	CUDA0
+node_2319	MUL	CUDA0
+ffn_moe_logits-26	MUL_MAT	CUDA0
+ffn_moe_probs-26	SOFT_MAX	CUDA0
+ffn_moe_probs-26 (reshaped)	RESHAPE	CUDA0
+ffn_moe_argsort-26	ARGSORT	CUDA0
+ffn_moe_topk-26	VIEW	CUDA0
+ffn_moe_weights-26	GET_ROWS	CUDA0
+ffn_moe_weights-26 (reshaped)	RESHAPE	CUDA0
+ffn_moe_weights_sum-26	SUM_ROWS	CUDA0
+ffn_moe_weights_sum_clamped-26	CLAMP	CUDA0
+ffn_moe_weights_norm-26	DIV	CUDA0
+ffn_moe_weights_norm-26 (reshaped)	RESHAPE	CUDA0
+norm-26	RMS_NORM	CUDA0
+ffn_norm_2-26	MUL	CUDA0
+ffn_norm_2-26 (reshaped)	RESHAPE	CUDA0
+ffn_moe_gate_up-26	MUL_MAT_ID	CPU
+ffn_moe_gate-26	VIEW	CPU
+ffn_moe_up-26	VIEW	CPU
+ffn_moe_geglu-26	GEGLU	CPU
+node_2338	MUL_MAT_ID	CPU
+blk.26.ffn_down_exps.scale (reshaped)	RESHAPE	CPU
+node_2340	REPEAT	CUDA0
+node_2341	GET_ROWS	CUDA0
+ffn_moe_down-26	MUL	CUDA0
+ffn_moe_weighted-26	MUL	CUDA0
+ffn_moe_weighted-26 (view)	VIEW	CUDA0
+ffn_moe_weighted-26 (view)	VIEW	CUDA0
+ffn_moe_weighted-26 (view)	VIEW	CUDA0
+ffn_moe_weighted-26 (view)	VIEW	CUDA0
+ffn_moe_weighted-26 (view)	VIEW	CUDA0
+ffn_moe_weighted-26 (view)	VIEW	CUDA0
+ffn_moe_weighted-26 (view)	VIEW	CUDA0
+ffn_moe_weighted-26 (view)	VIEW	CUDA0
+node_2352	ADD	CUDA0
+node_2353	ADD	CUDA0
+node_2354	ADD	CUDA0
+node_2355	ADD	CUDA0
+node_2356	ADD	CUDA0
+node_2357	ADD	CUDA0
+ffn_moe_out-26	ADD	CUDA0
+norm-26	RMS_NORM	CUDA0
+ffn_norm_1-26	MUL	CUDA0
+ffn_gate-26	MUL_MAT	CUDA0
+ffn_up-26	MUL_MAT	CUDA0
+ffn_geglu-26	GEGLU	CUDA0
+node_2364	MUL_MAT	CUDA0
+norm-26	RMS_NORM	CUDA0
+ffn_mlp-26	MUL	CUDA0
+norm-26	RMS_NORM	CUDA0
+ffn_moe-26	MUL	CUDA0
+ffn_moe_combined-26	ADD	CUDA0
+norm	RMS_NORM	CUDA0
+ffn_post_norm-26	MUL	CUDA0
+node_2372	ADD	CUDA0
+l_out-26	MUL	CUDA0
+norm-27	RMS_NORM	CUDA0
+attn_norm-27	MUL	CUDA0
+Qcur-27	MUL_MAT	CUDA0
+Qcur-27 (reshaped)	RESHAPE	CUDA0
+norm-27	RMS_NORM	CUDA0
+Qcur_normed-27	MUL	CUDA0
+Qcur_pos-27	ROPE	CUDA0
+Kcur-27	MUL_MAT	CUDA0
+Kcur-27 (reshaped)	RESHAPE	CUDA0
+norm-27	RMS_NORM	CUDA0
+Kcur_normed-27	MUL	CUDA0
+Kcur_pos-27	ROPE	CUDA0
+Vcur-27	MUL_MAT	CUDA0
+Vcur-27 (reshaped)	RESHAPE	CUDA0
+Vcur_normed-27	RMS_NORM	CUDA0
+Kcur_pos-27 (view)	VIEW	CUDA0
+cache_k_l27 (view)	SET_ROWS	CUDA0
+Vcur_normed-27 (view)	VIEW	CUDA0
+cache_v_l27 (view)	SET_ROWS	CUDA0
+Qcur_pos-27 (view)	VIEW	CUDA0
+Qcur_pos-27 (view) (permuted)	PERMUTE	CUDA0
+cache_k_l27 (view)	VIEW	CUDA0
+cache_k_l27 (view) (permuted)	PERMUTE	CUDA0
+cache_v_l27 (view)	VIEW	CUDA0
+cache_v_l27 (view) (permuted)	PERMUTE	CUDA0
+node_2399	FLASH_ATTN_EXT	CUDA0
+kqv_out-27	RESHAPE	CUDA0
+node_2401	MUL_MAT	CUDA0
+norm-27	RMS_NORM	CUDA0
+attn_post_norm-27	MUL	CUDA0
+attn_out-27	ADD	CUDA0
+node_2405	RMS_NORM	CUDA0
+node_2406	SCALE	CUDA0
+node_2407	MUL	CUDA0
+ffn_moe_logits-27	MUL_MAT	CUDA0
+ffn_moe_probs-27	SOFT_MAX	CUDA0
+ffn_moe_probs-27 (reshaped)	RESHAPE	CUDA0
+ffn_moe_argsort-27	ARGSORT	CUDA0
+ffn_moe_topk-27	VIEW	CUDA0
+ffn_moe_weights-27	GET_ROWS	CUDA0
+ffn_moe_weights-27 (reshaped)	RESHAPE	CUDA0
+ffn_moe_weights_sum-27	SUM_ROWS	CUDA0
+ffn_moe_weights_sum_clamped-27	CLAMP	CUDA0
+ffn_moe_weights_norm-27	DIV	CUDA0
+ffn_moe_weights_norm-27 (reshaped)	RESHAPE	CUDA0
+norm-27	RMS_NORM	CUDA0
+ffn_norm_2-27	MUL	CUDA0
+ffn_norm_2-27 (reshaped)	RESHAPE	CUDA0
+ffn_moe_gate_up-27	MUL_MAT_ID	CPU
+ffn_moe_gate-27	VIEW	CPU
+ffn_moe_up-27	VIEW	CPU
+ffn_moe_geglu-27	GEGLU	CPU
+node_2426	MUL_MAT_ID	CPU
+blk.27.ffn_down_exps.scale (reshaped)	RESHAPE	CPU
+node_2428	REPEAT	CUDA0
+node_2429	GET_ROWS	CUDA0
+ffn_moe_down-27	MUL	CUDA0
+ffn_moe_weighted-27	MUL	CUDA0
+ffn_moe_weighted-27 (view)	VIEW	CUDA0
+ffn_moe_weighted-27 (view)	VIEW	CUDA0
+ffn_moe_weighted-27 (view)	VIEW	CUDA0
+ffn_moe_weighted-27 (view)	VIEW	CUDA0
+ffn_moe_weighted-27 (view)	VIEW	CUDA0
+ffn_moe_weighted-27 (view)	VIEW	CUDA0
+ffn_moe_weighted-27 (view)	VIEW	CUDA0
+ffn_moe_weighted-27 (view)	VIEW	CUDA0
+node_2440	ADD	CUDA0
+node_2441	ADD	CUDA0
+node_2442	ADD	CUDA0
+node_2443	ADD	CUDA0
+node_2444	ADD	CUDA0
+node_2445	ADD	CUDA0
+ffn_moe_out-27	ADD	CUDA0
+norm-27	RMS_NORM	CUDA0
+ffn_norm_1-27	MUL	CUDA0
+ffn_gate-27	MUL_MAT	CUDA0
+ffn_up-27	MUL_MAT	CUDA0
+ffn_geglu-27	GEGLU	CUDA0
+node_2452	MUL_MAT	CUDA0
+norm-27	RMS_NORM	CUDA0
+ffn_mlp-27	MUL	CUDA0
+norm-27	RMS_NORM	CUDA0
+ffn_moe-27	MUL	CUDA0
+ffn_moe_combined-27	ADD	CUDA0
+norm	RMS_NORM	CUDA0
+ffn_post_norm-27	MUL	CUDA0
+node_2460	ADD	CUDA0
+l_out-27	MUL	CUDA0
+norm-28	RMS_NORM	CUDA0
+attn_norm-28	MUL	CUDA0
+Qcur-28	MUL_MAT	CUDA0
+Qcur-28 (reshaped)	RESHAPE	CUDA0
+norm-28	RMS_NORM	CUDA0
+Qcur_normed-28	MUL	CUDA0
+Qcur_pos-28	ROPE	CUDA0
+Kcur-28	MUL_MAT	CUDA0
+Kcur-28 (reshaped)	RESHAPE	CUDA0
+norm-28	RMS_NORM	CUDA0
+Kcur_normed-28	MUL	CUDA0
+Kcur_pos-28	ROPE	CUDA0
+Vcur-28	MUL_MAT	CUDA0
+Vcur-28 (reshaped)	RESHAPE	CUDA0
+Vcur_normed-28	RMS_NORM	CUDA0
+Kcur_pos-28 (view)	VIEW	CUDA0
+cache_k_l28 (view)	SET_ROWS	CUDA0
+Vcur_normed-28 (view)	VIEW	CUDA0
+cache_v_l28 (view)	SET_ROWS	CUDA0
+Qcur_pos-28 (view)	VIEW	CUDA0
+Qcur_pos-28 (view) (permuted)	PERMUTE	CUDA0
+cache_k_l28 (view)	VIEW	CUDA0
+cache_k_l28 (view) (permuted)	PERMUTE	CUDA0
+cache_v_l28 (view)	VIEW	CUDA0
+cache_v_l28 (view) (permuted)	PERMUTE	CUDA0
+node_2487	FLASH_ATTN_EXT	CUDA0
+kqv_out-28	RESHAPE	CUDA0
+node_2489	MUL_MAT	CUDA0
+norm-28	RMS_NORM	CUDA0
+attn_post_norm-28	MUL	CUDA0
+attn_out-28	ADD	CUDA0
+node_2493	RMS_NORM	CUDA0
+node_2494	SCALE	CUDA0
+node_2495	MUL	CUDA0
+ffn_moe_logits-28	MUL_MAT	CUDA0
+ffn_moe_probs-28	SOFT_MAX	CUDA0
+ffn_moe_probs-28 (reshaped)	RESHAPE	CUDA0
+ffn_moe_argsort-28	ARGSORT	CUDA0
+ffn_moe_topk-28	VIEW	CUDA0
+ffn_moe_weights-28	GET_ROWS	CUDA0
+ffn_moe_weights-28 (reshaped)	RESHAPE	CUDA0
+ffn_moe_weights_sum-28	SUM_ROWS	CUDA0
+ffn_moe_weights_sum_clamped-28	CLAMP	CUDA0
+ffn_moe_weights_norm-28	DIV	CUDA0
+ffn_moe_weights_norm-28 (reshaped)	RESHAPE	CUDA0
+norm-28	RMS_NORM	CUDA0
+ffn_norm_2-28	MUL	CUDA0
+ffn_norm_2-28 (reshaped)	RESHAPE	CUDA0
+ffn_moe_gate_up-28	MUL_MAT_ID	CPU
+ffn_moe_gate-28	VIEW	CPU
+ffn_moe_up-28	VIEW	CPU
+ffn_moe_geglu-28	GEGLU	CPU
+node_2514	MUL_MAT_ID	CPU
+blk.28.ffn_down_exps.scale (reshaped)	RESHAPE	CPU
+node_2516	REPEAT	CUDA0
+node_2517	GET_ROWS	CUDA0
+ffn_moe_down-28	MUL	CUDA0
+ffn_moe_weighted-28	MUL	CUDA0
+ffn_moe_weighted-28 (view)	VIEW	CUDA0
+ffn_moe_weighted-28 (view)	VIEW	CUDA0
+ffn_moe_weighted-28 (view)	VIEW	CUDA0
+ffn_moe_weighted-28 (view)	VIEW	CUDA0
+ffn_moe_weighted-28 (view)	VIEW	CUDA0
+ffn_moe_weighted-28 (view)	VIEW	CUDA0
+ffn_moe_weighted-28 (view)	VIEW	CUDA0
+ffn_moe_weighted-28 (view)	VIEW	CUDA0
+node_2528	ADD	CUDA0
+node_2529	ADD	CUDA0
+node_2530	ADD	CUDA0
+node_2531	ADD	CUDA0
+node_2532	ADD	CUDA0
+node_2533	ADD	CUDA0
+ffn_moe_out-28	ADD	CUDA0
+norm-28	RMS_NORM	CUDA0
+ffn_norm_1-28	MUL	CUDA0
+ffn_gate-28	MUL_MAT	CUDA0
+ffn_up-28	MUL_MAT	CUDA0
+ffn_geglu-28	GEGLU	CUDA0
+node_2540	MUL_MAT	CUDA0
+norm-28	RMS_NORM	CUDA0
+ffn_mlp-28	MUL	CUDA0
+norm-28	RMS_NORM	CUDA0
+ffn_moe-28	MUL	CUDA0
+ffn_moe_combined-28	ADD	CUDA0
+norm	RMS_NORM	CUDA0
+ffn_post_norm-28	MUL	CUDA0
+node_2548	ADD	CUDA0
+l_out-28	MUL	CUDA0
+norm-29	RMS_NORM	CUDA0
+attn_norm-29	MUL	CUDA0
+Qcur-29	MUL_MAT	CUDA0
+Qcur-29 (reshaped)	RESHAPE	CUDA0
+norm-29	RMS_NORM	CUDA0
+Qcur_normed-29	MUL	CUDA0
+Qcur_pos-29	ROPE	CUDA0
+Vcur-29	MUL_MAT	CUDA0
+Vcur-29 (reshaped)	RESHAPE	CUDA0
+norm-29	RMS_NORM	CUDA0
+Kcur_normed-29	MUL	CUDA0
+Kcur_pos-29	ROPE	CUDA0
+Vcur-29 (reshaped)	RESHAPE	CUDA0
+Vcur_normed-29	RMS_NORM	CUDA0
+Kcur_pos-29 (view)	VIEW	CUDA0
+cache_k_l29 (view)	SET_ROWS	CUDA0
+Vcur_normed-29 (view)	VIEW	CUDA0
+cache_v_l29 (view)	SET_ROWS	CUDA0
+Qcur_pos-29 (view)	VIEW	CUDA0
+Qcur_pos-29 (view) (permuted)	PERMUTE	CUDA0
+cache_k_l29 (view)	VIEW	CUDA0
+cache_k_l29 (view) (permuted)	PERMUTE	CUDA0
+cache_v_l29 (view)	VIEW	CUDA0
+cache_v_l29 (view) (permuted)	PERMUTE	CUDA0
+node_2574	FLASH_ATTN_EXT	CUDA0
+kqv_out-29	RESHAPE	CUDA0
+node_2576	MUL_MAT	CUDA0
+norm-29	RMS_NORM	CUDA0
+attn_post_norm-29	MUL	CUDA0
+attn_out-29	ADD	CUDA0
+node_2580	RMS_NORM	CUDA0
+node_2581	SCALE	CUDA0
+node_2582	MUL	CUDA0
+ffn_moe_logits-29	MUL_MAT	CUDA0
+ffn_moe_probs-29	SOFT_MAX	CUDA0
+ffn_moe_probs-29 (reshaped)	RESHAPE	CUDA0
+ffn_moe_argsort-29	ARGSORT	CUDA0
+ffn_moe_topk-29	VIEW	CUDA0
+ffn_moe_weights-29	GET_ROWS	CUDA0
+ffn_moe_weights-29 (reshaped)	RESHAPE	CUDA0
+ffn_moe_weights_sum-29	SUM_ROWS	CUDA0
+ffn_moe_weights_sum_clamped-29	CLAMP	CUDA0
+ffn_moe_weights_norm-29	DIV	CUDA0
+ffn_moe_weights_norm-29 (reshaped)	RESHAPE	CUDA0
+norm-29	RMS_NORM	CUDA0
+ffn_norm_2-29	MUL	CUDA0
+ffn_norm_2-29 (reshaped)	RESHAPE	CUDA0
+ffn_moe_gate_up-29	MUL_MAT_ID	CPU
+ffn_moe_gate-29	VIEW	CPU
+ffn_moe_up-29	VIEW	CPU
+ffn_moe_geglu-29	GEGLU	CPU
+node_2601	MUL_MAT_ID	CPU
+blk.29.ffn_down_exps.scale (reshaped)	RESHAPE	CPU
+node_2603	REPEAT	CUDA0
+node_2604	GET_ROWS	CUDA0
+ffn_moe_down-29	MUL	CUDA0
+ffn_moe_weighted-29	MUL	CUDA0
+ffn_moe_weighted-29 (view)	VIEW	CUDA0
+ffn_moe_weighted-29 (view)	VIEW	CUDA0
+ffn_moe_weighted-29 (view)	VIEW	CUDA0
+ffn_moe_weighted-29 (view)	VIEW	CUDA0
+ffn_moe_weighted-29 (view)	VIEW	CUDA0
+ffn_moe_weighted-29 (view)	VIEW	CUDA0
+ffn_moe_weighted-29 (view)	VIEW	CUDA0
+ffn_moe_weighted-29 (view)	VIEW	CUDA0
+node_2615	ADD	CUDA0
+node_2616	ADD	CUDA0
+node_2617	ADD	CUDA0
+node_2618	ADD	CUDA0
+node_2619	ADD	CUDA0
+node_2620	ADD	CUDA0
+ffn_moe_out-29	ADD	CUDA0
+norm-29	RMS_NORM	CUDA0
+ffn_norm_1-29	MUL	CUDA0
+ffn_gate-29	MUL_MAT	CUDA0
+ffn_up-29	MUL_MAT	CUDA0
+ffn_geglu-29	GEGLU	CUDA0
+node_2627	MUL_MAT	CUDA0
+norm-29	RMS_NORM	CUDA0
+ffn_mlp-29	MUL	CUDA0
+norm-29	RMS_NORM	CUDA0
+ffn_moe-29	MUL	CUDA0
+ffn_moe_combined-29	ADD	CUDA0
+norm	RMS_NORM	CUDA0
+ffn_post_norm-29	MUL	CUDA0
+node_2635	ADD	CUDA0
+l_out-29	MUL	CUDA0
+norm	RMS_NORM	CUDA0
+h_nextn	MUL	CUDA0
+result_norm	GET_ROWS	CUDA0
+node_2640	MUL_MAT	CUDA0
+node_2641	SCALE	CUDA0
+node_2642	TANH	CUDA0
+result_output	SCALE	CUDA0

@@ -1,0 +1,32 @@
+{
+ "n_cpu_moe": "20",
+ "ctx": "262144",
+ "vram_mib": "11280",
+ "short_2k": {
+  "prompt_n": 2195,
+  "prompt_tok_s": 237.0,
+  "gen_n": 400,
+  "gen_tok_s": 49.9,
+  "draft": 448,
+  "accepted": 249,
+  "wall": 17.3,
+  "finish": "length",
+  "content_chars": 0,
+  "reasoning_chars": 1544,
+  "head": "<removed: generated/story text is not kept in this repo>"
+ },
+ "long_20k": {
+  "prompt_n": 15449,
+  "prompt_tok_s": 286.7,
+  "gen_n": 300,
+  "gen_tok_s": 49.3,
+  "draft": 327,
+  "accepted": 189,
+  "wall": 60.0,
+  "finish": "length",
+  "content_chars": 0,
+  "reasoning_chars": 1257,
+  "head": "<removed: generated/story text is not kept in this repo>"
+ },
+ "vram_after": "11394"
+}

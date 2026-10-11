@@ -1,0 +1,10 @@
+p1 llama-allgpu-q4-vs-f16 {"steps":195,"top1_agree":194,"top1_rate":0.9949,"kl_mean":0.00507845,"kl_max":0.416865}
+p1 port-q4-vs-llama-allgpu-q4 {"steps":195,"top1_agree":194,"kl_mean":0.00260701}
+p2 llama-allgpu-q4-vs-f16 {"steps":198,"top1_agree":198,"top1_rate":1.0000,"kl_mean":0.00158094,"kl_max":0.182693}
+p2 port-q4-vs-llama-allgpu-q4 {"steps":198,"top1_agree":197,"kl_mean":0.00296796}
+p3 llama-allgpu-q4-vs-f16 {"steps":200,"top1_agree":195,"top1_rate":0.9750,"kl_mean":0.0109374,"kl_max":0.250944}
+p3 port-q4-vs-llama-allgpu-q4 {"steps":200,"top1_agree":193,"kl_mean":0.0154567}
+p4 llama-allgpu-q4-vs-f16 {"steps":200,"top1_agree":184,"top1_rate":0.9200,"kl_mean":0.0287958,"kl_max":0.344648}
+p4 port-q4-vs-llama-allgpu-q4 {"steps":200,"top1_agree":181,"kl_mean":0.0325719}
+p5 llama-allgpu-q4-vs-f16 {"steps":200,"top1_agree":190,"top1_rate":0.9500,"kl_mean":0.0126123,"kl_max":0.231242}
+p5 port-q4-vs-llama-allgpu-q4 {"steps":200,"top1_agree":188,"kl_mean":0.0135845}
