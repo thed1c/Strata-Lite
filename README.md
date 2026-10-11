@@ -15,6 +15,7 @@ and two models.
 | Needs | Linux, NVIDIA driver 580+, CUDA 12.8/13, 32 GB RAM for Gemma, 48 GB for Qwen (64 for 262k + images), a patched llama.cpp build (`lite/docs/BUILD.md`) |
 | Run | `strata-lite-server -m model.gguf --mtp mtp.gguf --mmproj mmproj.gguf`; it picks the engine from the GGUF (`lite/docs/RUN.md`) |
 | API | llama-server's and OpenAI chat; 63/63 parity checks for each model (`lite/docs/API.md`) |
+| Images | The vision projector takes GPU memory only while it is in use: small images encode on the CPU, big ones move it to the card and it leaves after 15 s idle; prompts over 64K keep images on the CPU; a second GPU takes it automatically; under 32 GB of RAM it loads only when an image arrives (`--mmproj-place`, see "The image projector, on demand") |
 | Docs | `lite/docs/HOW-IT-WORKS.md`, `lite/docs/CORRECTNESS.md`, `lite/docs/QWEN36.md`, `lite/docs/MODEL-DESCRIPTOR.md`, `lite/ROADMAP.md`, `lite/CONTRIBUTING.md`, `lite/CHANGELOG.md` |
 | Licence | MIT (`LICENSE`); weights are yours to download under their own terms |
 
