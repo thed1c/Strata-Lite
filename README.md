@@ -472,6 +472,9 @@ Two invented test turns (`lite/tests/sameness-inputs/`) compared the two setups 
 - HauhauCS for the Gemma 4 release and the MTP drafter (credited there to Unsloth); Google for Gemma 4.
 - HauhauCS for the Qwen3.6 release; Unsloth for the Qwen3.6 MTP GGUF the drafter head is taken from; the Qwen team for Qwen3.6.
 
+## Support
+Strata-Lite exists because of Niko's [Strata](https://github.com/Niko1221/Strata). If it runs well for you, please support Niko first: [buymeacoffee.com/strataengine](https://buymeacoffee.com/strataengine). If you'd like to help with this fork's testing and builds too: [buymeacoffee.com/thed1c](https://buymeacoffee.com/thed1c).
+
 ## Layout
 
 Strata-Lite is a fork of Strata: everything of Strata is here and works as it does upstream (its engine for Qwen3.8-Flash-Next,
