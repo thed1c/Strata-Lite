@@ -80,16 +80,17 @@ if(STRATA_LITE_PORTABLE)
     set(${f} ON CACHE BOOL "" FORCE)
   endforeach()
 endif()
-# LLAMA_SERVER_PCH off: the server's precompiled header is found from CMAKE_SOURCE_DIR, which is this folder, not llama.cpp's
-foreach(o LLAMA_BUILD_TESTS LLAMA_BUILD_EXAMPLES LLAMA_BUILD_APP LLAMA_BUILD_UI LLAMA_USE_PREBUILT_UI LLAMA_OPENSSL LLAMA_TOOLS_INSTALL
-          LLAMA_SERVER_PCH)
+foreach(o LLAMA_BUILD_TESTS LLAMA_BUILD_EXAMPLES LLAMA_BUILD_APP LLAMA_BUILD_UI LLAMA_USE_PREBUILT_UI LLAMA_OPENSSL LLAMA_TOOLS_INSTALL)
   set(${o} OFF CACHE BOOL "" FORCE)
 endforeach()
 foreach(o LLAMA_BUILD_COMMON LLAMA_BUILD_TOOLS LLAMA_BUILD_SERVER)
   set(${o} ON CACHE BOOL "" FORCE)
 endforeach()
 add_subdirectory(${LLAMA_DIR} ${CMAKE_BINARY_DIR}/llama.cpp EXCLUDE_FROM_ALL)
-target_include_directories(server-context PRIVATE ${LLAMA_DIR})   # it includes from CMAKE_SOURCE_DIR (llama.cpp's root standalone)
+# the server code finds its precompiled header and includes from CMAKE_SOURCE_DIR (llama.cpp's root when it is built alone,
+# this folder here): no precompiled header, and llama.cpp's root as an include folder
+set_property(TARGET server-context PROPERTY PRECOMPILE_HEADERS "")
+target_include_directories(server-context PRIVATE ${LLAMA_DIR})
 find_package(CUDAToolkit REQUIRED)
 find_package(Threads REQUIRED)
 
