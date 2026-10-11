@@ -1,3 +1,4 @@
+#include <algorithm>
 // src/kernels/cpu/native_expert.cpp - plan v0.3 P6: native (GGUF-form) experts on the CPU through ggml-cpu.
 // See the header.  Nothing here is Strata arithmetic: the activation quantizers and the row dot products are
 // ggml-cpu's, so an IQ expert computes what llama.cpp's CPU backend computes for it.
@@ -20,6 +21,25 @@ namespace strata::kernels::cpu {
 namespace {
 
 const ggml_type_traits_cpu* traits(int type) { return ggml_get_type_traits_cpu((ggml_type) type); }
+
+}  // namespace
+}  // namespace strata::kernels::cpu
+
+// ggml-cpu's GELU table (vec.cpp, filled by ggml_cpu_init): GeGLU must round exactly as llama.cpp's CPU backend does
+extern "C" ggml_fp16_t ggml_table_gelu_f16[1 << 16];
+// ggml-cpu's SwiGLU (vec.cpp): its SIMD silu rounds differently from a scalar one, and its lanes are independent, so
+// calling it on 16-element blocks gives every element exactly what llama.cpp's swiglu op gives it
+extern "C" void ggml_vec_swiglu_f32(const int n, float * y, const float * x, const float * g);
+
+namespace strata::kernels::cpu {
+namespace {
+
+// ggml_vec_geglu_f32 with GGML_GELU_FP16 (ggml-cpu/vec.h), one element
+inline float geglu_ggml(float x, float g) {
+    if (x <= -10.0f) return 0.0f;
+    if (x >= 10.0f) return x * g;
+    return ggml_fp16_to_fp32(ggml_table_gelu_f16[ggml_fp32_to_fp16(x)]) * g;
+}
 
 void init_once() {
     static std::once_flag once;
@@ -44,7 +64,8 @@ bool iq256_supported(int type) noexcept {
 
 bool kq256_supported(int type) noexcept { return type == 12 || type == 7 || type == 8; }
 
-bool native_fmt(int gu_type, int d_type, int64_t n_embd, int64_t n_ff, NativeFmt& f, std::string& err) {
+bool native_fmt(int gu_type, int d_type, int64_t n_embd, int64_t n_ff, NativeFmt& f, std::string& err, NativeAct act,
+                bool separate_down) {
     init_once();
     const ggml_type_traits_cpu* tg = traits(gu_type);
     const ggml_type_traits_cpu* td = traits(d_type);
@@ -72,8 +93,14 @@ bool native_fmt(int gu_type, int d_type, int64_t n_embd, int64_t n_ff, NativeFmt
     f.gu_row = ggml_row_size((ggml_type) gu_type, n_embd);
     f.d_row = ggml_row_size((ggml_type) d_type, n_ff);
     f.up_off = f.gu_row * (size_t) n_ff;
-    f.down_off = 2 * f.up_off;
-    f.bytes = f.down_off + f.d_row * (size_t) n_embd;
+    f.down_off = separate_down ? 0 : 2 * f.up_off;
+    f.bytes = 2 * f.up_off + f.d_row * (size_t) n_embd;
+    f.act = act;
+    f.separate_down = separate_down;
+    if (n_ff > kNativeMaxFF) {
+        err = "native experts: expert FFN wider than the pool's buffers";
+        return false;
+    }
     f.act_bytes = ggml_row_size(tg->vec_dot_type, n_embd);
     f.h_bytes = ggml_row_size(td->vec_dot_type, n_ff);
     if (f.act_bytes > kNativeActBytes || f.h_bytes > kNativeHBytes) {
@@ -155,6 +182,41 @@ void native_gu_rows(const NativeFmt& f, const uint8_t* blob, const void* const* 
     // as the AVX-2 kernels, and STRATA_IQ_MT_MIN=1 takes the kernel for one token too (its rows are then
     // independent of the drafting: iq_avx1_parity checks every width bit for bit).
     static const bool avx1 = !cpu_avx2_ok() && cpu_avx1_ok() && std::getenv("STRATA_NO_IQ128") == nullptr;
+    if (f.act == NativeAct::SwiGLU_ggml) {   // Strata-Lite qwen35moe: ggml-cpu's own dots and SwiGLU (bit for bit)
+        const ggml_vec_dot_t dot = traits(f.gu_type)->vec_dot;
+        const int n = (int) f.n_embd;
+        float g[16], u[16], y[16];
+        for (int t = 0; t < nt; ++t) {
+            for (int rb = r0; rb < r1; rb += 16) {
+                const int m = std::min(16, r1 - rb);
+                for (int i = 0; i < 16; ++i) { g[i] = 0.f; u[i] = 0.f; }
+                for (int i = 0; i < m; ++i) {
+                    const uint8_t* gr = blob + (size_t) (rb + i) * f.gu_row;
+                    const uint8_t* ur = blob + f.up_off + (size_t) (rb + i) * f.gu_row;
+                    dot(n, &g[i], 0, gr, 0, act[t], 0, 1);
+                    dot(n, &u[i], 0, ur, 0, act[t], 0, 1);
+                }
+                ggml_vec_swiglu_f32(16, y, g, u);
+                for (int i = 0; i < m; ++i) ff[t][rb + i] = y[i];
+            }
+        }
+        return;
+    }
+    if (f.act == NativeAct::GeGLU) {   // Strata-Lite gemma4: ggml-cpu's own dots and GeGLU only (bit for bit with llama.cpp)
+        const ggml_vec_dot_t dot = traits(f.gu_type)->vec_dot;
+        const int n = (int) f.n_embd;
+        for (int r = r0; r < r1; ++r) {
+            const uint8_t* gr = blob + (size_t) r * f.gu_row;
+            const uint8_t* ur = blob + f.up_off + (size_t) r * f.gu_row;
+            for (int t = 0; t < nt; ++t) {
+                float g = 0.f, u = 0.f;
+                dot(n, &g, 0, gr, 0, act[t], 0, 1);
+                dot(n, &u, 0, ur, 0, act[t], 0, 1);
+                ff[t][r] = geglu_ggml(g, u);
+            }
+        }
+        return;
+    }
     const int mt_min = native_gu_mt_min(f.gu_type);   // #152
     // Unsloth UD-Q4_K_XL's Q4_K gate/up: the multi-token kernel is bit-exact against ggml's per-token dot (any group
     // size, no #152 rule).  Opt-in, STRATA_KQ256=1: measured no faster in the engine (a window's expert groups hold
@@ -206,7 +268,7 @@ void native_down_rows(const NativeFmt& f, const uint8_t* blob, const void* const
     // Both multi-token kernels below are /arch:AVX2 translation units (kq_avx2.cpp and iq_avx2.cpp),
     // so a CPU without AVX2 has to reach ggml-cpu's vec_dot instead - same reasoning as the gate/up
     // rows above, where `avx512` tested cpu_avx512_ok() and `avx2` did not.
-    if (cpu_avx2_ok() && kq && nt >= 2 && (f.d_type == 7 || f.d_type == 8)) {   // Q5_1 / Q8_0 down: bit-exact, any group size
+    if (cpu_avx2_ok() && kq && nt >= 2 && (f.d_type == 7 || f.d_type == 8) && f.act == NativeAct::SwiGLU) {   // Q5_1 / Q8_0 down: bit-exact, any group size
         kq256_rows(f.d_type, blob + f.down_off, f.d_row, (int) f.n_ff, hq, nt, out, r0, r1);
         return;
     }
