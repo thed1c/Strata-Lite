@@ -104,6 +104,7 @@ int run(int argc, char ** argv) {
     P.n_parallel = 1;
     A.eo.n_ctx = 262144; A.eo.n_cpu_moe = 30; A.eo.pool = true; A.eo.pool_threads = 0; A.eo.cache_slots = -1;
     A.eo.adapt = true; A.eo.async_swaps = true; A.eo.overlap = true; A.eo.prefill_ubatch = -1; A.eo.lend = true;
+    A.eo.kv_initial = 32768;   // the KV pager: 32k global-layer cells on the card at load, grown as needed (0 = all at load)
     A.eo.type_k = GGML_TYPE_Q4_0; A.eo.type_v = GGML_TYPE_Q4_0;
     for (int i = 1; i < argc; ++i) {
         std::string a = argv[i];
@@ -133,6 +134,8 @@ int run(int argc, char ** argv) {
         else if (a == "--profile") A.eo.profile = nx();
         else if (a == "--pool-threads") A.eo.pool_threads = std::stoi(nx());
         else if (a == "--prefill-ubatch") { std::string v = nx(); A.eo.prefill_ubatch = v == "auto" ? -1 : std::stoi(v); }
+        else if (a == "--kv-initial") A.eo.kv_initial = std::stoi(nx());   // KV pager: cells on the card at load (0 = all)
+        else if (a == "--kv-step") A.eo.kv_step = std::stoi(nx());
         else if (a == "--no-lend") A.eo.lend = false;
         // the expert cache's behaviour (defaults: Gate 0's adaptive policy, the copy stream and the CPU/GPU overlap on)
         else if (a == "--adapt-half-life") A.eo.adapt_half_life = std::stof(nx());     // tokens; usage counts halve over this many

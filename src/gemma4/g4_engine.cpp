@@ -352,6 +352,7 @@ Engine::~Engine() {
     if (arena_) cudaFreeHost(arena_);
     if (sched_) ggml_backend_sched_free(sched_);
     if (buf_kv_) ggml_backend_buffer_free(buf_kv_);
+    for (KvLayer & kl : kvl_) { if (kl.buf) ggml_backend_buffer_free(kl.buf); if (kl.ctx) ggml_free(kl.ctx); }
     if (buf_gpu_) ggml_backend_buffer_free(buf_gpu_);
     if (buf_map_) ggml_backend_buffer_free(buf_map_);
     if (ctx_kv_) ggml_free(ctx_kv_);
@@ -509,17 +510,24 @@ std::string Engine::load(const Options & o) {
     ggml_init_params kp = { (size_t) (2 * hp_.n_layer + 4) * ggml_tensor_overhead(), nullptr, true };
     ctx_kv_ = ggml_init(kp);
     for (int il = 0; il < hp_.n_layer; ++il) {
-        Cache & c = hp_.is_swa[il] ? swa_ : base_;
-        const int hd = hp_.is_swa[il] ? hp_.head_dim_swa : hp_.head_dim;
-        const int64_t n_gqa = (int64_t) hd * hp_.n_head_kv[il];
-        c.k[il] = ggml_new_tensor_3d(ctx_kv_, o.type_k, n_gqa, c.size, 1);
-        c.v[il] = ggml_new_tensor_3d(ctx_kv_, o.type_v, n_gqa, c.size, 1);
-        ggml_format_name(c.k[il], "cache_k_l%d", il);
-        ggml_format_name(c.v[il], "cache_v_l%d", il);
+        if (!hp_.is_swa[il]) continue;   // the global layers: the KV pager below
+        const int64_t n_gqa = (int64_t) hp_.head_dim_swa * hp_.n_head_kv[il];
+        swa_.k[il] = ggml_new_tensor_3d(ctx_kv_, o.type_k, n_gqa, swa_.size, 1);
+        swa_.v[il] = ggml_new_tensor_3d(ctx_kv_, o.type_v, n_gqa, swa_.size, 1);
+        ggml_format_name(swa_.k[il], "cache_k_l%d", il);
+        ggml_format_name(swa_.v[il], "cache_v_l%d", il);
     }
     buf_kv_ = ggml_backend_alloc_ctx_tensors_from_buft(ctx_kv_, ggml_backend_get_default_buffer_type(gpu_));
     if (!buf_kv_) return "KV allocation failed";
     ggml_backend_buffer_clear(buf_kv_, 0);
+    // the KV pager: each global layer's K/V in its own buffer of kv_cap_ cells
+    kv_cap_ = o.kv_initial > 0 ? std::min<uint32_t>(base_.size, (uint32_t) ((o.kv_initial + 255) / 256 * 256)) : base_.size;
+    kvl_.assign(hp_.n_layer, {});
+    for (int il = 0; il < hp_.n_layer; ++il) {
+        if (hp_.is_swa[il]) continue;
+        const std::string e = kv_alloc_layer(il, kv_cap_);
+        if (!e.empty()) return e;
+    }
 
     if (o.pool) {   // stage c: Strata's CPU expert pool for the RAM-resident layers
         pool_ = std::make_unique<scpu::ExpertPool>(o.pool_threads, /*pin*/ false);   // never pin: machine A runs production
@@ -581,6 +589,7 @@ std::string Engine::load(const Options & o) {
         std::string aerr;
         while (!(aerr = arena_build(S, true)).empty() && autos && S > kMinSlots) S = std::max(kMinSlots, S - 2);
         if (!aerr.empty()) return aerr;
+        slots_load_ = slots_now_;
         for (int il = 0; il < hp_.n_layer; ++il) {
             CacheLayer * C = cache_[il].get();
             if (!C || C->full) continue;
@@ -707,6 +716,10 @@ std::string Engine::ubatch(const int32_t * toks, int n, int pos0, bool output, s
         if (!c->find_slot(n, H.n_swa)) return "KV cache full";
         c->apply(positions);
         if (kv_debug) fprintf(stderr, "g4   cells %lld..%lld n_kv %u\n", (long long) c->idxs.front(), (long long) c->idxs.back(), c->n_kv);
+    }
+    {   // the KV pager
+        const uint32_t need = (uint32_t) *std::max_element(base_.idxs.begin(), base_.idxs.end()) + 1;
+        if (need > kv_cap_) { const std::string e = kv_grow(need); if (!e.empty()) return e; }
     }
 
     ggml_init_params ip = { graph_buf_.size(), graph_buf_.data(), true };
@@ -1267,13 +1280,98 @@ void Engine::end_read() {
         // The read may leave less VRAM than it lent (ggml-cuda's pool keeps what the big ubatches grew): fewer slots
         // then, never a failed step.
         int S = slots_now_;
+        if (o_.cache_slots < 0) {   // auto slots: what the VRAM holds after the reserve, as at load (the KV pager may have
+            // grown the KV during the read; without it this is the load-time count)
+            size_t fr = 0, tot = 0; cudaMemGetInfo(&fr, &tot);
+            const size_t per = slot_bytes(), reserve = (size_t) o_.vram_reserve_mb << 20;
+            const int fit = fr > reserve + 2 * per ? (int) ((fr - reserve) / per) - 1 : kMinSlots;
+            S = std::max(kMinSlots, std::min(S, fit));
+        }
         std::string err;
         while (!(err = arena_build(S, false)).empty() && S > kMinSlots) S = std::max(kMinSlots, S - 4);
         if (!err.empty()) fatal_ = "after the read: " + err;
+        headroom_kv_ = 0;   // free VRAM changed: check again before the next small step
     }
     read_end_ = std::chrono::steady_clock::now();
     refill_watch_ = true;
     stats_.restore_ms += std::chrono::duration<double, std::milli>(read_end_ - t0).count();
+}
+
+// ---------------------------------------------------------------- the KV pager (global layers)
+size_t Engine::kv_bytes(uint32_t cells) const {
+    size_t b = 0;
+    for (int il = 0; il < hp_.n_layer; ++il) {
+        if (hp_.is_swa[il]) continue;
+        const int64_t n_gqa = (int64_t) hp_.head_dim * hp_.n_head_kv[il];
+        b += (ggml_row_size(o_.type_k, n_gqa) + ggml_row_size(o_.type_v, n_gqa)) * cells;
+    }
+    return b;
+}
+
+// one global layer's K/V in a buffer of cap cells: zeroed (as the whole-context buffer was at load), the old cells
+// copied over, the old buffer freed
+std::string Engine::kv_alloc_layer(int il, uint32_t cap) {
+    const int64_t n_gqa = (int64_t) hp_.head_dim * hp_.n_head_kv[il];
+    ggml_init_params p = { 4 * ggml_tensor_overhead(), nullptr, true };
+    KvLayer nl; nl.ctx = ggml_init(p);
+    ggml_tensor * k = ggml_new_tensor_3d(nl.ctx, o_.type_k, n_gqa, cap, 1);
+    ggml_tensor * v = ggml_new_tensor_3d(nl.ctx, o_.type_v, n_gqa, cap, 1);
+    ggml_format_name(k, "cache_k_l%d", il);
+    ggml_format_name(v, "cache_v_l%d", il);
+    nl.buf = ggml_backend_alloc_ctx_tensors_from_buft(nl.ctx, ggml_backend_get_default_buffer_type(gpu_));
+    if (!nl.buf) { ggml_free(nl.ctx); return "KV allocation failed (layer " + std::to_string(il) + ", " + std::to_string(cap) + " cells)"; }
+    ggml_backend_buffer_clear(nl.buf, 0);
+    if (base_.k[il]) {
+        const size_t rows = (size_t) std::min<int64_t>(base_.k[il]->ne[1], cap);
+        cudaMemcpy(k->data, base_.k[il]->data, ggml_row_size(k->type, n_gqa) * rows, cudaMemcpyDeviceToDevice);
+        cudaMemcpy(v->data, base_.v[il]->data, ggml_row_size(v->type, n_gqa) * rows, cudaMemcpyDeviceToDevice);
+    }
+    if (kvl_[il].buf) ggml_backend_buffer_free(kvl_[il].buf);
+    if (kvl_[il].ctx) ggml_free(kvl_[il].ctx);
+    kvl_[il] = nl;
+    base_.k[il] = k; base_.v[il] = v;
+    return "";
+}
+
+// room for cells: the capacity rounded up to kv_step (at most the context); the slot arena gives way first, one layer
+// at a time is reallocated (the moment's extra VRAM is one layer's new buffer)
+std::string Engine::kv_grow(uint32_t cells) {
+    if (cells <= kv_cap_) return "";
+    cudaSetDevice(cuda_dev_);
+    const uint32_t step = (uint32_t) std::max(256, (o_.kv_step + 255) / 256 * 256);
+    const uint32_t cap = std::min(base_.size, (cells + step - 1) / step * step);
+    size_t one = 0;
+    for (int il = 0; il < hp_.n_layer; ++il) if (!hp_.is_swa[il]) {
+        const int64_t n_gqa = (int64_t) hp_.head_dim * hp_.n_head_kv[il];
+        one = std::max(one, (ggml_row_size(o_.type_k, n_gqa) + ggml_row_size(o_.type_v, n_gqa)) * cap);
+    }
+    ensure_free(kv_bytes(cap) - kv_bytes(kv_cap_) + one + ((size_t) 64 << 20));
+    if (!fatal_.empty()) return fatal_;
+    ggml_backend_synchronize(gpu_);
+    for (int il = 0; il < hp_.n_layer; ++il) {
+        if (hp_.is_swa[il]) continue;
+        const std::string e = kv_alloc_layer(il, cap);
+        if (!e.empty()) return e;
+    }
+    fprintf(stderr, "strata-lite: KV on the card %u -> %u cells (%.0f MiB)\n", kv_cap_, cap, kv_bytes(cap) / 1048576.0);
+    kv_cap_ = cap;
+    headroom_kv_ = 0;   // free VRAM changed
+    return "";
+}
+
+void Engine::kv_shrink() {
+    const uint32_t init = o_.kv_initial > 0 ? std::min<uint32_t>(base_.size, (uint32_t) ((o_.kv_initial + 255) / 256 * 256)) : base_.size;
+    if (kv_cap_ <= init || kvl_.empty()) return;
+    ggml_backend_synchronize(gpu_);
+    for (int il = 0; il < hp_.n_layer; ++il) {
+        if (hp_.is_swa[il]) continue;
+        const std::string e = kv_alloc_layer(il, init);
+        if (!e.empty()) { fatal_ = "new conversation: " + e; return; }
+    }
+    fprintf(stderr, "strata-lite: KV on the card %u -> %u cells (a new conversation)\n", kv_cap_, init);
+    kv_cap_ = init;
+    headroom_kv_ = 0;
+    if (slots_load_ > slots_now_) grow_to(slots_load_, (size_t) o_.vram_reserve_mb << 20);
 }
 
 // ---------------------------------------------------------------- the slot arena: (re)build, size, shrink
@@ -1353,8 +1451,14 @@ std::string Engine::arena_build(int S, bool fill_profile) {
 
 int Engine::pick_chunk(int n) {
     size_t fr = 0, tot = 0; cudaMemGetInfo(&fr, &tot);
-    const size_t avail = fr + ((o_.lend && buf_cache_) ? ggml_backend_buffer_get_size(buf_cache_) : 0);
+    size_t avail = fr + ((o_.lend && buf_cache_) ? ggml_backend_buffer_get_size(buf_cache_) : 0);
     const size_t n_kv_end = (size_t) n_past_ + n, margin = (size_t) 256 << 20;
+    {   // the KV pager grows during this read: its new cells come out of the same VRAM
+        const uint32_t step = (uint32_t) std::max(256, (o_.kv_step + 255) / 256 * 256);
+        const uint32_t cells = (uint32_t) std::min<size_t>(base_.size, (n_kv_end + step - 1) / step * step);
+        const size_t kv_more = cells > kv_cap_ ? kv_bytes(cells) - kv_bytes(kv_cap_) : 0;
+        avail = avail > kv_more ? avail - kv_more : 0;
+    }
     for (int P : { 32768, 16384, 8192, kChunkMin }) {   // 32k only where the borrowable VRAM covers it (24-32 GB cards)
         const size_t m = (size_t) std::min(P, n);
         if (kChunkFixed + m * kChunkPerTok + m * n_kv_end * 2 + margin <= avail) return P;
@@ -1508,6 +1612,7 @@ void Engine::rollback(int n_past) {
     cudaSetDevice(cuda_dev_);   // a projector on a second card may have left another device current on this thread
     base_.seq_rm(n_past); swa_.seq_rm(n_past);
     n_past_ = n_past;
+    if (n_past == 0) kv_shrink();   // a new conversation (verify windows never roll back to 0)
 }
 
 // ---------------------------------------------------------------- stage f: the MTP drafter (llama.cpp src/models/gemma4-assistant.cpp)

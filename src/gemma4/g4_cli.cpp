@@ -49,6 +49,8 @@ int main(int argc, char ** argv) {
         else if (a == "--async-swaps") o.async_swaps = true;
         else if (a == "--overlap") o.overlap = true;
         else if (a == "--prefill-ubatch") { std::string v = next(); o.prefill_ubatch = v == "auto" ? -1 : std::stoi(v); }
+        else if (a == "--kv-initial") o.kv_initial = std::stoi(next());   // KV pager: cells on the card at load (0 = all)
+        else if (a == "--kv-step") o.kv_step = std::stoi(next());
         else if (a == "--lend") o.lend = true;
         else if (a == "-ctk" || a == "-ctv") {
             const std::string t = next();
@@ -97,7 +99,15 @@ int main(int argc, char ** argv) {
     std::vector<int32_t> gen;
     auto argmax = [&](const std::vector<float> & v) { return (int32_t) (std::max_element(v.begin(), v.end()) - v.begin()); };
     // compare one step's logits (predicting token `s` of the continuation) with the oracle's step s
+    // G4_LOGIT_HASH=FILE: one FNV-1a hash of every scored step's logits (bit-for-bit comparison of two builds, no oracle)
+    FILE * fhash = getenv("G4_LOGIT_HASH") ? fopen(getenv("G4_LOGIT_HASH"), "w") : nullptr;
     auto compare = [&](const float * L) {
+        if (fhash) {
+            uint64_t h = 1469598103934665603ull;
+            const unsigned char * b = (const unsigned char *) L;
+            for (size_t j = 0; j < (size_t) n_vocab * sizeof(float); ++j) { h ^= b[j]; h *= 1099511628211ull; }
+            fprintf(fhash, "%016llx\n", (unsigned long long) h);
+        }
         if (!(fo && fread(ref.data(), sizeof(float), n_vocab, fo) == (size_t) n_vocab)) return;
         steps++;
         if (memcmp(ref.data(), L, n_vocab * sizeof(float)) == 0) identical++;
@@ -183,6 +193,7 @@ int main(int argc, char ** argv) {
     auto t3 = std::chrono::steady_clock::now();
     if (fo) fclose(fo);
     if (fsteps) fclose(fsteps);
+    if (fhash) fclose(fhash);
     const double ls = std::chrono::duration<double>(t1 - t0).count(), ps = std::chrono::duration<double>(t2 - t1).count(),
                  ds = std::chrono::duration<double>(t3 - t2).count();
     char buf[4096];

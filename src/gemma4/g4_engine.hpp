@@ -49,6 +49,11 @@ struct Options {
     // arena is freed for the read (its VRAM funds the compute buffers and the enlarged window cache) and refilled after
     int   prefill_ubatch  = 0;      // -1 = auto: per read, the largest of 32k / 16k / 8k / 4k whose compute fits the VRAM the read can borrow
     bool  lend            = false;
+    // the KV pager: the global layers' K/V start with kv_initial cells on the card (0 = the whole context at load, as
+    // llama.cpp) and grow in kv_step steps as the conversation needs them; the slot arena gives way (ensure_free). The
+    // window layers keep their own small cache.
+    int   kv_initial      = 0;
+    int   kv_step         = 16384;
 };
 
 struct Stats {
@@ -97,6 +102,7 @@ public:
     // (llama-server's SWA check); else the conversation is read again from the start
     bool can_resume(int n) const;
     int n_ctx() const { return (int) base_.size; }
+    int kv_cap() const { return (int) kv_cap_; }   // global-layer KV cells on the card now (<= n_ctx)
     // vision: an image chunk's embeddings [n][n_embd] (mtmd), one ubatch; non_causal = mtmd_decode_use_non_causal
     // (Gemma: the sliding-window layers attend both ways inside the image, the global layers stay causal)
     std::string decode_embd(const float * embd, int n, bool non_causal, std::vector<float> * logits, std::vector<float> * h_last);
@@ -211,6 +217,15 @@ private:
     void headroom_for(int n_kv);
     int pick_chunk(int n);                   // auto prefill_ubatch for a read of n tokens at the current position             // before a small step: room for its compute buffer at this context, else fewer slots
     size_t slot_bytes() const;               // one slot in every cached layer
+    // the KV pager (global layers): each one's K/V in its own buffer of kv_cap_ cells (a multiple of 256, <= base_.size)
+    struct KvLayer { ggml_context * ctx = nullptr; ggml_backend_buffer_t buf = nullptr; };
+    std::vector<KvLayer> kvl_;
+    uint32_t kv_cap_ = 0;
+    int slots_load_ = 0;                     // the slot count at load: a new conversation grows the arena back to it
+    size_t kv_bytes(uint32_t cells) const;
+    std::string kv_alloc_layer(int il, uint32_t cap);
+    std::string kv_grow(uint32_t cells);
+    void kv_shrink();                        // a new conversation: back to kv_initial cells, the arena regrown
 };
 
 }  // namespace g4
