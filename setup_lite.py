@@ -531,6 +531,8 @@ def make_shortcut() -> None:
             entry = ("[Desktop Entry]\nType=Application\nName=Strata-Lite\nComment=Start Strata-Lite\n"
                      f"Exec=sh -c 'cd \"{ROOT}\" && ./setup.sh'\nTerminal=true\nCategories=Utility;\n")
             apps = Path.home() / ".local" / "share" / "applications"
+            if desk.is_dir():
+                apps.mkdir(parents=True, exist_ok=True)
             made = []
             for d in (desk, apps):
                 f = d / "strata-lite.desktop"
@@ -541,7 +543,7 @@ def make_shortcut() -> None:
                         subprocess.run(["gio", "set", str(f), "metadata::trusted", "true"], capture_output=True)
                     made.append(d)
             if desk in made:
-                S.ok("a Strata-Lite launcher is on your desktop (and in the applications menu)")
+                S.ok("a Strata-Lite launcher is on your desktop" + (" and in the applications menu" if apps in made else ""))
             elif apps in made:
                 S.ok("Strata-Lite is in your applications menu")
     except (OSError, subprocess.SubprocessError) as e:
@@ -630,6 +632,19 @@ SIGILL = (-4, 0xC000001D)
 DLL_MISSING = (0xC0000135,)
 
 
+def free_port(p: int) -> int:
+    """The first port from p on that nothing listens on (127.0.0.1)."""
+    import socket
+    for q in range(p, p + 100):
+        with socket.socket() as s:
+            try:
+                s.bind(("127.0.0.1", q))
+                return q
+            except OSError:
+                pass
+    return p
+
+
 def diagnose(tail: str, code: int, cfg: dict) -> tuple[str, list]:
     t = tail.lower()
     ctx = cfg.get("context", 0)
@@ -644,7 +659,7 @@ def diagnose(tail: str, code: int, cfg: dict) -> tuple[str, list]:
     if "cannot listen on" in t or "bind" in t and ("port" in t or "address" in t):
         port = int(cfg["args"][cfg["args"].index("--port") + 1])
         return (f"another program already uses port {port} (often Strata-Lite itself, still open in another window).",
-                [(f"use port {port + 1} instead", "port")])
+                [(f"use port {free_port(port + 1)} instead", "port")])
     if ("failed to open" in t or "cannot map" in t or "no such file" in t) and ".gguf" in t:
         return ("a model file is missing or damaged.", [("download it again (the setup for this model)", "change")])
     # RAM before the card: ggml's "failed to allocate ... pinned memory: out of memory" names CUDA but is the PC's RAM
@@ -669,7 +684,7 @@ def apply_fix(fix: str, cfg_path: Path, cfg: dict) -> bool:
         else:
             args.extend([flag, value])
     if fix == "port":
-        set_arg("--port", str(int(args[args.index("--port") + 1]) + 1))
+        set_arg("--port", str(free_port(int(args[args.index("--port") + 1]) + 1)))
         cfg["port"] = int(args[args.index("--port") + 1])
     elif fix == "ctx":
         cfg["context"] = max(32768, cfg.get("context", 131072) // 2)
