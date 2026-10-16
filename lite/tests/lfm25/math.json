@@ -1,0 +1,11 @@
+{
+  "messages": [
+    {
+      "role": "user",
+      "content": "Find the least common multiple of 84, 126, and 210. Explain the prime factorization and check the result."
+    }
+  ],
+  "chat_template_kwargs": {
+    "enable_thinking": true
+  }
+}

@@ -1,0 +1,11 @@
+{
+  "messages": [
+    {
+      "role": "user",
+      "content": "A reservoir contains 800 liters. One pipe adds 17 liters per minute while another drains 9 liters per minute. Both operate for 35 minutes, then only the drain runs for 20 minutes. Compute the final volume and explain each phase."
+    }
+  ],
+  "chat_template_kwargs": {
+    "enable_thinking": true
+  }
+}

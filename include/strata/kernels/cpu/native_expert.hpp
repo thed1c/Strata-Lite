@@ -15,11 +15,10 @@ namespace strata::kernels::cpu {
 
 /// Bytes of the largest quantized activation any native layer uses (2560 values as Q8_K: 10 x 292).
 inline constexpr size_t kNativeActBytes = 4096;
-/// Bytes of the largest quantized down activation (640 values as Q8_0: 20 x 34, or Q8_K 3 x 292; gemma4's 704 as
-/// Q8_0: 22 x 34 = 748).
-inline constexpr size_t kNativeHBytes = 1024;
-/// Strata-Lite: the widest expert FFN a native layer may have (Qwen3.8 640, Gemma 4 26B-A4B 704); the pool's buffers.
-inline constexpr int kNativeMaxFF = 1024;
+/// Bytes for the widest down activation: LFM2.5 has 1536 values as Q8_0 (48 x 34 = 1632).
+inline constexpr size_t kNativeHBytes = 2048;
+/// Strata-Lite: the widest expert FFN a native layer may have (Qwen3.8 640, Gemma 4 704, LFM2.5 1536); the pool's buffers.
+inline constexpr int kNativeMaxFF = 1536;
 
 /// The expert's gated activation.
 enum class NativeAct : int {

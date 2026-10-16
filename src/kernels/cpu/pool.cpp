@@ -781,6 +781,10 @@ void ExpertPool::run_split_multi_native(const NativeFmt& f, ExpertJobMulti* jobs
         mtasks_ = phase_tasks(mrows_);
         run_phase(6, mtasks_);
         const auto d = std::chrono::steady_clock::now();
+        for (int e = 0; e < nb; ++e)
+            for (int t = 0; t < mjobs_[e].nt; ++t)
+                if (mjobs_[e].hidden[t])
+                    memcpy(mjobs_[e].hidden[t], split_multi_[(size_t)e].ff[t], (size_t)f.n_ff * sizeof(float));
         ms_multi_gu += std::chrono::duration<double, std::milli>(b - a).count();
         ms_multi_q += std::chrono::duration<double, std::milli>(c - b).count();
         ms_multi_down += std::chrono::duration<double, std::milli>(d - c).count();

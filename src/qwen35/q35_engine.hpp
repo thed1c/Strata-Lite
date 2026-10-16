@@ -1,5 +1,5 @@
-// Strata-Lite qwen35moe engine (Qwen3.5 / Qwen3.6 MoE: Gated DeltaNet + gated attention, 256 experts + a shared
-// expert). llama.cpp's graph (src/models/qwen35moe.cpp, delta-net-base.cpp, llama-graph.cpp) rebuilt op for op with ggml,
+// Strata-Lite hybrid MoE engine: Qwen3.5 / 3.6 (DeltaNet, gated attention, shared expert) and
+// LFM2.5 (short convolution, attention, leading dense FFNs, biased sigmoid router). llama.cpp's graph (src/models/qwen35moe.cpp, delta-net-base.cpp, llama-graph.cpp) rebuilt op for op with ggml,
 // so every stage compares bit for bit with llama.cpp where the arithmetic is the same; in front of the RAM-resident
 // experts, Strata's GPU expert cache, CPU pool, adaptation, MTP drafting and chunked reads (docs/QWEN36.md).
 #pragma once
@@ -7,6 +7,7 @@
 #include "ggml.h"
 #include "ggml-backend.h"
 #include "gguf.h"
+#include "../lite/lfm_lora.hpp"
 
 #include <chrono>
 #include <cstdint>
@@ -20,6 +21,8 @@ namespace q35 {
 
 struct Options {
     std::string gguf;
+    std::string lora;             // opt-in rank-one LFM mixer-output/expert-down adapter
+    float lora_scale = 1.0f;      // fixed for this engine instance; prompt cache cannot mix scales
     int  n_ctx     = 32768;
     int  n_ubatch  = 512;
     int  n_cpu_moe = 40;        // the first N layers' experts stay in RAM (llama.cpp --n-cpu-moe)
@@ -80,13 +83,15 @@ struct Stats {
 };
 
 struct HParams {
+    bool lfm2 = false;
+    int n_dense = 0, n_ff = 0;
     int n_layer = 0, n_embd = 0, n_head = 0, n_head_kv = 0, head_dim = 0, n_rot = 0, n_vocab = 0, n_ctx_train = 0;
     int n_expert = 0, n_expert_used = 0, n_ff_exp = 0, n_ff_shexp = 0;
     int ssm_d_conv = 0, ssm_d_inner = 0, ssm_d_state = 0, ssm_n_group = 0, ssm_dt_rank = 0, full_attn_interval = 4;
     int rope_sections[4] = { 0, 0, 0, 0 };
     float rope_base = 0, eps = 0;
-    std::vector<bool> is_recr;          // Gated DeltaNet layer (else full attention)
-    int64_t n_embd_r() const { return (int64_t) (ssm_d_conv - 1) * (ssm_d_inner + 2 * ssm_n_group * ssm_d_state); }
+    std::vector<bool> is_recr;          // DeltaNet or LFM shortconv layer (else full attention)
+    int64_t n_embd_r() const { return (int64_t) (ssm_d_conv - 1) * (lfm2 ? n_embd : ssm_d_inner + 2 * ssm_n_group * ssm_d_state); }
     int64_t n_embd_s() const { return (int64_t) ssm_d_state * ssm_d_inner; }
 };
 
@@ -131,6 +136,8 @@ private:
         ggml_tensor *attn_norm, *attn_post_norm;
         ggml_tensor *wq, *wk, *wv, *wo, *q_norm, *k_norm;                                            // attention layers
         ggml_tensor *wqkv, *wqkv_gate, *ssm_conv1d, *ssm_dt, *ssm_a, *ssm_beta, *ssm_alpha, *ssm_norm, *ssm_out;   // delta-net
+        ggml_tensor *conv_in, *conv_out, *conv_kernel; // LFM2 short convolution
+        ggml_tensor *dense_gate, *dense_up, *dense_down, *expert_bias;
         ggml_tensor *gate_inp, *gate_exps, *up_exps, *down_exps;                                    // routed experts
         ggml_tensor *gate_inp_shexp, *gate_shexp, *up_shexp, *down_shexp;                          // shared expert
     };
@@ -158,6 +165,7 @@ private:
     ggml_tensor * norm(ggml_context * ctx, ggml_tensor * cur, ggml_tensor * w, int il);
 
     Options o_;
+    std::unique_ptr<lite::LfmLora> lora_;
     HParams hp_;
     gguf_context * gguf_ = nullptr;
     ggml_context * meta_ = nullptr, * ctx_w_ = nullptr, * ctx_gpu_ = nullptr, * ctx_kv_ = nullptr;

@@ -1,0 +1,11 @@
+{
+  "messages": [
+    {
+      "role": "user",
+      "content": "Explain why the seasons are opposite in the northern and southern hemispheres. Distinguish axial tilt from distance to the Sun and describe what happens near each solstice."
+    }
+  ],
+  "chat_template_kwargs": {
+    "enable_thinking": true
+  }
+}

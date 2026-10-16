@@ -89,7 +89,7 @@ static void exec_qwen_server(int argc, char ** argv) {
     std::vector<char *> av = { (char *) exe.c_str() };
     for (int i = 1; i < argc; ++i) av.push_back(argv[i]);
     av.push_back(nullptr);
-    fprintf(stderr, "strata-lite-server: a qwen35moe model: starting %s\n", exe.c_str());
+    fprintf(stderr, "strata-lite-server: a hybrid MoE model: starting %s\n", exe.c_str());
     execv(exe.c_str(), av.data());
     fprintf(stderr, "strata-lite-server: cannot start %s (build src/qwen35, or set STRATA_LITE_QWEN35_SERVER)\n", exe.c_str());
     exit(1);
@@ -414,7 +414,9 @@ int run(int argc, char ** argv) {
         auto emit = [&](llama_token t) -> bool {   // false = stop here
             out.push_back(t); stats.n_gen++;
             if (llama_vocab_is_eog(vocab, t)) { stop = STOP_TYPE_EOS; return false; }
-            text += common_token_to_piece(vocab, t, P.special);
+            // Match llama-server: parser-required markers survive even when ordinary special tokens are hidden.
+            const bool special = P.special || tp.sampling.preserved_tokens.count(t) != 0;
+            text += common_token_to_piece(vocab, t, special);
             for (const auto & w : tp.antiprompt) {
                 const size_t p = text.find(w, text.size() > w.size() + 16 ? text.size() - w.size() - 16 : 0);
                 if (!w.empty() && p != std::string::npos) { text.resize(p); stop = STOP_TYPE_WORD; stopping_word = w; return false; }
@@ -579,13 +581,13 @@ int run(int argc, char ** argv) {
 #ifdef STRATA_LITE_COMBINED
 namespace q35srv { int run(int argc, char ** argv); }
 int main(int argc, char ** argv) {
-    if (g4srv::model_architecture(argc, argv) == "qwen35moe") return q35srv::run(argc, argv);
+    if (const auto arch = g4srv::model_architecture(argc, argv); arch == "qwen35moe" || arch == "lfm2moe") return q35srv::run(argc, argv);
     return g4srv::run(argc, argv);
 }
 #else
 int main(int argc, char ** argv) {
 #ifndef _WIN32
-    if (g4srv::model_architecture(argc, argv) == "qwen35moe") g4srv::exec_qwen_server(argc, argv);
+    if (const auto arch = g4srv::model_architecture(argc, argv); arch == "qwen35moe" || arch == "lfm2moe") g4srv::exec_qwen_server(argc, argv);
 #endif
     return g4srv::run(argc, argv);
 }

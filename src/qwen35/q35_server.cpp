@@ -69,6 +69,7 @@ static void usage() {
                     "  [--temp T --top-k K --top-p P --min-p M --repeat-penalty R] [--image-max-tokens N] [-t N]\n"
                     "  [--n-cpu-moe N --cache-slots S --profile F --pool-threads N --prefill-ubatch N -ctk T -ctv T --n-draft N --mtp-own-head]\n"
                     "  [--checkpoint-min-tokens N]\n");
+    fprintf(stderr, "  [--lora FILE --lora-scale SCALE] (LFM rank-one output adapters; fixed at startup)\n");
 }
 
 static ggml_type kv_type(const std::string & t) { return t == "q4_0" ? GGML_TYPE_Q4_0 : t == "q8_0" ? GGML_TYPE_Q8_0 : GGML_TYPE_F16; }
@@ -84,22 +85,30 @@ int run(int argc, char ** argv) {
     A.eo.adapt = true; A.eo.async_swaps = true; A.eo.overlap = true; A.eo.prefill_ubatch = -1; A.eo.lend = true;
     A.eo.kv_initial = 32768;   // the KV pager: 32k cells on the card at load, grown as the conversation needs (0 = all at load)
     A.eo.type_k = GGML_TYPE_Q4_0; A.eo.type_v = GGML_TYPE_Q4_0;
+    bool ctx_set = false, k_set = false, v_set = false, temp_set = false, topk_set = false, repeat_set = false;
     for (int i = 1; i < argc; ++i) {
         std::string a = argv[i];
         auto nx = [&]() { if (i + 1 >= argc) { usage(); exit(2); } return std::string(argv[++i]); };
         if (a == "-m" || a == "--model") A.model = nx();
+        else if (a == "--lora") A.eo.lora = nx();
+        else if (a == "--lora-scale") A.eo.lora_scale = std::stof(nx());
+        else if (a == "--lora-scaled") {
+            const std::string v = nx(); const size_t at = v.rfind(':');
+            if (at == std::string::npos) { fprintf(stderr, "--lora-scaled needs FILE:SCALE\n"); return 2; }
+            A.eo.lora = v.substr(0, at); A.eo.lora_scale = std::stof(v.substr(at + 1));
+        }
         else if (a == "--mmproj") A.mmproj = nx();
         else if (a == "--mtp") A.mtp = nx();
         else if (a == "--alias") A.alias = nx();
         else if (a == "--host") A.host = nx();
         else if (a == "--port") A.port = std::stoi(nx());
-        else if (a == "-c" || a == "--ctx-size") A.eo.n_ctx = std::stoi(nx());
+        else if (a == "-c" || a == "--ctx-size") { A.eo.n_ctx = std::stoi(nx()); ctx_set = true; }
         else if (a == "-ub" || a == "--ubatch-size") A.eo.n_ubatch = std::stoi(nx());
-        else if (a == "--temp") P.sampling.temp = std::stof(nx());
-        else if (a == "--top-k") P.sampling.top_k = std::stoi(nx());
+        else if (a == "--temp") { P.sampling.temp = std::stof(nx()); temp_set = true; }
+        else if (a == "--top-k") { P.sampling.top_k = std::stoi(nx()); topk_set = true; }
         else if (a == "--top-p") P.sampling.top_p = std::stof(nx());
         else if (a == "--min-p") P.sampling.min_p = std::stof(nx());
-        else if (a == "--repeat-penalty") P.sampling.penalty_repeat = std::stof(nx());
+        else if (a == "--repeat-penalty") { P.sampling.penalty_repeat = std::stof(nx()); repeat_set = true; }
         else if (a == "--image-max-tokens") A.image_max_tokens = std::stoi(nx());
         else if (a == "--mmproj-place") A.mmproj_place = nx();
         else if (a == "--mmproj-idle") A.mmproj_idle = std::stoi(nx());
@@ -122,8 +131,8 @@ int run(int argc, char ** argv) {
         else if (a == "--no-adapt-refill") A.eo.adapt_refill = false;                 // keep the cache as it was after a prompt read
         else if (a == "--no-async-swaps") A.eo.async_swaps = false;                   // swaps copied in the step, not in the background
         else if (a == "--no-overlap") A.eo.overlap = false;                           // the CPU pool waits for the GPU, no overlap
-        else if (a == "-ctk") A.eo.type_k = kv_type(nx());
-        else if (a == "-ctv") A.eo.type_v = kv_type(nx());
+        else if (a == "-ctk") { A.eo.type_k = kv_type(nx()); k_set = true; }
+        else if (a == "-ctv") { A.eo.type_v = kv_type(nx()); v_set = true; }
         else if (a == "--n-draft") A.n_draft = std::stoi(nx());
         else if (a == "--mtp-own-head") A.mtp_own_head = true;
         else if (a == "--checkpoint-min-tokens") A.ckpt_min = std::stoi(nx());
@@ -143,7 +152,6 @@ int run(int argc, char ** argv) {
     A.eo.mtp = A.mtp; A.eo.mtp_share_head = !A.mtp_own_head;
     A.eo.n_rs_seq = A.mtp.empty() ? 0 : A.n_draft;   // llama.cpp: n_rs_seq = the draft max
     P.model.path = A.model;
-    P.n_ctx = A.eo.n_ctx;
 
     llama_backend_init();
     // the vocabulary, the chat template and the tokenizer come from llama.cpp (vocab-only load: no weights)
@@ -151,6 +159,26 @@ int run(int argc, char ** argv) {
     mp.vocab_only = true;
     llama_model * model = llama_model_load_from_file(A.model.c_str(), mp);
     if (!model) { fprintf(stderr, "cannot load the vocabulary\n"); return 1; }
+    char architecture[64] = {};
+    llama_model_meta_val_str(model, "general.architecture", architecture, sizeof(architecture));
+    const bool lfm2 = std::string(architecture) == "lfm2moe";
+    if (lfm2) {
+        if (!A.mtp.empty() || !A.mmproj.empty()) { fprintf(stderr, "LFM2 is text-only and has no supported MTP head\n"); llama_model_free(model); return 2; }
+        if (!ctx_set) {
+            // A vocab-only llama_model has no populated hparams; read the retained GGUF metadata.
+            char context[32] = {};
+            if (llama_model_meta_val_str(model, "lfm2moe.context_length", context, sizeof(context)) <= 0 || std::atoi(context) <= 0) {
+                fprintf(stderr, "missing LFM2 context_length\n"); llama_model_free(model); return 2;
+            }
+            A.eo.n_ctx = std::atoi(context);
+        }
+        if (!k_set) A.eo.type_k = GGML_TYPE_F16;
+        if (!v_set) A.eo.type_v = GGML_TYPE_F16;
+        if (!temp_set) P.sampling.temp = 0.1f;
+        if (!topk_set) P.sampling.top_k = 50;
+        if (!repeat_set) P.sampling.penalty_repeat = 1.05f;
+    }
+    P.n_ctx = A.eo.n_ctx;
     const llama_vocab * vocab = llama_model_get_vocab(model);
     const int n_vocab = llama_vocab_n_tokens(vocab);
     for (llama_token t = 0; t < n_vocab; ++t) if (llama_vocab_is_eog(vocab, t)) P.sampling.logit_bias_eog.push_back({ t, -INFINITY });
@@ -436,7 +464,9 @@ int run(int argc, char ** argv) {
         auto emit = [&](llama_token t) -> bool {   // false = stop here
             out.push_back(t); stats.n_gen++;
             if (llama_vocab_is_eog(vocab, t)) { stop = STOP_TYPE_EOS; return false; }
-            text += common_token_to_piece(vocab, t, P.special);
+            // Match llama-server: parser-required markers survive even when ordinary special tokens are hidden.
+            const bool special = P.special || tp.sampling.preserved_tokens.count(t) != 0;
+            text += common_token_to_piece(vocab, t, special);
             for (const auto & w : tp.antiprompt) {
                 const size_t p = text.find(w, text.size() > w.size() + 16 ? text.size() - w.size() - 16 : 0);
                 if (!w.empty() && p != std::string::npos) { text.resize(p); stop = STOP_TYPE_WORD; stopping_word = w; return false; }
@@ -528,7 +558,7 @@ int run(int argc, char ** argv) {
             { "media_marker", get_media_marker() }, { "endpoint_slots", true }, { "endpoint_props", false }, { "endpoint_metrics", true },
             { "chat_template", common_chat_templates_source(chat.tmpls.get(), "") },
             { "chat_template_caps", common_chat_templates_get_caps(chat.tmpls.get()) },
-            { "build_info", std::string("strata-lite (qwen35 engine) / ") + llama_build_info() }, { "is_sleeping", false },
+            { "build_info", std::string(lfm2 ? "strata-lite (lfm2moe engine) / " : "strata-lite (qwen35 engine) / ") + llama_build_info() }, { "is_sleeping", false },
             { "strata", json{ { "slots", eng.slots() }, { "arena_shrinks", eng.stats().arena_shrinks }, { "n_cpu_moe", A.eo.n_cpu_moe },
                               { "prefill_ubatch", A.eo.prefill_ubatch < 0 ? json("auto") : json(A.eo.prefill_ubatch) }, { "last_chunk", eng.stats().last_chunk }, { "lend", A.eo.lend }, { "mtp", mtp }, { "vision", !A.mmproj.empty() }, { "projector_in_ram", mctx.load() != nullptr && !mm_gpu_always },
                               { "projector", A.mmproj.empty() ? "none" : A.mmproj_place }, { "projector_on_card", mctx_gpu != nullptr },
@@ -538,7 +568,8 @@ int run(int argc, char ** argv) {
                               { "adapt", A.eo.adapt }, { "adapt_half_life", A.eo.adapt_half_life }, { "adapt_budget", A.eo.adapt_budget },
                               { "adapt_refill", A.eo.adapt_refill }, { "async_swaps", A.eo.async_swaps }, { "overlap", A.eo.overlap },
                               { "threads", A.threads }, { "pool_threads", A.eo.pool_threads }, { "n_draft", A.n_draft },
-                              { "mtp_head", A.mtp_own_head ? "drafter" : "target" }, { "engine", "qwen35" } } },
+                              { "mtp_head", A.mtp_own_head ? "drafter" : "target" }, { "engine", lfm2 ? "lfm2moe" : "qwen35" },
+                              { "lora", A.eo.lora.empty() ? json(nullptr) : json{{"file", std::filesystem::path(A.eo.lora).filename().string()}, {"scale", A.eo.lora_scale}} } } },
         };
         send_json(r, props, 200);
     });
@@ -549,6 +580,9 @@ int run(int argc, char ** argv) {
         json body;
         try { body = json::parse(req.body); }
         catch (...) { send_json(r, json{ { "error", format_error_response("invalid JSON body", ERROR_TYPE_INVALID_REQUEST) } }, 400); return; }
+        if (body.contains("lora")) {
+            send_json(r, json{{"error", format_error_response("LoRA is fixed at server startup; per-request adapters are not supported", ERROR_TYPE_INVALID_REQUEST)}}, 400); return;
+        }
         std::lock_guard<std::mutex> g(busy);
         processing = true;
         int code = 500;

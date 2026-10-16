@@ -1,0 +1,11 @@
+{
+  "messages": [
+    {
+      "role": "user",
+      "content": "Write a Python function that merges two sorted integer lists, retaining duplicates, without calling sorted or sort. Explain its time complexity and show three tests including empty lists."
+    }
+  ],
+  "chat_template_kwargs": {
+    "enable_thinking": true
+  }
+}

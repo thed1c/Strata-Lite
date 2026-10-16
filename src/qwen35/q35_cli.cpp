@@ -27,6 +27,13 @@ int main(int argc, char ** argv) {
         std::string a = argv[i];
         auto next = [&]() { return std::string(i + 1 < argc ? argv[++i] : ""); };
         if (a == "-m") o.gguf = next();
+        else if (a == "--lora") o.lora = next();
+        else if (a == "--lora-scale") o.lora_scale = std::stof(next());
+        else if (a == "--lora-scaled") {
+            const std::string v = next(); const size_t at = v.rfind(':');
+            if (at == std::string::npos) { fprintf(stderr, "--lora-scaled needs FILE:SCALE\n"); return 2; }
+            o.lora = v.substr(0, at); o.lora_scale = std::stof(v.substr(at + 1));
+        }
         else if (a == "--tokens") tokens_path = next();
         else if (a == "--oracle") oracle_path = next();
         else if (a == "--mode") mode = next();

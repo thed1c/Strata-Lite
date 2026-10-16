@@ -1,0 +1,24 @@
+{
+  "model": "LiquidAI/LFM2.5-24B-A2B-GGUF",
+  "revision": "0912d33141f77e10705345a6732bfd83f0252fdc",
+  "filename": "LFM2.5-24B-A2B-QAD-Q4_0.gguf",
+  "sha256": "d1c03f73ecaf61017d70419eec9e5dc0b05d50ae26c23d522829b934fbabf8a5",
+  "profile_sha256": "3adb1d9e9c1551d54dea7a05d9e6c0d62ddd3a221a20cbffc9a9a4ad80abb4da",
+  "training_inputs": [
+    "math",
+    "code",
+    "science",
+    "analysis"
+  ],
+  "held_out": [
+    "heldout"
+  ],
+  "input_dir": "lite/tests/lfm25",
+  "calibration": "Aggregate prefill and 192 generated token routes from each of four public synthetic prompts; top-64 ranking for each of 38 MoE layers. No private prompts. Online adaptation continues from this optional seed.",
+  "neural_weights_modified": false,
+  "policy": {
+    "half_life": 64,
+    "swap_budget": 2
+  },
+  "routing_tool": "route-log, llama.cpp b6b003d2cb29647d968302eb2db8da6f66303b3e"
+}

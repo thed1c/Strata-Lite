@@ -62,6 +62,7 @@ struct ExpertJobMulti {
     /// Plan v0.3 P6: a native pack's activations (the layer's `vec_dot_type`), one per token.
     const void* nact[MAXT] = {};
     const uint8_t* down = nullptr;   ///< Strata-Lite: the expert's down rows when NativeFmt::separate_down
+    float* hidden[MAXT] = {};       ///< Optional native SwiGLU result, n_ff floats per token, before down quantization.
 };
 
 /// How worker threads are allocated across physical/logical CPU cores (#272).  `All` is the layout the pool has

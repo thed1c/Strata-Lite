@@ -1,0 +1,11 @@
+{
+  "messages": [
+    {
+      "role": "user",
+      "content": "A workshop must produce 24 tables. Each table needs four legs and one top. There are 71 legs and 9 tops in inventory. A leg takes 12 minutes to make and a top takes 35 minutes. Two workers can make either part. Compute the missing parts and a feasible balanced work schedule. State the assumptions."
+    }
+  ],
+  "chat_template_kwargs": {
+    "enable_thinking": true
+  }
+}
