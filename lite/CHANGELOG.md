@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.2.2 (unreleased), experimental
+## 0.2.2 (2026-10-16), experimental
 - **LFM2.5-24B-A2B** (`lfm2moe`) on the hybrid engine (Codex's port, `lite/docs/LFM25.md`): short-convolution blocks with their own
   state and checkpoints, sigmoid + bias routing, the expert cache, CPU pool, swaps, overlap, lent reads and the KV pager; an optional
   rank-one output LoRA; 128K context. The setup offers AtomicChat's uncensored Q4_K_M (default) and Liquid AI's QAD Q4_0.
