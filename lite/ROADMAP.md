@@ -14,7 +14,13 @@ cache gives way and takes the room back on a new chat; bit for bit the same outp
 together made **q8 KV affordable for Gemma** (64K, Wikipedia text: top-1 87.1 % against q4's 80.5 %, at the f16 noise floor). This
 was the goal of the old item "KV streaming so a 262k context stops costing the cache half its slots": met without streaming.
 
+Done (v0.2.2): **LFM2.5-24B-A2B** on the hybrid engine (a third architecture) and in the installer; **the RAM tier** (lock the
+experts the PC can spare, read the rest from the model file: one setting between locked and low-RAM mode); the speed defaults
+(pool spin, MTP depth by model and context); the easier START-HERE (menu, shortcut, plain-language failures with fixes).
+
 Next, in order:
+0. **Qwen3.6 on Strata's own engine** once upstream releases it (0.1.45): the fork's Strata base moves up from 0.1.42 and the
+   setup's Qwen choice switches when Strata's engine measures at least as well on the standard benchmark.
 1. **A model descriptor** (hparams, tensor map, expert shapes and quants, activation, norm order, mixer pattern) so a third
    architecture is a descriptor plus a block file rather than a fork; Gemma moves onto the model-neutral slot cache Qwen uses,
    behind a full re-validation run (`lite/docs/MODEL-DESCRIPTOR.md`).
@@ -28,4 +34,6 @@ Next, in order:
    by misses converted, prefetch accuracy, and the cost to the adaptation stream; it matters most on slower cards and x16 links, and
    cannot keep up on x4.
 4. Batched slots (several requests at once), as Strata has for Qwen3.8.
+5. **Models that fit the card whole** (LFM2.5-8B on 12 GB; any of these on a 24 GB card): llama.cpp's own offload is faster
+   there today; the engine's full-GPU path, or the setup handing such a model to llama-server.
 5. Smaller quants from the same releases (IQ3) for more residency on 12 GB, measured in the same grid.

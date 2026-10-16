@@ -17,7 +17,7 @@ Where Qwen's defaults differ: `-ctk q4_0 -ctv q4_0`, `--n-cpu-moe 40`, `--adapt-
 | flag | default | what |
 |---|---|---|
 | `-m`, `--model` | | the text GGUF (required) |
-| `--mtp` | off | the MTP drafter GGUF; `--n-draft N` drafts per step (3) |
+| `--mtp` | off | the MTP drafter GGUF; `--n-draft N` drafts per step (Gemma 3, Qwen 2). Gemma: `--n-draft-long N` from `--n-draft-long-from POS` (2 from 32768): fewer drafts once the context is long, where fewer are accepted |
 | `--mmproj` | off | the image projector; `--mmproj-place second|auto|lazy|gpu|cpu`, `--mmproj-idle S` (15), `--mmproj-min-size PX` (128), `--mmproj-gpu-max-ctx N` (65536), `--image-max-tokens N` |
 | `--alias` | `strata-lite` | the model name the API reports |
 | `--host`, `--port` | `127.0.0.1`, `8080` | bind; keep it loopback or put a proxy with auth in front |
@@ -32,7 +32,8 @@ Where Qwen's defaults differ: `-ctk q4_0 -ctv q4_0`, `--n-cpu-moe 40`, `--adapt-
 | `--adapt-half-life` | 32 (Qwen: 64) | tokens over which usage counts halve |
 | `--adapt-budget` | 2 | swaps per layer per step |
 | `--no-adapt`, `--no-adapt-refill`, `--no-async-swaps`, `--no-overlap` | | the ablation switches (fixed cache; no refill after a read; swaps in the step; no CPU/GPU overlap) |
-| `--no-async-swaps` | | also low-RAM mode: the experts are not copied into locked RAM but read from the model file as needed (16 GB of RAM runs, slower; keep the model on an SSD). Turned on by itself when locking fails |
+| `--ram-budget GIB` | what the PC can spare | the RAM tier: GiB of experts locked in RAM (the copy stream's source); the rest is read from the model file as needed. Default: available RAM at start less 4 GiB / 15 % (Linux) or 8 GiB / 25 % (Windows). `0` = low-RAM mode (nothing locked: 16 GB of RAM runs, slower; keep the model on an SSD). A lock the OS refuses is retried at half, down to 1 GiB |
+| `--no-async-swaps` | | swaps copied in the step; with it nothing is locked (low-RAM mode, as `--ram-budget 0`) |
 | `-t`, `--pool-threads` | the cores the process may use | GPU-side threads / the CPU expert pool |
 | `--temp`, `--top-k`, `--top-p`, `--min-p`, `--repeat-penalty` | 0.8 / 40 / 0.95 / 0.05 / off | llama-server's sampling defaults; every request can override them |
 | `--mtp-own-head` | off | Qwen: load the drafter file's embedding and output head instead of sharing the model's (0.5 GB more VRAM) |

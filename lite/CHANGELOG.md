@@ -1,6 +1,28 @@
 # Changelog
 
-## 0.2.1 (unreleased), experimental
+## 0.2.2 (unreleased), experimental
+- **LFM2.5-24B-A2B** (`lfm2moe`) on the hybrid engine (Codex's port, `lite/docs/LFM25.md`): short-convolution blocks with their own
+  state and checkpoints, sigmoid + bias routing, the expert cache, CPU pool, swaps, overlap, lent reads and the KV pager; an optional
+  rank-one output LoRA; 128K context. The setup offers AtomicChat's uncensored Q4_K_M (default) and Liquid AI's QAD Q4_0.
+- **The RAM tier** (both engines, `--ram-budget GIB`): the experts the card does not hold are locked in RAM up to a budget and the rest
+  are read from the model file (the OS file cache, else the disk); by default the engine locks what the PC can spare when it starts
+  (available RAM less a headroom: 4 GiB / 15 % on Linux, 8 GiB / 25 % on Windows) instead of all or nothing, so a 32 GB PC no longer
+  locks so much that Windows runs out. Bit for bit the same output whatever the budget (only where the bytes come from changes).
+  `--ram-budget 0` is low-RAM mode.
+- **Speed defaults:** the CPU pool's workers spin 100 us before sleeping, not 20 ms (the same speed, 57 % less CPU time); Qwen3.6 drafts
+  2 tokens per step, not 3 (+21 % writing on a short chat, RTX 3060); Gemma 4 drafts 3, and 2 once the context passes 32K
+  (`--n-draft-long`, `--n-draft-long-from`).
+- **Easier START-HERE:** a short menu on every run (Enter starts the model; change the model or its settings; update Strata-Lite), a
+  desktop shortcut on the first install, startup failures said in plain words with the fixes to pick (not enough RAM or VRAM, a port in
+  use, a CPU the ready-made engine does not suit, missing CUDA libraries, an old driver, a missing model file), the window titled
+  Strata-Lite. UPDATE.bat / update.sh update a Strata-Lite install.
+- Fixes: on a 12 GB card at 262K, Gemma read a 17K-32K-token prompt as one chunk that did not fit the card and the server stopped
+  (the read's estimate now uses measured sizes and counts the window cache's growth; such prompts read in 16K chunks); upstream
+  Strata fixes: no SIMD code before `main` in the AVX-512 / AVX2 / AVX files (#2324), IQ4_NL down rows declined in the AVX1 kernel
+  (#2638), a CPU without a `flags` line (#2551), metadata-only GGUF shards (#2491), host compilers for `--build` (#1645), a failed
+  build no longer leaves the old version mark (#2054), `.bat` line endings (#1939), UTF-8 file reads (#2648).
+
+## 0.2.1 (2026-10-11), experimental
 - **The KV pager** (both engines): the full-attention KV starts at 32K cells on the card and grows in 16K steps as the conversation
   needs them; the expert cache gives way, and takes the room back when a new conversation starts (`--kv-initial`, `--kv-step`;
   `--kv-initial 0` reserves the whole context at load as before). Bit for bit the same output as the whole-context engine (both
