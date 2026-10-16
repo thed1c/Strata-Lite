@@ -129,6 +129,23 @@ inline double total_ram_gb() {
 #endif
 }
 
+// The process's cgroup v2 memory limit in bytes (Linux; 0 when none or elsewhere): a container's or a service's cap.
+inline double cgroup_limit_bytes() {
+#ifdef _WIN32
+    return 0;
+#else
+    std::ifstream cg("/proc/self/cgroup");
+    std::string line;
+    while (std::getline(cg, line)) {
+        if (line.rfind("0::", 0) != 0) continue;
+        std::ifstream mx("/sys/fs/cgroup" + line.substr(3) + "/memory.max");
+        std::string m;
+        if (mx >> m && m != "max") return std::stod(m);
+    }
+    return 0;
+#endif
+}
+
 // RAM the OS can give this process now, in bytes (Linux: MemAvailable, within the process's cgroup v2 limit when it
 // has one; Windows: available physical memory). Both count the file cache the OS would drop. 0 when unknown.
 inline double available_ram_bytes() {

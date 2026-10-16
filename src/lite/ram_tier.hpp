@@ -24,7 +24,8 @@ inline size_t ram_lock_budget(double budget_gib, size_t want) {
     if (budget_gib >= 0) return std::min(want, (size_t) (budget_gib * 1073741824.0));
     const double avail = available_ram_bytes();
     if (avail <= 0) return want;   // unknown: lock everything, as before the tier (a failed lock still falls back)
-    const double total = total_ram_gb() * 1e9;
+    double total = total_ram_gb() * 1e9;   // the PC's RAM, or the cgroup limit when the process runs under a smaller one
+    if (const double cap = cgroup_limit_bytes(); cap > 0 && (total == 0 || cap < total)) total = cap;
 #ifdef _WIN32
     const double headroom = std::max(8.0 * 1073741824.0, 0.25 * total);
 #else
