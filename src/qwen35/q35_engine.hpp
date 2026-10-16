@@ -48,6 +48,7 @@ struct Options {
     // committed when its copy has landed (the victim goes to the CPU at once); the misses run in the pool while the GPU
     // computes the hits (start / join ops around the slot path)
     bool  async_swaps     = false;
+    double ram_budget_gib = -1;    // the RAM tier: GiB of experts locked in RAM (-1 auto, see src/lite/ram_tier.hpp)
     bool  overlap         = false;
     // stage g: prompt reads in ubatches of prefill_ubatch tokens (0 = n_ubatch, -1 = auto: the largest of 32k / 16k / 8k
     // / 4k whose compute buffers fit the VRAM the read can borrow); with lend the slot arena's VRAM goes to the read and
@@ -112,6 +113,9 @@ public:
     const std::vector<float> & mtp_h() const { return mtp_h_prev_; }   // h of the last kept position (the next draft's)
     bool has_mtp() const { return mtp_.loaded; }
     const HParams & hp() const { return hp_; }
+    size_t ram_locked() const { return ram_locked_; }     // the RAM tier: expert bytes locked in RAM
+    size_t ram_experts() const { return ram_experts_; }   // and of all CPU-side experts
+    bool async_swaps() const { return o_.async_swaps; }    // false in low-RAM mode
     const Stats & stats() const { return stats_; }
     int slots() const { return slots_now_; }
     int n_past() const { return n_past_; }
@@ -189,6 +193,7 @@ private:
     // async swaps: the RAM-resident experts in a pinned arena, the copy stream, and the batches of copies in flight
     void * arena_ = nullptr;
     size_t arena_size_ = 0;
+    size_t ram_locked_ = 0, ram_experts_ = 0;   // the RAM tier: bytes locked / bytes of CPU-side experts
     ggml_backend_buffer_t buf_arena_ = nullptr;
     void * copy_stream_ = nullptr;
     struct PendingSwap { int il, e, slot; };

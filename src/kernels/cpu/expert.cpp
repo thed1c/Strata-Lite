@@ -148,7 +148,9 @@ inline float hsum_ps(__m256 v) {
 // products built for eight blocks at a time; the weight-independent correction is one FMA per eight blocks.
 // The sum order differs from the 256-bit kernel (last-bit differences); the verify window and plain decode both
 // use this kernel, so speculative decode still reproduces plain decode exactly.
-static const bool kZmm = std::getenv("STRATA_CPU_YMM") == nullptr;
+// Function-local (lazy) statics, not namespace-scope ones: a namespace-scope initializer in a file built for AVX-512
+// / AVX2 / AVX runs before main on every CPU, and the compiler may use those instructions in it (upstream #2324).
+static bool zmm_on() { static const bool on = std::getenv("STRATA_CPU_YMM") == nullptr; return on; }
 
 inline __m512i unpack64_q2_0(const uint8_t* codes) {
     const __m128i packed = _mm_loadu_si128((const __m128i*) codes);          // 8 u16 = 64 codes
@@ -228,7 +230,7 @@ inline void row_dot_multi_z(const uint8_t* codes, const uint8_t* scales, const A
 /// 64-weight block (two 8-lane horizontal sums: a store plus 16 scalar adds) cost far more than the dot
 /// products themselves - it made the kernel compute-bound at 21 GB/s instead of DRAM-bound at 32.
 inline float row_dot(const uint8_t* codes, const uint8_t* scales, const ActQ& a, int nblocks) {
-    if (kZmm) return row_dot_z(codes, scales, a, nblocks);
+    if (zmm_on()) return row_dot_z(codes, scales, a, nblocks);
     __m256 acc = _mm256_setzero_ps();
     // The -sum(xhat) term is a SCALAR: broadcasting it into all 8 lanes and letting hsum_ps add them would
     // apply it eight times per block.
@@ -275,7 +277,7 @@ inline float row_dot_oracle(const uint8_t* codes, const uint8_t* scales, const A
 template<int NT>
 inline void row_dot_multi(const uint8_t* codes, const uint8_t* scales, const ActQ* const* a, int nblocks,
                           float* res) {
-    if (kZmm) { row_dot_multi_z<NT>(codes, scales, a, nblocks, res); return; }
+    if (zmm_on()) { row_dot_multi_z<NT>(codes, scales, a, nblocks, res); return; }
     __m256 acc[NT];
     float corr[NT];
     for (int t = 0; t < NT; ++t) { acc[t] = _mm256_setzero_ps(); corr[t] = 0.f; }

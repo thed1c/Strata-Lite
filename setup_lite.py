@@ -1,20 +1,23 @@
 #!/usr/bin/env python3
-"""Strata-Lite's part of the setup: Qwen3.6-35B-A3B and Gemma 4 26B-A4B on strata-lite-server (Linux and Windows,
-NVIDIA RTX 30 / 40 / 50 cards). setup.py offers them in its "Which model?" question and starts an installed one like
-its own models; this file does the rest with setup.py's helpers (output, questions, the PC checks, NVIDIA's CUDA
-libraries from pip).
+"""Strata-Lite's part of the setup: Qwen3.6-35B-A3B, Gemma 4 26B-A4B and LFM2.5-24B-A2B on strata-lite-server (Linux
+and Windows, NVIDIA RTX 30 / 40 / 50 cards). setup.py offers them in its "Which model?" question and starts an
+installed one like its own models; this file does the rest with setup.py's helpers (output, questions, the PC checks,
+NVIDIA's CUDA libraries from pip).
 
     python setup_lite.py --start lite-<model>.json     what run-<model>.bat / .sh run: the server, then the chat page
 
 What an install does (each step is skipped when it is already done):
-  1. asks which files (the uncensored release every number was measured with, the official quantization - experimental,
-     not measured with this engine - or GGUF files you already have), the context, images, and an optional Hugging Face
-     token (none of the files needs one)
+  1. asks which files (the uncensored release every number was measured with, the official quantization, or GGUF
+     files you already have), the context, images, and an optional Hugging Face token (none of the files needs one)
   2. installs NVIDIA's CUDA libraries into .venv (pip)
   3. gets the engine: the ready-made strata-lite-server from the release (or, with --build, compiles lite/CMakeLists.txt)
   4. downloads the model files, 8 connections per file (resumable; aria2c when it is installed), and checks them
   5. Qwen with HauhauCS's file: reads the MTP head out of unsloth's release with range requests (0.5 GB, not 23 GB)
-  6. writes lite-<model>.json and run-<model>.bat / .sh, and starts the model
+  6. writes lite-<model>.json and run-<model>.bat / .sh, puts a Strata-Lite shortcut on the desktop, starts the model
+
+Every later START-HERE.bat (./setup.sh) shows a short menu: Enter starts the model, or change the model or its
+settings, or update Strata-Lite. When the model cannot start, the reason is said in plain words with the fixes to
+pick from.
 """
 from __future__ import annotations
 
@@ -41,8 +44,9 @@ LITE_REPO = os.environ.get("STRATA_LITE_REPO", "thed1c/Strata-Lite")
 LITE_ASSET = "strata-lite-windows-x64.zip" if WIN else "strata-lite-linux-x64.zip"
 LITE_DIR = ROOT / "engine-lite"
 LITE_EXE = "strata-lite-server.exe" if WIN else "strata-lite-server"
-LITE_MIN_ENGINE = (0, 2, 0)
-RAM_FLOOR_GIB = 15          # below this neither model is worth starting (low-RAM mode pages most of the model from disk)
+LITE_VERSION = (0, 2, 2)    # this copy of Strata-Lite (the update menu compares it with the newest release)
+LITE_MIN_ENGINE = (0, 2, 2)
+RAM_FLOOR_GIB = 15          # below this no model is worth starting (low-RAM mode pages most of the model from disk)
 LITE_ARCHS = ("86", "87", "89", "120")       # what the engine is built for: RTX 30, RTX 40, RTX 50
 CONTEXTS = [32768, 131072, 262144]
 CONNECTIONS = 8
@@ -52,11 +56,15 @@ HF_REVISIONS = {
     "unsloth/Qwen3.6-35B-A3B-MTP-GGUF": "5bc3e238d916f48a861bac2f8a1990a0e9b7e98d",
     "HauhauCS/Gemma4-26B-A4B-QAT-Uncensored-HauhauCS-Balanced-MTP": "f9093662a2e7ae0503f637088bc96f77a1a70c83",
     "unsloth/gemma-4-26B-A4B-it-qat-GGUF": "7b92b5b28818151e8669af2e45e88d6086f490dd",
+    "AtomicChat/LFM2.5-24B-A2B-Uncensored-GGUF": "1acb8f6eb027d85b7771dcc9eb68817aa480e9c8",
+    "LiquidAI/LFM2.5-24B-A2B-GGUF": "0912d33141f77e10705345a6732bfd83f0252fdc",
 }
 # SHA-256 of the files the engine was measured with (the rest: size checks only)
 SHA256 = {
     "Qwen3.6-35B-A3B-Uncensored-HauhauCS-Aggressive-Q4_K_P.gguf": "8d344a4336d8ea7da0cbfc12792d1471e568be7abe8930c52260698bfd01d731",
     "mmproj-Qwen3.6-35B-A3B-Uncensored-HauhauCS-Aggressive-f16.gguf": "c8e702344a81f8c226a914aa980ed6e1f604bce9374f1fed8e65c896908af414",
+    "LFM2.5-24B-A2B-Uncensored-AD-Q4_K_M.gguf": "17a5de7f9718d8f6133ef08579d35845dd69bb51f329204ead0fc0ee97a75a41",
+    "LFM2.5-24B-A2B-QAD-Q4_0.gguf": "d1c03f73ecaf61017d70419eec9e5dc0b05d50ae26c23d522829b934fbabf8a5",
 }
 
 FAMILIES = {
@@ -92,6 +100,19 @@ FAMILIES = {
             "official": {"about": "unsloth QAT UD-Q4_K_XL (14 GB), EXPERIMENTAL: not measured with this engine",
                          "repo": "unsloth/gemma-4-26B-A4B-it-qat-GGUF", "model": "gemma-4-26B-A4B-it-qat-UD-Q4_K_XL.gguf",
                          "mmproj": "mmproj-BF16.gguf", "mtp": "mtp-gemma-4-26B-A4B-it.gguf", "experimental": True},
+        }},
+    "lfm25": {
+        "title": "LFM2.5-24B-A2B", "by": "Liquid AI, on the Strata-Lite engine",
+        "about": "24B MoE (2B active), fast, thinks, text only: a 12 GB card and 24 GB of RAM (16 GB runs, slower)",
+        "arch": "lfm2moe", "name": "lfm2.5-24b",
+        "locked_gib": 21,       # the experts: about 13 GiB
+        "max_ctx": 131072,      # the checkpoint's own limit
+        "variants": {
+            "uncensored": {"about": "AtomicChat Uncensored, Q4_K_M (15 GB) - measured with this engine",
+                           "repo": "AtomicChat/LFM2.5-24B-A2B-Uncensored-GGUF",
+                           "model": "LFM2.5-24B-A2B-Uncensored-AD-Q4_K_M.gguf"},
+            "official": {"about": "Liquid AI QAD Q4_0 (14 GB) - measured with this engine",
+                         "repo": "LiquidAI/LFM2.5-24B-A2B-GGUF", "model": "LFM2.5-24B-A2B-QAD-Q4_0.gguf"},
         }},
 }
 
@@ -277,7 +298,7 @@ def get_engine(build: bool) -> Path:
                 z.unlink()
             S.download(base + LITE_ASSET, z, "the ready-made Strata-Lite engine")
             sums = (urllib.request.urlopen(base + "SHA256SUMS.txt", timeout=60).read().decode()
-                    if base.startswith(("http://", "https://")) else Path(base, "SHA256SUMS.txt").read_text())
+                    if base.startswith(("http://", "https://")) else Path(base, "SHA256SUMS.txt").read_text(encoding="utf-8"))
             want = next((l.split()[0] for l in sums.splitlines() if l.strip().endswith(LITE_ASSET)), None)
             got = hashlib.sha256(z.read_bytes()).hexdigest()
             if want != got:
@@ -303,11 +324,17 @@ def build_engine() -> Path:
                "or use the ready-made engine (run without --build)")
     bdir = ROOT / "build-lite"
     S.say("  Compiling Strata-Lite (20-60 minutes) ...")
-    S.cmake_build(ROOT / "lite", bdir, "strata-lite-server", ["-DSTRATA_LITE_PORTABLE=OFF", f"-DCMAKE_CUDA_COMPILER={nvcc}"],
+    # a build that fails half-way must not leave the old version mark beside the old engine (upstream #2054, #2159)
+    (LITE_DIR / "BUILD.json").unlink(missing_ok=True)
+    # CC / CXX / CUDAHOSTCXX reach an existing build folder too (upstream #1645; a g++ too new for CUDA:
+    # CUDAHOSTCXX=g++-14)
+    S.cmake_build(ROOT / "lite", bdir, "strata-lite-server", ["-DSTRATA_LITE_PORTABLE=OFF", f"-DCMAKE_CUDA_COMPILER={nvcc}",
+                                                              *S.host_compiler_defs(True)],
                   S.find_vcvars() if WIN else None, "build-lite.bat")
     LITE_DIR.mkdir(exist_ok=True)
     shutil.copy2(bdir / "bin" / LITE_EXE, LITE_DIR / LITE_EXE)
-    (LITE_DIR / "BUILD.json").write_text(json.dumps({"version": ".".join(map(str, LITE_MIN_ENGINE)), "source": "local"}))
+    (LITE_DIR / "BUILD.json").write_text(json.dumps({"version": ".".join(map(str, LITE_VERSION)), "source": "local"}),
+                                         encoding="utf-8")
     S.ok("Strata-Lite compiled")
     return LITE_DIR / LITE_EXE
 
@@ -363,15 +390,14 @@ def install(a, family: str, gpu: dict, ram: float, models_dir: Path) -> int:
     if ram < RAM_FLOOR_GIB:
         S.confirm_risk(f"RAM: {ram:.0f} GB - {fam['title']} needs at least 16 GB; with less, most of the model is read from the disk "
                        "for every answer", False, a.yes, f"{fam['title']} needs at least 16 GB of RAM", "choose a PC with more RAM")
-    # low-RAM mode (Strata's file tier, simply): the experts stay in the model file and are read in as needed instead of
-    # being locked in RAM; the engine also falls back to it by itself if the OS will not lock them
-    low_ram = ram < fam["locked_gib"]
-    if low_ram:
-        S.warn(f"RAM: {ram:.0f} GB - not enough to keep {fam['title']}'s experts locked in RAM (that needs about "
-               f"{fam['locked_gib'] + 2} GB). It runs in low-RAM mode: the experts are read from the model file as needed. "
-               "It works, but slower: measured with 16 GB on an RTX 3060, Gemma 4 wrote about 10 tokens a "
-               "second and Qwen3.6 about 4 (Gemma 4 with enough RAM: about 43). Keep the model files on an SSD"
-               + ("; with this much RAM Gemma 4 is the better choice." if family == "qwen36" else "."))
+    # the RAM tier: the engine locks as many experts in RAM as the PC can spare when it starts (leaving room for the OS
+    # and other programs) and reads the rest from the model file; with very little RAM nothing is locked (low-RAM mode)
+    if ram < fam["locked_gib"]:
+        S.warn(f"RAM: {ram:.0f} GB - not enough to keep all of {fam['title']}'s experts locked in RAM (that needs about "
+               f"{fam['locked_gib'] + 2} GB). The engine locks what this PC can spare and reads the rest from the model "
+               "file as needed. It works, but slower the less is locked: with 16 GB on an RTX 3060, Gemma 4 wrote about "
+               "10 tokens a second and Qwen3.6 about 4 (Gemma 4 with enough RAM: about 43). Keep the model files on an SSD"
+               + ("; with this much RAM Gemma 4 or LFM2.5 is the better choice." if family == "qwen36" else "."))
     # ---- the questions: a first install takes the recommended answers (the measured files, the context the card holds,
     # images on); `setup --setup` (SETUP.bat) asks them
     simple = not a.setup
@@ -389,24 +415,26 @@ def install(a, family: str, gpu: dict, ram: float, models_dir: Path) -> int:
     if var and var.get("experimental"):
         S.warn("experimental: these files have not been measured with the Strata-Lite engine; if it refuses them, "
                "it says why (an unsupported quantization type)")
-    rec_ctx = 262144 if gpu.get("vram_gb", 0) >= 11.5 else 131072
-    ctx = a.context if a.context in CONTEXTS else (rec_ctx if simple else None)
+    contexts = [c for c in CONTEXTS if c <= fam.get("max_ctx", CONTEXTS[-1])]
+    rec_ctx = min(262144 if gpu.get("vram_gb", 0) >= 11.5 else 131072, contexts[-1])
+    ctx = a.context if a.context in contexts else (rec_ctx if simple else None)
     if ctx is None:
-        for i, c in enumerate(CONTEXTS, 1):
+        for i, c in enumerate(contexts, 1):
             S.say(f"  {i}) {c // 1024}K tokens" + ("  (recommended)" if c == rec_ctx else ""))
-        ctx = CONTEXTS[int(S.ask("Context?", [str(i) for i in range(1, len(CONTEXTS) + 1)], str(CONTEXTS.index(rec_ctx) + 1), a.yes)) - 1]
-    vision = a.vision not in ("no", "none") if a.vision else (True if simple else S.ask(
+        ctx = contexts[int(S.ask("Context?", [str(i) for i in range(1, len(contexts) + 1)], str(contexts.index(rec_ctx) + 1), a.yes)) - 1]
+    text_only = all(not v.get("mmproj") for v in fam["variants"].values())
+    vision = False if text_only else a.vision not in ("no", "none") if a.vision else (True if simple else S.ask(
         "Do you want images? (the image encoder is loaded only when an image comes)", ["y", "n"], "y", a.yes) == "y")
     if simple:
-        S.ok(f"files: {vs[0]} ({fam['variants'][vs[0]]['about'].split(' - ')[0]}); context {ctx // 1024}K; images on "
-             "(other choices: SETUP.bat / ./setup.sh --setup)")
+        S.ok(f"files: {vs[0]} ({fam['variants'][vs[0]]['about'].split(' - ')[0]}); context {ctx // 1024}K"
+             + ("" if text_only else "; images on") + " (other choices: START-HERE menu > change the model or its settings)")
     port = a.port or 8080
     # ---- files
     if own:
         mpath = Path(input("  The model GGUF (full path): ").strip().strip('"'))
         if gguf_arch(mpath) != fam["arch"]:
             S.fail(f"{mpath} is not a {fam['arch']} GGUF")
-        mtp = input("  The MTP drafter GGUF (Enter: none, or the model itself if it carries an MTP head): ").strip().strip('"')
+        mtp = "" if text_only else input("  The MTP drafter GGUF (Enter: none, or the model itself if it carries an MTP head): ").strip().strip('"')
         mm = input("  The image projector (mmproj) GGUF (Enter: none): ").strip().strip('"') if vision else ""
         files = {"model": mpath, "mtp": Path(mtp) if mtp else None, "mmproj": Path(mm) if mm else None}
     else:
@@ -439,14 +467,14 @@ def install(a, family: str, gpu: dict, ram: float, models_dir: Path) -> int:
         args += ["--mtp", str(files["mtp"])]
     if files["mmproj"]:
         args += ["--mmproj", str(files["mmproj"])]
-    if low_ram:
-        args += ["--no-async-swaps"]
     cfg = {"engine": "strata-lite", "model_name": f"{fam['title']} (Strata-Lite, {'own files' if own else vs[pick - 1]})",
            "family": family, "exe": str(exe), "args": args, "port": port, "context": ctx}
     cfg_path = ROOT / f"lite-{fam['name']}.json"
     cfg_path.write_text(json.dumps(cfg, indent=1), encoding="utf-8")
     script = write_run_script(fam["name"], cfg_path)
     S.ok(f"installed: start it again with {script.name}")
+    if not getattr(a, "no_shortcut", False):
+        make_shortcut()
     if a.host and a.host != "127.0.0.1":
         S.warn("the Strata-Lite server has no API key: on a network address anyone who can reach it can use it")
     return 0 if a.no_start else start(cfg_path)
@@ -456,8 +484,9 @@ def write_run_script(name: str, cfg_path: Path) -> Path:
     cmd = [sys.executable, str(ROOT / "setup_lite.py"), "--start", str(cfg_path)]
     if WIN:
         script = ROOT / f"run-{name}.bat"
+        # newline="": the \r\n are written as they are (text mode would make them \r\r\n; upstream #1939)
         script.write_text("@echo off\r\ntitle Strata-Lite " + name + "\r\ncd /d \"" + str(ROOT) + "\"\r\n" +
-                          " ".join(f'"{x}"' for x in cmd) + "\r\nif errorlevel 1 pause\r\n", encoding="utf-8")
+                          " ".join(f'"{x}"' for x in cmd) + "\r\nif errorlevel 1 pause\r\n", encoding="utf-8", newline="")
     else:
         script = ROOT / f"run-{name}.sh"
         script.write_text("#!/bin/sh\ncd \"" + str(ROOT) + "\"\nexec " + " ".join(f'"{x}"' for x in cmd) + "\n", encoding="utf-8")
@@ -465,9 +494,237 @@ def write_run_script(name: str, cfg_path: Path) -> Path:
     return script
 
 
+def set_title(title: str = "Strata-Lite") -> None:
+    """The console window's title."""
+    if WIN:
+        try:
+            import ctypes
+            ctypes.windll.kernel32.SetConsoleTitleW(title)
+        except (AttributeError, OSError):
+            pass
+    elif sys.stdout.isatty():
+        print(f"\033]0;{title}\007", end="", flush=True)
+
+
+def make_shortcut() -> None:
+    """A Strata-Lite shortcut on the desktop that opens START-HERE.bat (Linux: setup.sh in a terminal), made once."""
+    try:
+        if WIN:
+            desk = S.out(["powershell", "-NoProfile", "-Command", "[Environment]::GetFolderPath('Desktop')"]).strip()
+            if not desk or not Path(desk).is_dir():
+                return
+            lnk = Path(desk) / "Strata-Lite.lnk"
+            if lnk.exists():
+                return
+            q = lambda x: str(x).replace("'", "''")
+            ps = (f"$s = (New-Object -ComObject WScript.Shell).CreateShortcut('{q(lnk)}'); "
+                  f"$s.TargetPath = '{q(ROOT / 'START-HERE.bat')}'; $s.WorkingDirectory = '{q(ROOT)}'; "
+                  "$s.Description = 'Start Strata-Lite'; $s.Save()")
+            subprocess.run(["powershell", "-NoProfile", "-Command", ps], capture_output=True, timeout=60)
+            if lnk.exists():
+                S.ok("a Strata-Lite shortcut is on your desktop: double-click it to start the model next time")
+        else:
+            desk = ""
+            if shutil.which("xdg-user-dir"):
+                desk = subprocess.run(["xdg-user-dir", "DESKTOP"], capture_output=True, text=True).stdout.strip()
+            desk = Path(desk) if desk else Path.home() / "Desktop"
+            entry = ("[Desktop Entry]\nType=Application\nName=Strata-Lite\nComment=Start Strata-Lite\n"
+                     f"Exec=sh -c 'cd \"{ROOT}\" && ./setup.sh'\nTerminal=true\nCategories=Utility;\n")
+            apps = Path.home() / ".local" / "share" / "applications"
+            made = []
+            for d in (desk, apps):
+                f = d / "strata-lite.desktop"
+                if d.is_dir() and not f.exists():
+                    f.write_text(entry, encoding="utf-8")
+                    f.chmod(0o755)
+                    if d == desk and shutil.which("gio"):   # GNOME asks before running an untrusted launcher
+                        subprocess.run(["gio", "set", str(f), "metadata::trusted", "true"], capture_output=True)
+                    made.append(d)
+            if desk in made:
+                S.ok("a Strata-Lite launcher is on your desktop (and in the applications menu)")
+            elif apps in made:
+                S.ok("Strata-Lite is in your applications menu")
+    except (OSError, subprocess.SubprocessError) as e:
+        S.warn(f"no desktop shortcut ({e}); start Strata-Lite with START-HERE.bat / ./setup.sh")
+
+
+# ------------------------------------------------------------------------------------------------ the menu
+def model_name(cfg_path: Path) -> str:
+    try:
+        return json.loads(cfg_path.read_text(encoding="utf-8")).get("model_name", cfg_path.stem)
+    except (OSError, ValueError):
+        return cfg_path.stem
+
+
+def menu(have: list[Path], a) -> str | Path:
+    """Every START-HERE run once a model is installed: Enter starts it. Returns the config to start, "change" (the
+    setup's questions) or "update". No question without a terminal (a harness, a service) or with --yes: it starts."""
+    set_title()
+    if a.yes or not sys.stdin.isatty():
+        return have[0]
+    S.say(f"\nStrata-Lite {'.'.join(map(str, LITE_VERSION))}")
+    for i, c in enumerate(have, 1):
+        S.say(f"  {i}) start {model_name(c)}" + ("   (Enter)" if i == 1 else ""))
+    n = len(have)
+    S.say(f"  {n + 1}) change the model or its settings (another model, the context, images)")
+    S.say(f"  {n + 2}) update Strata-Lite")
+    pick = int(S.ask("Your choice", [str(i) for i in range(1, n + 3)], "1", False))
+    return have[pick - 1] if pick <= n else "change" if pick == n + 1 else "update"
+
+
+def _version(tag: str) -> tuple:
+    return tuple(int(x) for x in tag.removeprefix("lite-v").split(".") if x.isdigit())
+
+
+def update(pulled: bool = False) -> int:
+    """The newest Strata-Lite: git pull in a git clone; otherwise the newest release's files unpacked over this folder
+    (the models, settings, engine and .venv are not in a release and stay as they are). Then the engine for it.
+    pulled: UPDATE.bat / update.sh has already run its git pull."""
+    if pulled:
+        pass
+    elif (ROOT / ".git").exists():
+        if not shutil.which("git"):
+            S.fail("this folder is a git clone, but git is not installed", "install git, or run 'git pull' here yourself")
+        S.say("  Getting the newest Strata-Lite (git pull) ...")
+        if subprocess.call(["git", "-C", str(ROOT), "pull", "--ff-only"]) != 0:
+            S.fail("git pull did not finish", "your copy has changes of its own: run 'git status' in this folder")
+    else:
+        try:
+            req = urllib.request.Request(f"https://api.github.com/repos/{LITE_REPO}/releases/latest",
+                                         headers={"User-Agent": "strata-lite-setup", "Accept": "application/vnd.github+json"})
+            with urllib.request.urlopen(req, timeout=30) as r:
+                tag = json.loads(r.read().decode("utf-8"))["tag_name"]
+        except (OSError, urllib.error.URLError, ValueError, KeyError) as e:
+            S.fail(f"could not ask GitHub for the newest release ({e})", "check the internet connection and try again")
+        if _version(tag) <= LITE_VERSION:
+            S.ok(f"Strata-Lite {'.'.join(map(str, LITE_VERSION))} is the newest")
+        else:
+            import tempfile
+            S.say(f"  Updating Strata-Lite {'.'.join(map(str, LITE_VERSION))} -> {tag.removeprefix('lite-v')} ...")
+            with tempfile.TemporaryDirectory() as tmp:
+                z = Path(tmp) / "src.zip"
+                S.download(f"https://github.com/{LITE_REPO}/archive/refs/tags/{tag}.zip", z, "the new release")
+                with zipfile.ZipFile(z) as zf:
+                    names = [n for n in zf.namelist() if not n.endswith("/")]
+                    top = names[0].split("/")[0] + "/"
+                    for n in names:
+                        dst = ROOT / n[len(top):]
+                        dst.parent.mkdir(parents=True, exist_ok=True)
+                        with zf.open(n) as src, open(dst, "wb") as out:
+                            shutil.copyfileobj(src, out)
+            if not WIN:
+                for f in ("setup.sh", "update.sh"):
+                    if (ROOT / f).exists():
+                        (ROOT / f).chmod(0o755)
+            S.ok(f"Strata-Lite {tag.removeprefix('lite-v')}: the engine is updated the next time a model starts")
+            return 0
+    if engine_version(LITE_DIR) < LITE_MIN_ENGINE and (LITE_DIR / LITE_EXE).exists():
+        get_engine(False)
+    return 0
+
+
 # ------------------------------------------------------------------------------------------------ start
+# What a failed start means in plain words, and the fixes offered: (test on the output and exit code, the reason,
+# [(fix label, fix id)]). The first match wins; the server's own last lines are shown above it.
+SIGILL = (-4, 0xC000001D)
+DLL_MISSING = (0xC0000135,)
+
+
+def diagnose(tail: str, code: int, cfg: dict) -> tuple[str, list]:
+    t = tail.lower()
+    ctx = cfg.get("context", 0)
+    if code in SIGILL or "illegal instruction" in t:
+        return ("the ready-made engine uses processor instructions this PC's CPU does not have.",
+                [("compile the engine on this PC (20-60 minutes; needs NVIDIA's CUDA toolkit)", "build")])
+    if code in DLL_MISSING or "error while loading shared libraries" in t or "cannot open shared object" in t:
+        return ("NVIDIA's CUDA libraries the engine needs are missing.", [("install them again", "cuda")])
+    if "cuda driver version is insufficient" in t or "no cuda-capable device" in t or "cudaerrornodevice" in t:
+        return ("the NVIDIA driver is too old, or the card is not found. Install the newest driver from nvidia.com "
+                "(Game Ready or Studio), restart the PC and try again.", [])
+    if "cannot listen on" in t or "bind" in t and ("port" in t or "address" in t):
+        port = int(cfg["args"][cfg["args"].index("--port") + 1])
+        return (f"another program already uses port {port} (often Strata-Lite itself, still open in another window).",
+                [(f"use port {port + 1} instead", "port")])
+    if ("failed to open" in t or "cannot map" in t or "no such file" in t) and ".gguf" in t:
+        return ("a model file is missing or damaged.", [("download it again (the setup for this model)", "change")])
+    # RAM before the card: ggml's "failed to allocate ... pinned memory: out of memory" names CUDA but is the PC's RAM
+    if "bad_alloc" in t or "cannot allocate memory" in t or "pinned memory" in t or code in (-9, 137):
+        return ("the PC ran out of RAM.", [("lock less of the model in RAM (half of it)", "ram-half"),
+                                           ("lock none of it: low-RAM mode (slowest, works with 16 GB)", "ram-0")])
+    if "out of memory" in t and ("cuda" in t or "vram" in t) or "allocation failed" in t or "cudamalloc failed" in t:
+        fixes = [(f"use a smaller context ({ctx // 2 // 1024}K)", "ctx")] if ctx > 32768 else []
+        return ("the graphics card ran out of memory. Close other programs that use it (games, video, a browser with "
+                "many tabs) and try again" + (", or use a smaller context." if fixes else "."), fixes)
+    return (f"Strata-Lite stopped unexpectedly (exit code {code}). The last lines above say more.",
+            [("lock less of the model in RAM (half of it)", "ram-half")])
+
+
+def apply_fix(fix: str, cfg_path: Path, cfg: dict) -> bool:
+    """Changes the saved settings for a fix; False when the fix ran something else instead (and the start is over)."""
+    args = cfg["args"]
+
+    def set_arg(flag, value):
+        if flag in args:
+            args[args.index(flag) + 1] = value
+        else:
+            args.extend([flag, value])
+    if fix == "port":
+        set_arg("--port", str(int(args[args.index("--port") + 1]) + 1))
+        cfg["port"] = int(args[args.index("--port") + 1])
+    elif fix == "ctx":
+        cfg["context"] = max(32768, cfg.get("context", 131072) // 2)
+        set_arg("-c", str(cfg["context"]))
+    elif fix in ("ram-half", "ram-0"):
+        budget = 0.0
+        if fix == "ram-half":
+            ram = S.ram_gb()
+            budget = round(max(0.0, (ram - 10) / 2), 1) if ram else 6.0   # half of what is left beside the OS
+        set_arg("--ram-budget", str(budget))
+    elif fix == "build":
+        cfg["exe"] = str(build_engine())
+    elif fix == "cuda":
+        S.pip_install(S.CUDA_WHEELS, "NVIDIA CUDA libraries (cuBLAS, CUDA runtime; ~0.4 GB)")
+    elif fix == "change":
+        return False
+    cfg_path.write_text(json.dumps(cfg, indent=1), encoding="utf-8")
+    return True
+
+
 def start(cfg_path: Path, port: int | None = None, open_browser: bool = True) -> int:
-    cfg = json.loads(Path(cfg_path).read_text(encoding="utf-8"))
+    set_title()
+    cfg_path = Path(cfg_path)
+    cfg = json.loads(cfg_path.read_text(encoding="utf-8"))
+    if Path(cfg["exe"]).parent == LITE_DIR and engine_version(LITE_DIR) < LITE_MIN_ENGINE:
+        try:   # this setup needs a newer engine than the installed one (after an update)
+            cfg["exe"] = str(get_engine(False))
+        except SystemExit:
+            S.warn("could not get the newer engine: starting the installed one")
+    while True:
+        code, tail = run_server(cfg, port, open_browser)
+        if code in (0, None):
+            return 0
+        why, fixes = diagnose(tail, code, cfg)
+        S.say()
+        S.warn(f"{cfg['model_name']} could not start: {why}")
+        if not fixes or not sys.stdin.isatty():
+            return 1
+        S.say("  What to do:")
+        for i, (label, _) in enumerate(fixes, 1):
+            S.say(f"  {i}) {label}")
+        S.say(f"  {len(fixes) + 1}) stop here")
+        pick = int(S.ask("Your choice", [str(i) for i in range(1, len(fixes) + 2)], "1", False))
+        if pick > len(fixes):
+            return 1
+        if not apply_fix(fixes[pick - 1][1], cfg_path, cfg):
+            S.say("  Run START-HERE.bat (./setup.sh) and choose 'change the model or its settings'.")
+            return 1
+        S.say("  Starting it again with that change (saved for next time) ...")
+        port = None
+
+
+def run_server(cfg: dict, port: int | None, open_browser: bool) -> tuple[int | None, str]:
+    """The server, its output shown as it comes and its last lines kept; (exit code, last lines). None: stopped by
+    the user (Ctrl+C)."""
     args = list(cfg["args"])
     if port:
         args[args.index("--port") + 1] = str(port)
@@ -476,8 +733,26 @@ def start(cfg_path: Path, port: int | None = None, open_browser: bool = True) ->
     libs = S.cuda_lib_dirs(13)
     key = "PATH" if WIN else "LD_LIBRARY_PATH"
     env[key] = os.pathsep.join(libs + [env.get(key, "")]).rstrip(os.pathsep)
+    import socket
+    host = args[args.index("--host") + 1] if "--host" in args else "127.0.0.1"
+    with socket.socket() as probe:   # a port in use is found now, not after the model has loaded
+        try:
+            probe.bind((host, port))
+        except OSError:
+            return 1, f"strata-lite-server: cannot listen on {host}:{port}"
     S.say(f"\nStarting {cfg['model_name']} on http://127.0.0.1:{port}/ (loading takes a minute or two) ...")
-    p = subprocess.Popen([cfg["exe"], *args], env=env)
+    try:
+        p = subprocess.Popen([cfg["exe"], *args], env=env, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+    except OSError as e:
+        return 1, f"cannot start the engine: {e}"
+    tail = []
+
+    def pump():
+        for line in iter(p.stdout.readline, b""):
+            sys.stdout.write(line.decode("utf-8", "replace"))
+            sys.stdout.flush()
+            tail.append(line.decode("utf-8", "replace"))
+            del tail[:-80]
 
     def watch():
         url = f"http://127.0.0.1:{port}/health"
@@ -491,16 +766,20 @@ def start(cfg_path: Path, port: int | None = None, open_browser: bool = True) ->
             except (OSError, urllib.error.URLError):
                 pass
             time.sleep(2)
+    reader = threading.Thread(target=pump, daemon=True)
+    reader.start()
     threading.Thread(target=watch, daemon=True).start()
     try:
-        return p.wait()
+        code = p.wait()
+        reader.join(timeout=5)
+        return code, "".join(tail)
     except KeyboardInterrupt:
         p.terminate()
         try:
-            return p.wait(timeout=20)
+            p.wait(timeout=20)
         except subprocess.TimeoutExpired:
             p.kill()
-            return 1
+        return None, ""
 
 
 if __name__ == "__main__":

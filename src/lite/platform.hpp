@@ -2,6 +2,7 @@
 // they use is portable C++ or ggml / CUDA.
 #pragma once
 
+#include <algorithm>
 #include <cstddef>
 #include <cstdint>
 #include <string>
@@ -125,6 +126,35 @@ inline double total_ram_gb() {
 #else
     struct sysinfo si;
     return sysinfo(&si) == 0 ? (double) si.totalram * si.mem_unit / 1e9 : 0.0;
+#endif
+}
+
+// RAM the OS can give this process now, in bytes (Linux: MemAvailable, within the process's cgroup v2 limit when it
+// has one; Windows: available physical memory). Both count the file cache the OS would drop. 0 when unknown.
+inline double available_ram_bytes() {
+#ifdef _WIN32
+    MEMORYSTATUSEX ms; ms.dwLength = sizeof ms;
+    return GlobalMemoryStatusEx(&ms) ? (double) ms.ullAvailPhys : 0.0;
+#else
+    double avail = 0;
+    {
+        std::ifstream f("/proc/meminfo");
+        std::string key, unit; double kb = 0;
+        while (f >> key >> kb >> unit) if (key == "MemAvailable:") { avail = kb * 1024; break; }
+    }
+    std::ifstream cg("/proc/self/cgroup");
+    std::string line;
+    while (std::getline(cg, line)) {
+        if (line.rfind("0::", 0) != 0) continue;
+        const std::string dir = "/sys/fs/cgroup" + line.substr(3);
+        std::ifstream mx(dir + "/memory.max"), cur(dir + "/memory.current");
+        std::string m; double c = 0;
+        if (mx >> m && m != "max" && cur >> c) {
+            const double room = std::max(0.0, std::stod(m) - c);
+            if (avail == 0 || room < avail) avail = room;
+        }
+    }
+    return avail;
 #endif
 }
 

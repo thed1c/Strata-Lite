@@ -143,14 +143,19 @@ void rows_bp(const uint8_t* w, size_t row_bytes, int npairs, const ActQ* const* 
     }
 }
 
-const bool kBitplane = [] {
-    const char* e = std::getenv("STRATA_Q2_BITPLANE");
-    return e != nullptr && e[0] == '1';
-}();
+// Function-local (lazy) statics, not namespace-scope ones: a namespace-scope initializer in a file built for AVX-512
+// / AVX2 / AVX runs before main on every CPU, and the compiler may use those instructions in it (upstream #2324).
+bool bitplane_on() {
+    static const bool on = [] {
+        const char* e = std::getenv("STRATA_Q2_BITPLANE");
+        return e != nullptr && e[0] == '1';
+    }();
+    return on;
+}
 
 }  // namespace
 
-bool q2_bitplane_enabled() { return kBitplane; }
+bool q2_bitplane_enabled() { return bitplane_on(); }
 
 void q2_0_gguf_rows_multi_avx2_v(bool vnni_rows, const uint8_t* w, size_t row_bytes, int nblocks, const ActQ* const* a,
                                  int nt, float* const* out, int r0, int r1) {
@@ -171,7 +176,7 @@ void q2_0_gguf_rows_multi_avx2_legacy(const uint8_t* w, size_t row_bytes, int nb
 
 void q2_0_gguf_rows_multi_avx2(const uint8_t* w, size_t row_bytes, int nblocks, const ActQ* const* a, int nt,
                                float* const* out, int r0, int r1) {
-    bool bp = kBitplane && nblocks % 2 == 0;
+    bool bp = bitplane_on() && nblocks % 2 == 0;
     for (int t = 0; t < nt && bp; ++t) bp = a[t]->bp_pairs == nblocks / 2;
     if (!bp) {
         q2_0_gguf_rows_multi_avx2_legacy(w, row_bytes, nblocks, a, nt, out, r0, r1);
@@ -264,7 +269,7 @@ void act_quant_q8_1_avx2(const float* x, int n, ActQ& a) {
         a.sum[k] = total;
         a.hx[k] = s * (float) total;
     }
-    if (kBitplane) bitplane_image(a);   // the image costs a pass per token: only when its kernel will read it
+    if (bitplane_on()) bitplane_image(a);   // the image costs a pass per token: only when its kernel will read it
     else a.bp_pairs = 0;
 }
 

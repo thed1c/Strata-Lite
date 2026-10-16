@@ -45,7 +45,10 @@ namespace g4srv {
 struct Args {
     std::string model, mmproj, mtp, alias = "strata-lite", host = "127.0.0.1", profile;
     int port = 8080, n_draft = 3, image_max_tokens = 384, threads = 0;   // 384: the maintainer, 2026-10-10; threads 0 = physical cores
-    bool reserve_set = false;
+    // MTP depth by context (v0.2.2): drafts accepted fall as the context grows, and a rejected draft costs a wider
+    // verify; on a 3060, depth 2 is 9 % slower than 3 on a short chat and 33 % faster at 157K
+    int n_draft_long = 2, n_draft_long_from = 32768;
+    bool reserve_set = false, n_draft_long_set = false;
     std::string mmproj_place;   // second: on a second visible GPU (default when one has room); gpu: always on the engine's card;
                                 // cpu: in RAM; auto: in RAM, on the card while images need it;
                                 // lazy: not loaded until an image comes (RAM or card by the rules), unloaded when idle. Default: lazy
@@ -59,8 +62,10 @@ static void usage() {
     fprintf(stderr, "strata-lite-server -m MODEL [--mmproj F] [--mtp F] [--alias A] [--host H] [--port P] [-c CTX] [-ub N]\n"
                     "  [--mmproj-place second|auto|lazy|gpu|cpu --mmproj-min-size PX --mmproj-gpu-max-ctx N --mmproj-idle S]\n"
                     "  [--adapt-half-life T --adapt-budget N --no-adapt --no-adapt-refill --no-async-swaps --no-overlap --no-lend]\n"
+                    "  [--ram-budget GIB] (experts locked in RAM; the rest read from the model file; 0 = low-RAM mode; default: what the PC can spare)\n"
                     "  [--temp T --top-k K --top-p P --min-p M --repeat-penalty R] [--image-max-tokens N] [-t N]\n"
-                    "  [--n-cpu-moe N --cache-slots S --profile F --pool-threads N --prefill-ubatch N --lend -ctk T -ctv T --n-draft N]\n");
+                    "  [--n-cpu-moe N --cache-slots S --profile F --pool-threads N --prefill-ubatch N --lend -ctk T -ctv T --n-draft N]\n"
+                    "  [--n-draft-long N --n-draft-long-from POS] (MTP depth once the context passes POS; default 2 from 32768)\n");
 }
 
 static ggml_type kv_type(const std::string & t) { return t == "q4_0" ? GGML_TYPE_Q4_0 : t == "q8_0" ? GGML_TYPE_Q8_0 : GGML_TYPE_F16; }
@@ -146,13 +151,17 @@ int run(int argc, char ** argv) {
         else if (a == "--no-adapt") A.eo.adapt = false;                               // a fixed cache (the profile's, or plain order)
         else if (a == "--no-adapt-refill") A.eo.adapt_refill = false;                 // keep the cache as it was after a prompt read
         else if (a == "--no-async-swaps") A.eo.async_swaps = false;                   // swaps copied in the step, not in the background
+        else if (a == "--ram-budget") A.eo.ram_budget_gib = std::stod(nx());           // GiB of experts locked in RAM (the RAM tier)
         else if (a == "--no-overlap") A.eo.overlap = false;                           // the CPU pool waits for the GPU, no overlap
         else if (a == "-ctk") A.eo.type_k = kv_type(nx());
         else if (a == "-ctv") A.eo.type_v = kv_type(nx());
         else if (a == "--n-draft") A.n_draft = std::stoi(nx());
+        else if (a == "--n-draft-long") { A.n_draft_long = std::stoi(nx()); A.n_draft_long_set = true; }
+        else if (a == "--n-draft-long-from") A.n_draft_long_from = std::stoi(nx());
         else { fprintf(stderr, "unknown arg %s\n", a.c_str()); usage(); return 2; }
     }
     if (A.model.empty()) { usage(); return 2; }
+    if (!A.n_draft_long_set) A.n_draft_long = std::min(A.n_draft, A.n_draft_long);   // a lower --n-draft holds everywhere
     if (!A.eo.adapt) {   // a fixed cache: no swaps to copy, and a lent arena would come back empty with nothing to refill it
         A.eo.async_swaps = false;
         if (A.eo.lend) { A.eo.lend = false; fprintf(stderr, "strata-lite: --no-adapt reads without lending the cache's VRAM\n"); }
@@ -441,7 +450,8 @@ int run(int argc, char ** argv) {
             }
             // MTP: drafts at one position, one verify window, llama.cpp's sample-and-accept
             const int pos0 = eng.n_past();
-            const int room = std::min(A.n_draft, std::min(n_predict - (int) out.size(), n_ctx - pos0 - 2));
+            const int depth = pos0 >= A.n_draft_long_from ? A.n_draft_long : A.n_draft;
+            const int room = std::min(depth, std::min(n_predict - (int) out.size(), n_ctx - pos0 - 2));
             std::vector<int32_t> win = { tok };
             std::vector<float> hc = h_pending;
             for (int k = 0; k < room; ++k) {
@@ -515,8 +525,9 @@ int run(int argc, char ** argv) {
                               { "projector_min_size", A.mmproj_min_size }, { "projector_gpu_max_ctx", A.mmproj_gpu_max_ctx },
                               { "projector_idle_s", A.mmproj_idle },
                               { "adapt", A.eo.adapt }, { "adapt_half_life", A.eo.adapt_half_life }, { "adapt_budget", A.eo.adapt_budget },
-                              { "adapt_refill", A.eo.adapt_refill }, { "async_swaps", A.eo.async_swaps }, { "overlap", A.eo.overlap },
-                              { "threads", A.threads }, { "pool_threads", A.eo.pool_threads }, { "n_draft", A.n_draft } } },
+                              { "adapt_refill", A.eo.adapt_refill }, { "async_swaps", eng.async_swaps() }, { "ram_locked_gb", eng.ram_locked() / 1e9 }, { "ram_experts_gb", eng.ram_experts() / 1e9 }, { "overlap", A.eo.overlap },
+                              { "threads", A.threads }, { "pool_threads", A.eo.pool_threads }, { "n_draft", A.n_draft },
+                              { "n_draft_long", A.n_draft_long }, { "n_draft_long_from", A.n_draft_long_from } } },
         };
         send_json(r, props, 200);
     });

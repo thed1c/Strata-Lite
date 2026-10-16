@@ -4,7 +4,7 @@ rem what START-HERE.bat does before a start - the engine (a new one when this ve
 rem each installed model's settings and draft subset. The model files are not touched. Start the model later with
 rem START-HERE.bat. Options are passed on to setup.py.
 setlocal
-title Strata - update
+title Strata-Lite - update
 cd /d "%~dp0"
 rem All of it in one block: cmd reads a .bat file while it runs it, and the git pull can change this very file.
 (

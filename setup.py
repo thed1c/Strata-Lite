@@ -717,7 +717,8 @@ def cpu_info():
     else:
         try:
             txt = open("/proc/cpuinfo").read()
-            flags = set(re.search(r"^flags\s*:\s*(.*)$", txt, re.M).group(1).split())
+            m = re.search(r"^(?:flags|Features)\s*:\s*(.*)$", txt, re.M)   # upstream #2551: no flags line, no crash
+            flags = set(m.group(1).split()) if m else set()
             avx2 = "avx2" in flags
             avx512 = {"avx512f", "avx512bw", "avx512vl", "avx512_vnni", "avx512vbmi"} <= flags
             m = re.search(r"^model name\s*:\s*(.*)$", txt, re.M)
@@ -1544,6 +1545,8 @@ def whole_shard(s: Path) -> bool:
     from gguf_reader import GGUFFile
     try:
         g = GGUFFile(s)
+        if not g.tensors:   # a metadata-only shard (Unsloth's first one): its header is all of it, no padded data section
+            return True
         return s.stat().st_size >= g.data_start + max((t.offset + (t.expected_bytes() or 0) for t in g.tensors),
                                                      default=0)
     except (OSError, ValueError, struct.error):
@@ -1700,6 +1703,8 @@ def check_shards(shards):
             g = GGUFFile(s)
         except (ValueError, struct.error) as e:
             fail(f"{s.name} is not a whole GGUF shard ({e})", "delete it and run setup again")
+        if not g.tensors:       # upstream #2491 / #2587: a metadata-only shard ends with its header (it parsed above)
+            continue
         need = g.data_start + max((t.offset + (t.expected_bytes() or 0) for t in g.tensors), default=0)
         have = s.stat().st_size
         if have < need:
@@ -4790,7 +4795,8 @@ def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     import setup_lite                                  # Strata-Lite: Qwen3.6-35B-A3B and Gemma 4 26B-A4B
     ap.add_argument("--family", choices=list(FAMILIES) + list(setup_lite.FAMILIES),
-                    help="qwen = Qwen3.8-Flash-Next, swift = Swift 1.5; Strata-Lite: qwen36 = Qwen3.6-35B-A3B, gemma4 = Gemma 4 26B-A4B")
+                    help="qwen = Qwen3.8-Flash-Next, swift = Swift 1.5; Strata-Lite: qwen36 = Qwen3.6-35B-A3B, gemma4 = Gemma 4 26B-A4B, "
+                         "lfm25 = LFM2.5-24B-A2B")
     ap.add_argument("--model", choices=list(MODELS))
     ap.add_argument("--context", type=int)
     ap.add_argument("--rope-scaling", choices=["none", "linear", "yarn"],
@@ -4837,6 +4843,7 @@ def main() -> int:
     ap.add_argument("--gguf-dir", help="use GGUF files you already have (a folder with every shard: "
                                        "<name>-00001-of-0000N.gguf ... -0000N-of-0000N.gguf)")
     ap.add_argument("--yes", action="store_true", help="accept the recommended answers")
+    ap.add_argument("--no-shortcut", action="store_true", help="Strata-Lite: no desktop shortcut on a first install")
     ap.add_argument("--setup", action="store_true", help="install another model or change settings")
     ap.add_argument("--no-start", action="store_true", help="install only, do not start the model")
     ap.add_argument("--update", action="store_true",
@@ -4912,7 +4919,8 @@ def main() -> int:
             a.gpu = int(a.gpu)
         else:
             ap.error(f"--gpu takes a GPU number as nvidia-smi numbers them, e.g. --gpu 1 (or --gpus 0,2), not {a.gpu!r}")
-    say("Strata - Qwen3.8-Flash-Next on a normal PC (a GPU + system RAM + CPU)")
+    setup_lite.set_title()
+    say("Strata-Lite - Gemma 4, Qwen3.6 and LFM2.5 on a 12 GB card (a fork of Strata: Qwen3.8-Flash-Next on a normal PC)")
     data, elsewhere = data_folder(a.data_dir)          # the model files: in the data folder, found from any copy
     roots = [data, *elsewhere]
     if a.models_dir is None:
@@ -4925,6 +4933,8 @@ def main() -> int:
     have = installed_configs()
     lite_have = setup_lite.configs()                   # Strata-Lite installs (lite-*.json), started by setup_lite
     if a.update:                                       # #475: UPDATE.bat / update.sh - never starts the model
+        if lite_have and not have:                     # Strata-Lite: after their git pull, the engine this setup needs
+            return setup_lite.update(pulled=True)
         return update_install(have, a)
     explicit = a.setup or a.model or a.family or a.check or a.no_start
     adopted = None                                     # #629: the earlier install this copy is set up like
@@ -4974,17 +4984,14 @@ def main() -> int:
         return 0 if a.no_start else start(pick_cfg, a.port, run_gpu, yes=a.yes, layer_split=a.layer_split,
                      keep={"host": a.host, "api_key": a.api_key, "draft_vocab": a.draft_vocab,
                            "vram_reserve_mib": a.vram_reserve_mib, "open_browser": a.browser})
-    if lite_have and not (a.setup or a.model or a.family or a.check or a.no_start):
-        if not have and len(lite_have) == 1:
-            return setup_lite.start(lite_have[0], a.port, a.browser is not False)
-        if not have:
-            say()
-            for i, c in enumerate(lite_have, 1):
-                say(f"  {i}) {json.loads(c.read_text(encoding='utf-8')).get('model_name', c.stem)}")
-            say(f"  {len(lite_have) + 1}) install another model / change settings")
-            pick = int(ask("Which one?", [str(i) for i in range(1, len(lite_have) + 2)], "1", a.yes))
-            if pick <= len(lite_have):
-                return setup_lite.start(lite_have[pick - 1], a.port, a.browser is not False)
+    if lite_have and not have and not (a.setup or a.model or a.family or a.check or a.no_start):
+        # Strata-Lite: a menu on every run (Enter starts the model; or change it / its settings; or update)
+        pick = setup_lite.menu(lite_have, a)
+        if pick == "update":
+            return setup_lite.update()
+        if pick != "change":
+            return setup_lite.start(pick, a.port, a.browser is not False)
+        a.setup = True
     if have and not (a.setup or a.model or a.family or a.check or a.no_start):
         if not a.build:
             update_installed_engine(a.prebuilt)

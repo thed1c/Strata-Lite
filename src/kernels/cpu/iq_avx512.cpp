@@ -30,13 +30,18 @@ inline uint64_t u64(const uint8_t* p) { uint64_t v; std::memcpy(&v, p, 8); retur
 
 // E-2: the IQ3 grids by one AVX-512 gather (the same words, the same results) - measured 3-5% SLOWER than the scalar
 // lookups on a Ryzen 5 7600 (Zen 4 gathers are microcoded), so opt-in: STRATA_IQ_GATHER=1
-const bool gather = std::getenv("STRATA_IQ_GATHER") != nullptr;
+// Function-local (lazy) statics, not namespace-scope ones: a namespace-scope initializer in a file built for AVX-512
+// / AVX2 / AVX runs before main on every CPU, and the compiler may use those instructions in it (upstream #2324).
+bool gather_on() { static const bool on = std::getenv("STRATA_IQ_GATHER") != nullptr; return on; }
 // E-2: software prefetch distance in bytes (STRATA_IQ_PREFETCH; 0 = off): -2-3% gate/up time on IQ3_S decode
 // (the rows are read at ~30 GB/s by 6 cores, near what DDR5 with 4 KB pages gives: the pool is memory-bound)
-const int prefetch_ahead = [] {
-    const char* v = std::getenv("STRATA_IQ_PREFETCH");
-    return v ? std::atoi(v) : 2048;
-}();
+int prefetch_ahead_bytes() {
+    static const int d = [] {
+        const char* v = std::getenv("STRATA_IQ_PREFETCH");
+        return v ? std::atoi(v) : 2048;
+    }();
+    return d;
+}
 
 // lanes 0-7 -> s0, 8-15 -> s1, 16-23 -> s2, 24-31 -> s3 (int16 lanes of a maddubs result: two values each)
 inline __m512i scales4(int s0, int s1, int s2, int s3) {
@@ -111,7 +116,7 @@ template <> struct Fmt<18> {   // IQ3_XXS: d, qs[64] grid bytes, 8 x u32 (4 x 7-
     static inline void decode(const uint8_t* b, int j, __m512i& g, __mmask64& m, __m512i& sc) {
         const uint8_t* q = b + 2 + 16 * j;
         // E-2: one gather of the 16 grid words (the scalar lookups assembled with set_epi32 cost ~30 uops)
-        g = gather ? _mm512_i32gather_epi32(_mm512_cvtepu8_epi32(_mm_loadu_si128((const __m128i*) q)), iq3xxs_grid, 4)
+        g = gather_on() ? _mm512_i32gather_epi32(_mm512_cvtepu8_epi32(_mm_loadu_si128((const __m128i*) q)), iq3xxs_grid, 4)
                    : _mm512_set_epi32((int) iq3xxs_grid[q[15]], (int) iq3xxs_grid[q[14]], (int) iq3xxs_grid[q[13]], (int) iq3xxs_grid[q[12]],
                              (int) iq3xxs_grid[q[11]], (int) iq3xxs_grid[q[10]], (int) iq3xxs_grid[q[9]], (int) iq3xxs_grid[q[8]],
                              (int) iq3xxs_grid[q[7]], (int) iq3xxs_grid[q[6]], (int) iq3xxs_grid[q[5]], (int) iq3xxs_grid[q[4]],
@@ -133,7 +138,7 @@ template <> struct Fmt<21> {   // IQ3_S: d, qs[64], qh[8], signs[32], scales[4]
     static inline void decode(const uint8_t* b, int j, __m512i& g, __mmask64& m, __m512i& sc) {
         const uint8_t* q = b + 2 + 16 * j;
         const uint32_t h0 = b[66 + 2 * j], h1 = b[66 + 2 * j + 1];
-        if (gather) {   // E-2: the 9-bit indices (the high bit from qh under a mask), one gather
+        if (gather_on()) {   // E-2: the 9-bit indices (the high bit from qh under a mask), one gather
             __m512i idx = _mm512_cvtepu8_epi32(_mm_loadu_si128((const __m128i*) q));
             idx = _mm512_mask_add_epi32(idx, (__mmask16) (h0 | (h1 << 8)), idx, _mm512_set1_epi32(256));
             g = _mm512_i32gather_epi32(idx, iq3s_grid, 4);
@@ -161,7 +166,7 @@ inline void row_dot(const uint8_t* row, int nblocks, const block_q8_K* const* y,
         const uint8_t* blk = row + (size_t) i * Fmt<TY>::bytes;
         // E-2: the weight rows stream from DRAM (4 KB pages when large pages are refused): ask for the bytes a few
         // blocks ahead (the next row's start included) before the decode needs them
-        if (prefetch_ahead > 0) {
+        if (const int prefetch_ahead = prefetch_ahead_bytes(); prefetch_ahead > 0) {
             const uint8_t* ahead = blk + (size_t) prefetch_ahead;
             _mm_prefetch((const char*) ahead, _MM_HINT_T0);
             _mm_prefetch((const char*) ahead + 64, _MM_HINT_T0);

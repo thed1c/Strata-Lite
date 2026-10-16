@@ -402,7 +402,9 @@ bool iq128_supported(int type) noexcept {
 }
 
 bool iq128_down_supported(int type) noexcept {
-    return type == 20 || type == 42;
+    // IQ4_NL (20) is declined too (upstream #2638): ggml's own IQ4_NL dot beats the 128-bit kernel on AVX-without-AVX2
+    // CPUs (0.78-0.93x); the kernel stays built and parity-tested.
+    return type == 42;
 }
 
 void iq128_gu_rows(int type, const uint8_t* blob, size_t gu_row, size_t up_off, int n, const void* const* act,

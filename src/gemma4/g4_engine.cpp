@@ -23,6 +23,7 @@
 #include <cstring>
 #include <vector>
 #include "../lite/platform.hpp"
+#include "../lite/ram_tier.hpp"
 
 namespace g4 {
 
@@ -472,16 +473,14 @@ std::string Engine::load(const Options & o) {
     // needs pinned sources, and a read-only file mapping cannot be registered. Same bytes, so the arithmetic is unchanged.
     // Low-RAM mode: when the OS will not lock that much (too little free RAM), the experts stay in the file mapping and the
     // OS reads them in as needed; swaps are then copied in the step (slower, but it runs). --no-async-swaps chooses it up front.
-    auto in_arena = [&](ggml_tensor * t) { return o_.async_swaps && strstr(ggml_get_name(t), "_exps.") != nullptr; };
+    // The RAM tier (src/lite/ram_tier.hpp): the experts locked up to --ram-budget, the rest stay in the mapping.
+    lite::RamTier tier;
     if (o_.async_swaps) {
-        for (auto & [t, off] : on_cpu) if (in_arena(t)) arena_size_ += GGML_PAD(ggml_nbytes(t), 4096);
-        if (cudaHostAlloc(&arena_, arena_size_, cudaHostAllocPortable) != cudaSuccess) {
-            cudaGetLastError();
-            fprintf(stderr, "strata-lite: not enough free RAM to lock the experts (%.1f GB): low-RAM mode - they stay in the model file and "
-                            "are read in as needed (slower)\n", arena_size_ / 1e9);
-            arena_ = nullptr; arena_size_ = 0; o_.async_swaps = false;
-        }
+        tier = lite::ram_tier_lock(on_cpu, o_.ram_budget_gib, 4096);
+        arena_ = tier.arena; arena_size_ = tier.arena_size; ram_locked_ = tier.arena_size; ram_experts_ = tier.want;
+        if (!arena_) o_.async_swaps = false;
     }
+    auto in_arena = [&](ggml_tensor * t) { return o_.async_swaps && tier.in_arena(t); };
     if (o_.async_swaps) {
         buf_arena_ = ggml_backend_cpu_buffer_from_ptr(arena_, arena_size_);
         ggml_backend_buffer_set_usage(buf_arena_, GGML_BACKEND_BUFFER_USAGE_WEIGHTS);

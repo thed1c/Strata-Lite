@@ -1,8 +1,8 @@
 @echo off
-rem Strata for Windows: the first run installs everything and starts the model; later runs just start it.
+rem Strata-Lite for Windows: the first run installs everything and starts the model; later runs show a short menu (Enter starts it).
 rem Needs only an NVIDIA or AMD graphics driver. Python is installed for your user account if it is missing (no admin needed).
 setlocal
-title Strata
+title Strata-Lite
 cd /d "%~dp0"
 if exist ".venv\Scripts\python.exe" goto run
 
@@ -37,9 +37,12 @@ pause
 exit /b 1
 
 :run
-".venv\Scripts\python.exe" setup.py %*
-if errorlevel 1 pause
-exit /b
+rem one block: cmd reads all of it before Python runs, so an update that rewrites this file is safe
+(
+  ".venv\Scripts\python.exe" setup.py %*
+  if errorlevel 1 pause
+  exit /b
+)
 
 :findpy
 rem the py launcher first, then python on PATH (not the Microsoft Store stub), then the usual per-user folders

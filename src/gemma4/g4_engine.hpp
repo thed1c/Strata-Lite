@@ -44,6 +44,7 @@ struct Options {
     int   adapt_budget    = 2;       // swaps per layer per decode step
     bool  adapt_refill    = true;    // re-set every layer to its top-S after a prompt read
     bool  async_swaps     = false;   // copies on their own CUDA stream from the pinned mapping; commit when they land
+    double ram_budget_gib = -1;    // the RAM tier: GiB of experts locked in RAM (-1 auto, see src/lite/ram_tier.hpp)
     bool  overlap         = false;   // the misses run in the pool while the GPU computes the hits (start/join ops)
     // stage g: the chunk test. Prompt reads in ubatches of prefill_ubatch tokens (0 = n_ubatch); with lend, the slot
     // arena is freed for the read (its VRAM funds the compute buffers and the enlarged window cache) and refilled after
@@ -118,6 +119,9 @@ public:
     int grow_to(int S, size_t headroom);
     int slots() const { return slots_now_; }
     const HParams & hp() const { return hp_; }
+    size_t ram_locked() const { return ram_locked_; }     // the RAM tier: expert bytes locked in RAM
+    size_t ram_experts() const { return ram_experts_; }   // and of all CPU-side experts
+    bool async_swaps() const { return o_.async_swaps; }    // false in low-RAM mode
     int n_past() const { return n_past_; }
 
     struct PoolLayer;            // one layer's experts as the pool reads them (in g4_engine.cpp)
@@ -205,6 +209,7 @@ private:
     bool pinned_ = false;
     void * arena_ = nullptr;                 // Strata's expert arena: the RAM-resident experts in page-locked memory
     size_t arena_size_ = 0;
+    size_t ram_locked_ = 0, ram_experts_ = 0;   // the RAM tier: bytes locked / bytes of CPU-side experts
     ggml_backend_buffer_t buf_arena_ = nullptr;
     ggml_context * ctx_cache_ = nullptr;
     ggml_backend_buffer_t buf_cache_ = nullptr;
