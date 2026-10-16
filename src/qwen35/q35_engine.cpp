@@ -1851,6 +1851,9 @@ std::string Engine::decode(const std::vector<int32_t> & toks, std::vector<float>
         std::string err = ubatch(toks.data() + i, m, n_past_ + i, out ? 1 : 0, out ? logits : nullptr);
         want_h_ = false;
         if (!err.empty()) return err;
+        if ((i == 0 || i + m == n) && m >= kOffloadMin)   // the first and the last chunk (the most KV cells)
+            fprintf(stderr, "strata: read compute buffers %.0f MiB (%d-token chunk, %u KV cells)\n",
+                    ggml_backend_sched_get_buffer_size(sched_, gpu_) / 1048576.0, m, kv_.n_kv);
         if (out && h_last) h_last->assign(h_rows_.end() - ne, h_rows_.end());
         if (mtp_.loaded) {
             err = mtp_catchup(toks.data() + i, m, n_past_ + i, h_rows_.data());

@@ -46,10 +46,7 @@ static constexpr int   kMinSlots = 8;          // below this the arena is not wo
 // ~4.1 KB per cell); ggml's allocator crashes rather than fails when it cannot get it, so the room is made beforehand.
 static constexpr size_t kComputePerCell = 4608;
 static constexpr int    kHeadroomStep   = 8192;   // cells of context growth covered per check
-// Auto chunk: a read's compute buffers ~ fixed + per token + the KQ mask (chunk x context, f16). Calibrated on the grid
-// (RTX 5070 and 3060, q4 KV): 16k chunks fit at 32k/131k contexts, at 262k a 157k prompt takes 8k, not 16k.
-static constexpr size_t kChunkFixed  = (size_t) 768 << 20;
-static constexpr size_t kChunkPerTok = 200 * 1024;
+// Auto chunk: the largest of 32k / 16k / 8k / 4k whose compute buffers (read_compute_bytes) fit what the read can borrow.
 static constexpr int    kChunkMin    = 4096;
 
 namespace scpu = strata::kernels::cpu;
@@ -1448,6 +1445,22 @@ std::string Engine::arena_build(int S, bool fill_profile) {
     return "";
 }
 
+// The compute buffers of an m-token read chunk over n_kv KV cells (bytes). Measured on an RTX 3060 at 262K context, q8 KV,
+// n_kv = m (v0.2.2: 4096 -> 1261 MiB, 8192 -> 2448, 12288 -> 3659, 16384 -> 5265, 18000 -> 5819, 20824 -> 7777), linear
+// between the points and 0.75 MiB a token past the last (the growth steepens there); cells past the chunk add its f16
+// mask row and the q8 cells' f16 copy for flash attention. The old formula (768 MiB + 200 KB a token + the mask) was
+// 0.8 GB short at 16K and 1.5 GB at 20.8K: auto chose a whole 20.8K-token prompt as one chunk and the read failed.
+static size_t read_compute_bytes(size_t m, size_t n_kv) {
+    static const double pts[][2] = { { 0, 250 }, { 4096, 1261 }, { 8192, 2448 }, { 12288, 3659 }, { 16384, 5265 },
+                                     { 18000, 5819 }, { 20824, 7777 } };
+    const int np = (int) (sizeof pts / sizeof pts[0]);
+    double mib = pts[np - 1][1] + ((double) m - pts[np - 1][0]) * 0.75;
+    for (int i = 1; i < np; ++i)
+        if ((double) m <= pts[i][0]) { mib = pts[i - 1][1] + ((double) m - pts[i - 1][0]) * (pts[i][1] - pts[i - 1][1]) / (pts[i][0] - pts[i - 1][0]); break; }
+    const size_t extra = n_kv > m ? (n_kv - m) * (2 * m + 4096) : 0;
+    return (size_t) (mib * 1048576.0) + extra;
+}
+
 int Engine::pick_chunk(int n) {
     size_t fr = 0, tot = 0; cudaMemGetInfo(&fr, &tot);
     size_t avail = fr + ((o_.lend && buf_cache_) ? ggml_backend_buffer_get_size(buf_cache_) : 0);
@@ -1458,9 +1471,13 @@ int Engine::pick_chunk(int n) {
         const size_t kv_more = cells > kv_cap_ ? kv_bytes(cells) - kv_bytes(kv_cap_) : 0;
         avail = avail > kv_more ? avail - kv_more : 0;
     }
+    size_t swa_cell = 0;   // the window layers' K + V per cell: begin_read grows their cache to n_swa + the chunk
+    for (int il = 0; il < hp_.n_layer; ++il) if (swa_.k[il]) swa_cell += swa_.k[il]->nb[1] + swa_.v[il]->nb[1];
     for (int P : { 32768, 16384, 8192, kChunkMin }) {   // 32k only where the borrowable VRAM covers it (24-32 GB cards)
         const size_t m = (size_t) std::min(P, n);
-        if (kChunkFixed + m * kChunkPerTok + m * n_kv_end * 2 + margin <= avail) return P;
+        const size_t swa_cells = std::min<size_t>(base_.size, ((size_t) hp_.n_swa + P + 255) / 256 * 256);
+        const size_t swa_more = swa_cells > swa_.size ? (swa_cells - swa_.size) * swa_cell : 0;
+        if (read_compute_bytes(m, n_kv_end) + swa_more + margin <= avail) return P;
     }
     // nothing fits: with a lent arena 4k is the floor (the maintainer, 2026-10-10: minimum chunk 4k); without lending the
     // read takes llama.cpp's ubatches
@@ -1562,6 +1579,9 @@ std::string Engine::decode(const std::vector<int32_t> & toks, std::vector<float>
         std::string err = ubatch(toks.data() + i, m, n_past_ + i, out, out ? logits : nullptr);
         want_h_ = false;
         if (!err.empty()) return err;
+        if ((i == 0 || i + m == n) && m >= kOffloadMin)   // the first and the last chunk (the most KV cells)
+            fprintf(stderr, "strata: read compute buffers %.0f MiB (%d-token chunk, %u KV cells)\n",
+                    ggml_backend_sched_get_buffer_size(sched_, gpu_) / 1048576.0, m, base_.n_kv);
     }
     if (h_last) *h_last = h_rows_;
     n_past_ += n;
