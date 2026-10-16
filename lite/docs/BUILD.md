@@ -29,13 +29,34 @@ The program is `build-lite/bin/strata-lite-server` (`.exe` on Windows). Options:
 | `-DSTRATA_LITE_LLAMA_DIR=<path>` | download | a llama.cpp b6b003d source tree already on disk |
 | `-DSTRATA_LITE_TOOLS=ON` | off | also the test drivers (`strata-gemma4`, `strata-qwen35`), `logit-cmp` and `route-oracle` / `route-log` |
 
-What the build adds to llama.cpp: one function, `common_sampler_sample_logits` (llama.cpp's sampler run on a logits vector;
-the server needs it because the forward pass is the engine's), appended to `common/sampling.cpp` and `sampling.h` from
-`lite/llama-hooks/`. Nothing else in llama.cpp changes. `lite/patches/` has the same change, plus the comparison tools, as
-a patch for a llama.cpp checkout of your own.
+What the build adds to llama.cpp, from `lite/llama-hooks/`:
+- one function, `common_sampler_sample_logits` (llama.cpp's sampler run on a logits vector; the server needs it because
+  the forward pass is the engine's), appended to `common/sampling.cpp` and `sampling.h`;
+- for LFM2.5 (`lfm-json-tools.cmake`): a patched copy of `common/parsers/lfm2.cpp`, written into the build folder, so
+  a request with `tool_choice: auto` and a JSON response format may answer with either a tool call or the JSON (the
+  pinned parser makes the tool call mandatory). The build stops if the pinned source no longer matches.
+
+Nothing else in llama.cpp changes. `lite/patches/` has the same changes, plus the comparison tools, as a patch for a
+llama.cpp checkout of your own.
 
 A build is per card architecture: the bit-for-bit checks in `lite/tests/` are re-run on each card you build for, because
 CUDA kernels differ by architecture.
+
+## Copying a build to another PC
+
+A default build (`STRATA_LITE_PORTABLE=OFF`) uses every instruction of the CPU it was built on. Copied to a PC whose CPU
+lacks some of them (AVX-512 on a server CPU, a laptop CPU without it), it can pass `--help` and find the card, then
+stop with an illegal instruction while loading the model. For a binary meant for other PCs, build portable in a clean
+build folder:
+
+```bash
+cmake -S lite -B build-portable -G Ninja -DCMAKE_BUILD_TYPE=Release -DSTRATA_LITE_PORTABLE=ON -DCMAKE_CUDA_ARCHITECTURES="86-real;120a-real"
+cmake --build build-portable --target strata-lite-server
+```
+
+Pick the CUDA architectures for the cards it will run on (86 = RTX 30, 89 = RTX 40, 120a = RTX 50). In `CMakeCache.txt`,
+check `GGML_NATIVE=OFF` and the AVX-512 options off. Test a copied build by loading a model and getting an answer:
+starting the server is not enough. The release zips are built this way.
 
 ## The model files
 The setup downloads them. By hand:

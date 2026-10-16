@@ -593,3 +593,19 @@ index 0000000..1de9e05
 +    llama_backend_free();
 +    return 0;
 +}
+diff --git a/common/parsers/lfm2.cpp b/common/parsers/lfm2.cpp
+--- a/common/parsers/lfm2.cpp
++++ b/common/parsers/lfm2.cpp
+@@ -88,6 +88,12 @@
+             )
+         );
+ 
++        // Auto tool choice permits a tool call OR the requested final response format.
++        // A schema must not turn the lazy tool-only branch into a mandatory call.
++        if (has_response_format && inputs.tool_choice == COMMON_CHAT_TOOL_CHOICE_AUTO) {
++            auto response_format = p.content(p.schema(p.json(), "response-format-schema", inputs.json_schema));
++            return generation_prompt + reasoning + (tool_calls | response_format) + end;
++        }
+         auto content = p.content(p.until(TOOL_CALL_START));
+ 
+         return generation_prompt + reasoning + content + tool_calls + end;
