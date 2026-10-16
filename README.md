@@ -1,18 +1,18 @@
 # Strata-Lite
 
-*A fork of [Strata](https://github.com/Niko1221/Strata) by Niko1221: Strata's adaptive expert cache for Gemma 4 26B-A4B and
-Qwen3.6-35B-A3B on one 12 GB card. Strata's own README is [`STRATA.md`](STRATA.md).*
+*A fork of [Strata](https://github.com/Niko1221/Strata) by Niko1221: Strata's adaptive expert cache for Gemma 4 26B-A4B,
+Qwen3.6-35B-A3B and LFM2.5-24B-A2B on one 12 GB card. Strata's own README is [`STRATA.md`](STRATA.md).*
 
-**Experimental.** A port of [Strata](https://github.com/Niko1221/Strata)'s adaptive expert-cache engine to Gemma 4 26B-A4B and
-Qwen3.6-35B-A3B, so either model runs on one 12 GB card at near-GPU speed, with MTP drafting, chunked prompt reads and the image
-projector, behind a llama-server-compatible API. Built and measured in about a week; read the numbers as what they are, two cards
-and two models.
+**Experimental.** A port of [Strata](https://github.com/Niko1221/Strata)'s adaptive expert-cache engine to Gemma 4 26B-A4B,
+Qwen3.6-35B-A3B and LFM2.5-24B-A2B, so each runs on one 12 GB card at near-GPU speed, with MTP drafting, chunked prompt reads and
+the image projector, behind a llama-server-compatible API. Built and measured in about a week; read the numbers as what they are,
+two cards and three models.
 
 | | |
 |---|---|
-| Models | Gemma 4 26B-A4B (HauhauCS QAT Uncensored Balanced, Q4_K_M, with its MTP drafter and projector); Qwen3.6-35B-A3B (HauhauCS Uncensored Aggressive, Q4_K_P, with its projector and the MTP head from unsloth's release, `lite/docs/QWEN36.md`) |
+| Models | Gemma 4 26B-A4B (HauhauCS QAT Uncensored Balanced, Q4_K_M, with its MTP drafter and projector); Qwen3.6-35B-A3B (HauhauCS Uncensored Aggressive, Q4_K_P, with its projector and the MTP head from unsloth's release, `lite/docs/QWEN36.md`); LFM2.5-24B-A2B (AtomicChat Uncensored Q4_K_M or Liquid AI's QAD Q4_0, text only, 128K, `lite/docs/LFM25.md`) |
 | Cards | 12 GB: RTX 3060 (sm_86), RTX 5070 (sm_120); built for sm_89 too. 8 GB is on the roadmap |
-| Needs | Windows or Linux, an NVIDIA RTX 30 / 40 / 50 card, driver 580+, 24 GB of RAM for Gemma or 32 GB for Qwen (16 GB runs in low-RAM mode, slower), a CPU with AVX2. The setup installs everything else (Install, below); to compile it yourself: `lite/docs/BUILD.md` |
+| Needs | Windows or Linux, an NVIDIA RTX 30 / 40 / 50 card, driver 580+, 24 GB of RAM for Gemma or LFM2.5 and 32 GB for Qwen (with less, the engine keeps what the PC can spare in RAM and reads the rest from the model file: 16 GB runs, slower), a CPU with AVX2. The setup installs everything else (Install, below); to compile it yourself: `lite/docs/BUILD.md` |
 | Run | `strata-lite-server -m model.gguf --mtp mtp.gguf --mmproj mmproj.gguf`; it picks the engine from the GGUF (`lite/docs/RUN.md`) |
 | API | llama-server's and OpenAI chat; 63/63 parity checks for each model (`lite/docs/API.md`) |
 | Images | The vision projector does not sit on the card beside the model: on one GPU it waits in RAM and takes GPU memory only while it is in use. Small images encode on the CPU, big ones move it to the card and it leaves after 15 s idle; prompts over 64K keep images on the CPU; a second GPU takes it automatically; under 32 GB of RAM it loads only when an image arrives (`--mmproj-place`, see "The image projector, on demand") |
@@ -208,23 +208,29 @@ comes back as an HTTP 500.
 [Download Strata-Lite](https://github.com/thed1c/Strata-Lite/archive/refs/heads/main.zip) and unzip it (or `git clone` it).
 **Windows:** double-click **`START-HERE.bat`**. **Linux:** run **`./setup.sh`** in the folder.
 
-It is Strata's installer. In "Which model?" choose **Qwen3.6-35B-A3B** or **Gemma 4 26B-A4B** (Strata's own Qwen3.8-Flash-Next
-models are there too). Then it asks:
-- **which files:** *uncensored* (the HauhauCS releases every number here was measured with), *official* (unsloth's
-  quantizations; experimental, not measured with this engine), or GGUF files you already have;
-- **how much context:** 32K, 128K or 256K tokens;
+It is Strata's installer. In "Which model?" choose **Gemma 4 26B-A4B**, **Qwen3.6-35B-A3B** or **LFM2.5-24B-A2B** (Strata's own
+Qwen3.8-Flash-Next models are there too). Then it asks:
+- **which files:** *uncensored* (the releases every number here was measured with), *official* (Gemma and Qwen: unsloth's
+  quantizations, experimental, not measured with this engine; LFM2.5: Liquid AI's QAD Q4_0, measured), or GGUF files you already have;
+- **how much context:** 32K, 128K or 256K tokens (LFM2.5: up to 128K);
 - **images:** the image encoder loads only when an image arrives;
 - **a Hugging Face token:** optional, press Enter (none of the files needs one).
 
-Press Enter for the recommended answers. It downloads the model (Qwen ~24 GB, Gemma ~18 GB, eight connections at a time,
-resumable) and NVIDIA's CUDA libraries, gets the ready-made engine, and starts the model. Your browser opens a chat page at
-`http://127.0.0.1:8080`; the same address serves the OpenAI and llama-server APIs (`/v1/chat/completions`).
+Press Enter for the recommended answers. It downloads the model (Qwen ~24 GB, Gemma ~18 GB, LFM2.5 ~15 GB, eight connections
+at a time, resumable) and NVIDIA's CUDA libraries, gets the ready-made engine, puts a Strata-Lite shortcut on the desktop, and
+starts the model. Your browser opens a chat page at `http://127.0.0.1:8080`; the same address serves the OpenAI and llama-server
+APIs (`/v1/chat/completions`).
 
 What it needs: an NVIDIA RTX 30, 40 or 50 card with 12 GB (8-11 GB runs with fewer experts on the card), driver 580 or
-newer, 24 GB of RAM for Gemma and 32 GB for Qwen, and a CPU with AVX2. The first start loads ~15-22 GB into locked RAM:
-the PC can be slow for a minute. With less RAM (16 GB at least) the setup picks low-RAM mode: the experts are read from
-the model file as needed, so keep it on an SSD. Measured with 16 GB on an RTX 3060: Gemma writes about 10 tokens a second
-and reads an image in 11 s; Qwen about 4 tokens a second (Gemma with enough RAM, same test: about 43). Next time, run `START-HERE.bat` (or `./setup.sh`) again: it starts right away.
+newer, 24 GB of RAM for Gemma or LFM2.5 and 32 GB for Qwen, and a CPU with AVX2. The first start loads ~13-22 GB into locked
+RAM: the PC can be slow for a minute. With less RAM the engine locks what the PC can spare (leaving room for the OS and your
+other programs) and reads the rest from the model file as needed, so keep it on an SSD; with 16 GB nearly nothing is locked.
+Measured with 16 GB on an RTX 3060: Gemma writes about 10 tokens a second and reads an image in 11 s; Qwen about 4 tokens a
+second (Gemma with enough RAM, same test: about 43).
+
+Next time, double-click the shortcut (or run `START-HERE.bat` / `./setup.sh`): a short menu comes up, and Enter starts the
+model. The menu also changes the model or its settings and updates Strata-Lite. If the model cannot start, it says why in plain
+words (not enough RAM or graphics memory, a port in use, a missing file...) and offers the fix.
 
 ## Results: Gemma 4 26B-A4B
 
@@ -422,12 +428,12 @@ The defaults (Qwen's differences are in `lite/docs/RUN.md`) (every one can be ov
 |---|---|
 | API | OpenAI `/v1/chat/completions` and llama-server's `/completion`, `/health`, `/props`, `/slots`, `/v1/models`; alias `strata-lite`, `127.0.0.1:8080`, one request at a time, prompt cache on |
 | context, KV | 262,144 tokens; q8_0 K and V (Qwen: q4_0, where q8 measured no better); the card holds only the context the conversation has reached (`--kv-initial`) |
-| experts | all in RAM (`--n-cpu-moe 30`), with a GPU cache in front sized from free VRAM (`--cache-slots auto`). It shrinks instead of failing when VRAM gets tight and grows back when VRAM frees. |
+| experts | all in RAM (`--n-cpu-moe 30`), with a GPU cache in front sized from free VRAM (`--cache-slots auto`). It shrinks instead of failing when VRAM gets tight and grows back when VRAM frees. In RAM, as much is locked as the PC can spare; the rest is read from the model file (`--ram-budget`). |
 | starting profile | none needed: the cache fills from the first prompt's routing (`--profile` to start from a ranked list) |
 | prompt reads | in the largest chunk that fits, from 32k / 16k / 8k / 4k (`--prefill-ubatch auto`) |
 | threads | the physical cores the process may run on (`-t`, `--pool-threads`) |
 | sampling | llama-server's: temperature 0.8, top-k 40, top-p 0.95, min-p 0.05, no repeat penalty |
-| MTP drafting | with `--mtp`, 3 drafts per step (`--n-draft`) |
+| MTP drafting | with `--mtp`: Gemma 3 drafts per step, 2 once the context passes 32K (`--n-draft`, `--n-draft-long`); Qwen 2 |
 | cache behaviour | adaptive, at most 2 swaps per layer per step (`--adapt-budget`), swaps copied on a background stream, CPU misses overlapped with the GPU hits. Every switch: `lite/docs/RUN.md`. |
 | image projector | `--mmproj-place`: `second` on a second GPU with room, else `auto` with 32 GB of RAM or more, else `lazy`. Images under 128 px, and every image in a prompt over 65,536 tokens, encode on the CPU. The projector leaves the card after 15 s idle. Up to 384 tokens per image. |
 
@@ -461,16 +467,20 @@ Two invented test turns (`lite/tests/sameness-inputs/`) compared the two setups 
 - The first reply after a long read is 13–27 % slower while the cache settles (about half a second).
 - Mean KL against an all-GPU run is slightly above llama.cpp's static offload (which experts run where), with every cached row
   proven bit-exact; see `lite/docs/CORRECTNESS.md`.
-- On 12 GB a 262k context halves the cache's slots; KV streaming is next on the roadmap.
+- On 12 GB a long conversation costs the cache slots as its KV grows (Gemma at 157K: 79 slots at load, 56 after); streaming the KV
+  from RAM was measured and set aside (above).
 - Qwen's prompt cache resumes only at checkpoints of its recurrent state (the next chat turn and a repeated prompt resume; a prompt
   that changes earlier is read again), see `lite/docs/RUN.md`.
-- Tested on two cards and two models, by one person, in about a week.
+- LFM2.5-8B and other models small enough to sit on the card whole run faster on llama.cpp's own server today.
+- The setup's Windows paths (the desktop shortcut, the menu in `START-HERE.bat`) were written for Windows and tested on Linux only.
+- Tested on two cards and three models, by one person, in about a week.
 
 ## Credits
 - [Strata](https://github.com/Niko1221/Strata) by Niko1221 and contributors (MIT): the engine this is adapted from.
 - [llama.cpp](https://github.com/ggml-org/llama.cpp) / ggml: the kernels, the quant formats, the projector path and the server layer; and the reference every stage was checked against.
 - HauhauCS for the Gemma 4 release and the MTP drafter (credited there to Unsloth); Google for Gemma 4.
 - HauhauCS for the Qwen3.6 release; Unsloth for the Qwen3.6 MTP GGUF the drafter head is taken from; the Qwen team for Qwen3.6.
+- Liquid AI for LFM2.5 and its QAD quantization; AtomicChat for the uncensored LFM2.5-24B release.
 
 ## Support
 Strata-Lite exists because of Niko's [Strata](https://github.com/Niko1221/Strata). If it runs well for you, please support Niko first: [buymeacoffee.com/strataengine](https://buymeacoffee.com/strataengine). If you'd like to help with this fork's testing and builds too: [buymeacoffee.com/thed1c](https://buymeacoffee.com/thed1c).
