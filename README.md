@@ -29,7 +29,7 @@ background copy stream.
 
 - **A third model, LFM2.5-24B-A2B** (Liquid AI's hybrid MoE: 24B, 2B active, text only, 128K), on the same engine as Qwen3.6, with
   the uncensored AtomicChat release and Liquid AI's own QAD Q4_0 in the installer (`lite/docs/LFM25.md`). It reads fastest of the
-  three (3,300 tokens a second on a 15K prompt on an RTX 5070, a 120K prompt in about a minute) and writes 85-97 tokens a second.
+  three (3,300 tokens a second on a 15K prompt on an RTX 5070, a 120K prompt in about a minute) and writes 97-116 tokens a second.
 - **The RAM tier.** v0.2.1 locked all the experts the card does not hold in RAM, or none (low-RAM mode). v0.2.2 locks what the PC
   can spare when it starts, leaving room for the OS and other programs, and reads the rest from the model file (`--ram-budget`).
   The output is the same bit for bit whatever is locked (checked on Gemma and Qwen: all, part, none).
@@ -51,7 +51,10 @@ at x16 (v0.2.1, 157K: Gemma 252 s against 234, Qwen 260 against 221). The 5070 i
 held through the whole session), the rest in RAM, q4 KV for Gemma and Qwen, f16 for LFM2.5 on both engines. The text is
 Wikipedia (the CC BY-SA corpus published with [llama.cpp-adaptive-kv-streaming](https://github.com/RaymondHuang210129/llama.cpp-adaptive-kv-streaming)).
 Prefills are fresh conversations; "writing after a 4K prompt" is the mean of the last three of four sends of two different
-prompts; the long prompt (157K; LFM2.5 120K, its context being 128K) is read once and answered twice. The accuracy rows are the
+prompts; the long prompt (157K; LFM2.5 120K, its context being 128K) is read once and answered twice. Both engines run with the
+same sampling: LFM2.5's model card asks for a 1.05 repeat penalty, which Strata-Lite's LFM2.5 server applies by default and
+llama-server does not, so these requests set it to 1.0 for both (with 1.05, Strata-Lite writes 8-16 % slower on a short chat:
+the penalty scans every token of the vocabulary each step). The accuracy rows are the
 KV type's cost against f16 KV at 64K (`lite/docs/RELEASES.md`, v0.2.1). The ratio in brackets is v0.2.2 over the other column
 (for the first token, the other column's time over v0.2.2's).
 
@@ -137,11 +140,11 @@ accepted): read differences in those rows under ~25 % as level. v0.2.2 against v
 | experts on the card after the 120K prompt | 33 slots/layer | (fixed) |
 | prefill, 5K prompt, tok/s | 1,041 (2.60×) | 400 |
 | prefill, 15K prompt, tok/s | 1,870 (4.73×) | 395 |
-| prefill, 120K prompt, tok/s | 1,134 (3.02×) | 376 |
-| first token after the 120K prefill, s | 106 (3.02×) | 320 |
-| writing after a 4K prompt, tok/s | 58.1 (1.26×) | 46.0 |
-| writing at 120K, first turn, tok/s | 37.6 (1.07×) | 35.1 |
-| writing at 120K, second turn, tok/s | 37.3 (1.08×) | 34.5 |
+| prefill, 120K prompt, tok/s | 1,132 (3.01×) | 376 |
+| first token after the 120K prefill, s | 106 (3.01×) | 320 |
+| writing after a 4K prompt, tok/s | 64.6 (1.40×) | 46.0 |
+| writing at 120K, first turn, tok/s | 37.2 (1.06×) | 35.1 |
+| writing at 120K, second turn, tok/s | 39.8 (1.15×) | 34.5 |
 
 **LFM2.5-24B-A2B, AtomicChat Uncensored Q4_K_M, RTX 5070, 128K context**
 
@@ -152,11 +155,11 @@ accepted): read differences in those rows under ~25 % as level. v0.2.2 against v
 | experts on the card after the 120K prompt | 32 slots/layer | (fixed) |
 | prefill, 5K prompt, tok/s | 2,021 (5.68×) | 356 |
 | prefill, 15K prompt, tok/s | 3,307 (9.38×) | 353 |
-| prefill, 120K prompt, tok/s | 1,796 (5.11×) | 352 |
-| first token after the 120K prefill, s | 67 (5.11×) | 341 |
-| writing after a 4K prompt, tok/s | 84.7 (1.74×) | 48.8 |
-| writing at 120K, first turn, tok/s | 52.1 (1.28×) | 40.6 |
-| writing at 120K, second turn, tok/s | 54.0 (1.33×) | 40.6 |
+| prefill, 120K prompt, tok/s | 1,795 (5.10×) | 352 |
+| first token after the 120K prefill, s | 67 (5.10×) | 341 |
+| writing after a 4K prompt, tok/s | 97.1 (1.99×) | 48.8 |
+| writing at 120K, first turn, tok/s | 55.2 (1.36×) | 40.6 |
+| writing at 120K, second turn, tok/s | 59.3 (1.46×) | 40.6 |
 
 **LFM2.5-24B-A2B, Liquid AI QAD Q4_0, RTX 3060 (PCIe 3.0 x8), 128K context**
 
@@ -167,11 +170,11 @@ accepted): read differences in those rows under ~25 % as level. v0.2.2 against v
 | experts on the card after the 120K prompt | 38 slots/layer | (fixed) |
 | prefill, 5K prompt, tok/s | 1,066 (2.57×) | 415 |
 | prefill, 15K prompt, tok/s | 1,906 (4.66×) | 409 |
-| prefill, 120K prompt, tok/s | 1,321 (3.41×) | 388 |
-| first token after the 120K prefill, s | 91 (3.41×) | 309 |
-| writing after a 4K prompt, tok/s | 72.5 (1.39×) | 52.2 |
-| writing at 120K, first turn, tok/s | 39.8 (1.06×) | 37.6 |
-| writing at 120K, second turn, tok/s | 42.2 (1.12×) | 37.6 |
+| prefill, 120K prompt, tok/s | 1,281 (3.30×) | 388 |
+| first token after the 120K prefill, s | 94 (3.30×) | 309 |
+| writing after a 4K prompt, tok/s | 78.8 (1.51×) | 52.2 |
+| writing at 120K, first turn, tok/s | 43.0 (1.14×) | 37.6 |
+| writing at 120K, second turn, tok/s | 41.1 (1.09×) | 37.6 |
 
 **LFM2.5-24B-A2B, Liquid AI QAD Q4_0, RTX 5070, 128K context**
 
@@ -182,11 +185,11 @@ accepted): read differences in those rows under ~25 % as level. v0.2.2 against v
 | experts on the card after the 120K prompt | 37 slots/layer | (fixed) |
 | prefill, 5K prompt, tok/s | 2,056 (4.31×) | 478 |
 | prefill, 15K prompt, tok/s | 3,359 (7.08×) | 475 |
-| prefill, 120K prompt, tok/s | 1,940 (4.15×) | 468 |
-| first token after the 120K prefill, s | 62 (4.15×) | 256 |
-| writing after a 4K prompt, tok/s | 96.8 (1.66×) | 58.2 |
-| writing at 120K, first turn, tok/s | 57.0 (1.22×) | 46.8 |
-| writing at 120K, second turn, tok/s | 56.4 (1.21×) | 46.7 |
+| prefill, 120K prompt, tok/s | 1,938 (4.14×) | 468 |
+| first token after the 120K prefill, s | 62 (4.14×) | 256 |
+| writing after a 4K prompt, tok/s | 115.5 (1.98×) | 58.2 |
+| writing at 120K, first turn, tok/s | 58.6 (1.25×) | 46.8 |
+| writing at 120K, second turn, tok/s | 64.6 (1.38×) | 46.7 |
 
 ### v0.2.2 vs v0.2.1
 
